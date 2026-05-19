@@ -1,0 +1,56 @@
+{
+    "effect1": {
+        "name": "exposureEffect",
+        "description": "",
+        "frames": 9,
+        "width": 500,
+        "height": 400,
+        "frameRate": 30,
+        "scale": 0.3,
+        "tint": "#66ffcc",
+        "opacity": 0.9,
+        "positionOffsetPreset": "center",
+        "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "loop": false
+    },
+    "effect2": {
+        "name": "exposureEffect2",
+        "description": "",
+        "frames": 7,
+        "width": 500,
+        "height": 400,
+        "frameRate": 30,
+        "scale": 0.5,
+        "tint": "#ff9f66",
+        "opacity": 0.8,
+        "positionOffsetPreset": "center",
+        "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "loop": false
+    },
+    "effect3": {
+        "name": "exposureEffect3",
+        "description": "",
+        "frames": 9,
+        "width": 500,
+        "height": 400,
+        "frameRate": 30,
+        "scale": 0.3,
+        "tint": false,
+        "opacity": 0.8,
+        "positionOffsetPreset": "topRight",
+        "offset": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+        },
+        "loop": false
+    }
+}

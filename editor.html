@@ -1,0 +1,3019 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GLB Texture Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root, [data-theme="light"] {
+      --text-xs: clamp(0.75rem,0.7rem + 0.25vw,0.875rem); --text-sm: clamp(0.875rem,0.8rem + 0.35vw,1rem);
+      --text-base: clamp(1rem,0.95rem + 0.25vw,1.125rem); --text-lg: clamp(1.125rem,1rem + 0.75vw,1.5rem);
+      --text-xl: clamp(1.5rem,1.2rem + 1.25vw,2.25rem);
+      --space-1:.25rem;--space-2:.5rem;--space-3:.75rem;--space-4:1rem;--space-5:1.25rem;
+      --space-6:1.5rem;--space-8:2rem;
+      --color-bg:#f7f6f2;--color-surface:#f9f8f5;--color-surface-2:#fbfbf9;--color-surface-offset:#edeae5;
+      --color-border:#d4d1ca;--color-text:#28251d;--color-text-muted:#7a7974;--color-text-faint:#bab9b4;
+      --color-primary:#01696f;--color-primary-hover:#0c4e54;--color-primary-highlight:#cedcd8;
+      --color-error:#a12c7b;--color-warning:#964219;
+      --radius-sm:.375rem;--radius-md:.5rem;--radius-lg:.75rem;--radius-xl:1rem;
+      --shadow-sm:0 1px 2px rgba(25,20,10,.06);--shadow-md:0 8px 24px rgba(25,20,10,.10);
+      --font-body:'Inter',system-ui,sans-serif;--transition:180ms cubic-bezier(0.16,1,0.3,1);
+    }
+    [data-theme="dark"] {
+      --color-bg:#171614;--color-surface:#1c1b19;--color-surface-2:#201f1d;--color-surface-offset:#22211f;
+      --color-border:#393836;--color-text:#cdccca;--color-text-muted:#979694;--color-text-faint:#6a6967;
+      --color-primary:#4f98a3;--color-primary-hover:#227f8b;--color-primary-highlight:#313b3b;
+      --color-error:#d163a7;--color-warning:#bb653b;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.2);--shadow-md:0 12px 32px rgba(0,0,0,.35);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+    body{min-height:100vh;font-family:var(--font-body);font-size:var(--text-base);line-height:1.6;color:var(--color-text);
+      background:radial-gradient(circle at top right,color-mix(in oklab,var(--color-primary) 12%,transparent),transparent 30%),var(--color-bg);}
+    button,input{font:inherit;}
+    button{border:1px solid color-mix(in oklab,var(--color-text) 12%,transparent);cursor:pointer;border-radius:var(--radius-md);
+      background:var(--color-surface);color:var(--color-text);transition:all var(--transition);}
+    button:hover{border-color:color-mix(in oklab,var(--color-primary) 40%,var(--color-border));}
+    .btn-primary{background:var(--color-primary);color:#fff;border-color:transparent;}
+    .btn-primary:hover{background:var(--color-primary-hover);}
+    .btn-danger{background:color-mix(in oklab,var(--color-error) 15%,var(--color-surface));color:var(--color-error);border-color:color-mix(in oklab,var(--color-error) 30%,transparent);}
+    .btn-danger:hover{background:color-mix(in oklab,var(--color-error) 25%,var(--color-surface));}
+    .app{display:grid;grid-template-columns:minmax(320px,440px) 1fr;height:100vh;overflow:hidden;}
+    .panel{background:color-mix(in oklab,var(--color-surface) 92%,transparent);backdrop-filter:blur(12px);
+      border-right:1px solid color-mix(in oklab,var(--color-text) 10%,transparent);padding:var(--space-6);
+      display:flex;flex-direction:column;gap:var(--space-5);overflow-y:auto;height:100vh;}
+    .logo{display:flex;align-items:center;gap:.875rem;}
+    .logo-mark{width:2.5rem;height:2.5rem;border-radius:.8rem;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--color-primary-highlight),var(--color-surface-offset));box-shadow:var(--shadow-sm);}
+    .logo h1{font-size:var(--text-xl);line-height:1.05;}
+    .muted{color:var(--color-text-muted);} .tiny{font-size:var(--text-sm);color:var(--color-text-muted);}
+    .dropzone{border:1.5px dashed color-mix(in oklab,var(--color-primary) 40%,var(--color-border));border-radius:var(--radius-xl);
+      padding:var(--space-6);background:var(--color-surface-2);transition:all var(--transition);}
+    .dropzone.dragover{background:color-mix(in oklab,var(--color-primary) 9%,var(--color-surface-2));border-color:var(--color-primary);}
+    .file-trigger{display:inline-flex;align-items:center;gap:.5rem;padding:.8rem 1rem;
+      border:1px solid color-mix(in oklab,var(--color-text) 12%,transparent);border-radius:var(--radius-md);
+      background:var(--color-surface);cursor:pointer;transition:all var(--transition);}
+    .file-trigger:hover{border-color:color-mix(in oklab,var(--color-primary) 40%,var(--color-border));}
+    .actions,.toolbar{display:flex;flex-wrap:wrap;gap:var(--space-3);}
+    .actions button,.toolbar button,.toolbar label{padding:.8rem 1rem;}
+    .toolbar label{display:inline-flex;align-items:center;gap:.5rem;border:1px solid color-mix(in oklab,var(--color-text) 12%,transparent);border-radius:var(--radius-md);background:var(--color-surface);}
+    .statbox,.tips,.slot-list,.node-list,.mesh-list{background:var(--color-surface);border:1px solid color-mix(in oklab,var(--color-text) 10%,transparent);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);}
+    .statbox,.tips{padding:var(--space-4);}
+    .slot-list{overflow:auto;max-height:32vh;} .node-list{overflow:auto;max-height:28vh;} .mesh-list{overflow:auto;max-height:24vh;}
+    .slot-item{display:grid;grid-template-columns:72px 1fr;gap:var(--space-4);padding:var(--space-4);border-bottom:1px solid color-mix(in oklab,var(--color-text) 8%,transparent);}
+    .slot-item:last-child{border-bottom:0;}
+    .thumb{width:72px;height:72px;border-radius:var(--radius-md);overflow:hidden;background:var(--color-surface-offset);border:1px solid color-mix(in oklab,var(--color-text) 10%,transparent);display:grid;place-items:center;}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+    .slot-meta h3{font-size:1rem;margin-bottom:.15rem;}
+    .slot-meta code{font-size:.78rem;word-break:break-all;color:var(--color-text-muted);}
+    .slot-meta .row{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem;}
+    .slot-meta button,.slot-meta label{font-size:.85rem;padding:.55rem .75rem;display:inline-flex;align-items:center;gap:.35rem;border:1px solid color-mix(in oklab,var(--color-text) 12%,transparent);border-radius:var(--radius-md);background:var(--color-surface-2);}
+    .slot-meta input[type="file"]{display:none;}
+
+    /* Session restore banner */
+    .session-banner{background:color-mix(in oklab,var(--color-primary) 12%,var(--color-surface));
+      border:1px solid color-mix(in oklab,var(--color-primary) 35%,var(--color-border));
+      border-radius:var(--radius-lg);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);}
+    .session-banner h3{font-size:.9rem;color:var(--color-primary);}
+    .session-files{font-size:.78rem;color:var(--color-text-muted);display:flex;flex-direction:column;gap:.2rem;}
+    .session-actions{display:flex;gap:.5rem;flex-wrap:wrap;}
+    div#attachedListSection {
+        height: 480px;
+        overflow: auto;
+    }
+    /* Node list */
+    .node-item{padding:var(--space-3) var(--space-4);border-bottom:1px solid color-mix(in oklab,var(--color-text) 8%,transparent);
+      cursor:pointer;transition:background var(--transition);display:flex;align-items:center;gap:var(--space-3);}
+    .node-item:last-child{border-bottom:0;}
+    .node-item:hover{background:color-mix(in oklab,var(--color-primary) 8%,var(--color-surface));}
+    .node-item.selected{background:var(--color-primary-highlight);}
+    .node-item.has-accessories{border-left:3px solid var(--color-primary);}
+    .node-type-badge{font-size:.7rem;padding:.15rem .45rem;border-radius:999px;font-weight:600;
+      background:color-mix(in oklab,var(--color-primary) 20%,var(--color-surface-offset));color:var(--color-primary);}
+    .node-name{font-size:.9rem;flex:1;}
+    .node-acc-count{font-size:.7rem;background:var(--color-primary);color:#fff;border-radius:999px;
+      padding:.05rem .4rem;flex-shrink:0;}
+
+    /* Mesh visibility */
+    .mesh-item{padding:.45rem var(--space-4);border-bottom:1px solid color-mix(in oklab,var(--color-text) 6%,transparent);
+      display:flex;align-items:center;gap:var(--space-3);transition:background var(--transition);}
+    .mesh-item:last-child{border-bottom:0;}
+    .mesh-item:hover{background:color-mix(in oklab,var(--color-primary) 5%,var(--color-surface));}
+    .mesh-item-name{flex:1;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .mesh-item-type{font-size:.68rem;color:var(--color-text-faint);white-space:nowrap;}
+    .vis-btn{width:2rem;height:1.6rem;padding:0;font-size:.8rem;flex-shrink:0;
+      border-radius:var(--radius-sm);display:grid;place-items:center;border:1px solid color-mix(in oklab,var(--color-text) 12%,transparent);}
+    .vis-btn.hidden-mesh{opacity:.45;}
+
+    /* Animation */
+    .anim-panel{background:var(--color-surface);border:1px solid color-mix(in oklab,var(--color-text) 10%,transparent);
+      border-radius:var(--radius-lg);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);box-shadow:var(--shadow-sm);}
+    .anim-list{display:flex;flex-direction:column;gap:.3rem;max-height:150px;overflow-y:auto;}
+    .anim-item{display:flex;align-items:center;gap:.5rem;padding:.35rem .6rem;border-radius:var(--radius-md);
+      border:1px solid transparent;cursor:pointer;transition:all var(--transition);}
+    .anim-item:hover{background:color-mix(in oklab,var(--color-primary) 8%,var(--color-surface-2));}
+    .anim-item.active{background:var(--color-primary-highlight);border-color:color-mix(in oklab,var(--color-primary) 30%,transparent);}
+    .anim-item-name{flex:1;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .anim-item-dur{font-size:.72rem;color:var(--color-text-faint);white-space:nowrap;}
+    .anim-controls{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+    .anim-speed-select{font-size:.78rem;padding:.2rem .5rem;background:var(--color-surface-2);
+      border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text);cursor:pointer;}
+    .anim-progress-wrap{display:flex;align-items:center;gap:.5rem;margin-top:.2rem;}
+    .anim-time{font-size:.72rem;color:var(--color-text-muted);white-space:nowrap;min-width:3.5rem;text-align:right;}
+    .anim-progress{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;
+      background:color-mix(in oklab,var(--color-primary) 25%,var(--color-border));outline:none;cursor:pointer;}
+    .anim-progress::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--color-primary);cursor:pointer;}
+
+    /* Attach panel */
+    .attach-panel{background:var(--color-surface);border:1px solid color-mix(in oklab,var(--color-primary) 30%,var(--color-border));
+      border-radius:var(--radius-lg);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-4);box-shadow:var(--shadow-md);}
+    .attach-panel h3{font-size:1rem;color:var(--color-primary);}
+
+    /* Per-node accessory list */
+    .node-acc-list{display:flex;flex-direction:column;gap:.3rem;margin-bottom:var(--space-3);}
+    .node-acc-item{display:flex;align-items:center;gap:.4rem;padding:.35rem .6rem;
+      background:var(--color-surface-2);border:1px solid color-mix(in oklab,var(--color-text) 8%,transparent);
+      border-radius:var(--radius-md);cursor:pointer;transition:all var(--transition);}
+    .node-acc-item:hover{border-color:var(--color-primary);}
+    .node-acc-item.active-edit{background:var(--color-primary-highlight);border-color:var(--color-primary);}
+    .node-acc-item-name{flex:1;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .node-acc-item-rec{font-size:.68rem;color:var(--color-primary);white-space:nowrap;}
+
+    .transform-group{display:flex;flex-direction:column;gap:var(--space-2);}
+    .transform-row{display:flex;align-items:center;gap:var(--space-2);}
+    .transform-row .axis-inputs{display:flex;gap:var(--space-2);flex:1;}
+    .axis-input-wrap{display:flex;align-items:center;gap:.2rem;flex:1;}
+    .axis-input-wrap span{font-size:.75rem;color:var(--color-text-faint);width:.8rem;}
+    .num-input{width:100%;background:var(--color-surface-2);border:1px solid var(--color-border);color:var(--color-text);
+      border-radius:var(--radius-sm);font-size:.5rem;text-align:center;}
+    .num-input:focus{outline:none;border-color:var(--color-primary);}
+    .section-label{font-size:.78rem;color:var(--color-text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+    .attached-list{display:flex;flex-direction:column;gap:var(--space-2);}
+    .attached-item{background:var(--color-surface-2);border:1px solid color-mix(in oklab,var(--color-text) 8%,transparent);
+      border-radius:var(--radius-md);padding:var(--space-3);display:flex;align-items:center;gap:var(--space-3);}
+    .attached-item-name{flex:1;font-size:.9rem;}
+    .attached-item-node{font-size:.75rem;color:var(--color-text-muted);}
+    .step-row{display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;flex-wrap:wrap;}
+    .step-select{font-size:.78rem;padding:.2rem .4rem;background:var(--color-surface-2);
+      border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text);cursor:pointer;}
+    .axis-btn{width:1.5rem;height:1.5rem;min-width:1.5rem;padding:0;font-size:.85rem;line-height:1;
+      border-radius:var(--radius-sm);display:grid;place-items:center;flex-shrink:0;}
+
+    /* Config */
+    .config-panel{background:var(--color-surface);border:1px solid color-mix(in oklab,var(--color-primary) 25%,var(--color-border));
+      border-radius:var(--radius-lg);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);}
+    .config-panel h3{font-size:.95rem;color:var(--color-primary);margin-bottom:.15rem;}
+    .config-save-row{display:flex;gap:.5rem;}
+    .config-name-input{flex:1;background:var(--color-surface-2);border:1px solid var(--color-border);
+      border-radius:var(--radius-sm);padding:.35rem .6rem;font-size:.85rem;color:var(--color-text);}
+    .config-name-input:focus{outline:none;border-color:var(--color-primary);}
+    .config-list{display:flex;flex-direction:column;gap:.35rem;max-height:180px;overflow-y:auto;}
+    .config-item{display:flex;align-items:center;gap:.4rem;background:var(--color-surface-2);
+      border:1px solid color-mix(in oklab,var(--color-text) 8%,transparent);border-radius:var(--radius-md);padding:.4rem .6rem;}
+    .config-item-name{flex:1;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .config-item-meta{font-size:.72rem;color:var(--color-text-muted);white-space:nowrap;}
+    .config-empty{font-size:.82rem;color:var(--color-text-faint);text-align:center;padding:.6rem 0;}
+
+    .viewer-wrap{position:relative;height:100vh;}
+    #viewer{position:absolute;inset:0;}
+    .viewer-overlay{position:absolute;left:var(--space-5);right:var(--space-5);bottom:var(--space-5);
+      display:flex;justify-content:space-between;gap:var(--space-4);pointer-events:none;}
+    .viewer-card{pointer-events:auto;max-width:min(38rem,100%);background:color-mix(in oklab,var(--color-surface) 88%,transparent);
+      border:1px solid color-mix(in oklab,var(--color-text) 10%,transparent);border-radius:var(--radius-lg);
+      padding:var(--space-4);backdrop-filter:blur(10px);box-shadow:var(--shadow-md);}
+    .world-gizmo-card{max-width:16rem;align-self:flex-end;display:flex;flex-direction:column;gap:var(--space-2);}
+    .world-gizmo-row{display:flex;gap:.5rem;}
+    .world-gizmo-row button{flex:1;padding:.45rem .7rem;font-size:.82rem;}
+    .world-gizmo-hint{font-size:.76rem;color:var(--color-text-muted);line-height:1.4;}
+    .status{min-height:1.5rem;font-size:var(--text-sm);color:var(--color-text-muted);}
+    .status.error{color:var(--color-error);} .status.ok{color:var(--color-primary);}
+    .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3);}
+    .kv{background:var(--color-surface-2);border-radius:var(--radius-md);padding:.8rem .9rem;border:1px solid color-mix(in oklab,var(--color-text) 8%,transparent);}
+    .kv strong{display:block;font-size:.78rem;color:var(--color-text-muted);font-weight:600;}
+    .kv span{font-size:1rem;}
+    .tips ul{padding-left:1.15rem;} .tips li+li{margin-top:.5rem;}
+    .hidden{display:none !important;}
+    .section-divider{border:none;border-top:1px solid color-mix(in oklab,var(--color-text) 10%,transparent);}
+    @media(max-width:980px){
+      .app{height:auto;overflow:visible;grid-template-columns:1fr;}
+      .panel{height:auto;border-right:0;border-bottom:1px solid color-mix(in oklab,var(--color-text) 10%,transparent);}
+      .viewer-wrap{min-height:58vh;} .slot-list{max-height:none;}
+      .viewer-overlay{left:var(--space-4);right:var(--space-4);bottom:var(--space-4);flex-direction:column;}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <div class="logo">
+      <div class="logo-mark" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="M12 3v18"/><path d="M4 7.5 12 12l8-4.5"/>
+        </svg>
+      </div>
+      <div><h1>GLB Texture Editor</h1><p class="muted">Extract, edit, replace, and re-export GLB.</p></div>
+    </div>
+
+    <div class="toolbar">
+      <button type="button" id="themeToggle">Toggle Theme</button>
+      <button type="button" id="resetCamera">Reset Camera</button>
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <label for="lightingIntensity" style="font-size:.85rem;color:var(--color-text-muted);">Light</label>
+        <input type="range" id="lightingIntensity" min="0" max="2" step="0.1" value="1" style="width:120px;cursor:pointer;">
+        <span id="lightingIntensityLabel" style="font-size:.85rem;color:var(--color-text-muted);min-width:2.5rem;text-align:right;">100%</span>
+      </div>
+      <button type="button" id="loadSessionBtn" style="font-size:.85rem;padding:.6rem .9rem;">📂 Load Session</button>
+      <button type="button" id="saveSessionBtn" style="background:var(--color-primary);color:#fff;" disabled>💾 Save Session</button>
+      <button type="button" id="downloadGlb" class="btn-primary" disabled>Export GLB</button>
+    </div>
+
+    <!-- Save Session Dialog -->
+    <div id="saveSessionDialog" class="session-banner hidden" style="border-color:var(--color-primary);background:color-mix(in oklab,var(--color-primary) 8%,var(--color-surface));">
+      <h3>💾 Save Session</h3>
+      <p style="margin:0.5rem 0;font-size:0.9rem;">Enter session name:</p>
+      <input type="text" id="saveSessionName" placeholder="e.g., My Character Setup" maxlength="60" style="width:100%;padding:0.5rem;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-2);color:var(--color-text);margin-bottom:0.5rem;font-size:0.85rem;">
+      <div id="saveSessionOptions" style="margin-bottom:0.5rem;font-size:0.85rem;color:var(--color-text-muted);"></div>
+      <div class="session-actions">
+        <button type="button" id="saveSessionNewBtn" class="btn-primary" style="font-size:.85rem;padding:.5rem .9rem;">New Session</button>
+        <button type="button" id="saveSessionOverwriteBtn" style="font-size:.85rem;padding:.5rem .9rem;display:none;">Overwrite</button>
+        <button type="button" id="saveSessionCancelBtn" style="font-size:.85rem;padding:.5rem .9rem;">Cancel</button>
+      </div>
+    </div>
+
+    <section class="dropzone" id="dropzone" aria-label="GLB Drop Zone">
+      <p><strong>Drop a .glb</strong> file here, or choose below.</p>
+      <p class="tiny" style="margin-top:.45rem;">Files are processed locally — never uploaded to any server.</p>
+      <div class="actions" style="margin-top:1rem;">
+        <label for="glbInput" class="file-trigger">Choose GLB</label>
+        <input type="file" id="glbInput" accept=".glb,model/gltf-binary" />
+        <button type="button" id="browseModelBtn" title="Browse GLB files in server model/ folder">📂 model/</button>
+      </div>
+    </section>
+
+    <!-- Model folder browser -->
+    <div id="modelBrowser" class="session-banner hidden" style="padding:var(--space-3);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+        <h3 style="font-size:.9rem;">📂 model/ folder</h3>
+        <button type="button" id="closeBrowserBtn" style="font-size:.75rem;padding:.2rem .5rem;">✕</button>
+      </div>
+      <div id="modelFileList" style="display:flex;flex-direction:column;gap:.3rem;max-height:180px;overflow-y:auto;font-size:.82rem;"></div>
+    </div>
+
+    <section class="statbox">
+      <div class="grid2">
+        <div class="kv"><strong>Model Name</strong><span id="modelName">Not loaded</span></div>
+        <div class="kv"><strong>Textures</strong><span id="textureCount">0</span></div>
+        <div class="kv"><strong>Materials</strong><span id="materialCount">0</span></div>
+        <div class="kv"><strong>Animations</strong><span id="animationCount">0</span></div>
+      </div>
+      <p id="status" class="status" style="margin-top:1rem;">Load a GLB to get started.</p>
+    </section>
+
+    <!-- ANIMATION -->
+    <section id="animSection" class="hidden">
+      <p style="margin-bottom:.65rem;"><strong>🎬 Animations</strong></p>
+      <div class="anim-panel">
+        <div id="animList" class="anim-list"></div>
+        <div class="anim-progress-wrap">
+          <span style="font-size:.72rem;color:var(--color-text-muted);">0:00</span>
+          <input type="range" class="anim-progress" id="animProgress" min="0" max="1" step="0.001" value="0">
+          <span class="anim-time" id="animTimeLabel">0:00 / 0:00</span>
+        </div>
+        <div class="anim-controls">
+          <button type="button" id="animPlayBtn" style="font-size:.82rem;padding:.4rem .8rem;min-width:5rem;">▶ Play</button>
+          <button type="button" id="animStopBtn" style="font-size:.82rem;padding:.4rem .8rem;">⏹ Stop</button>
+          <span style="font-size:.75rem;color:var(--color-text-muted);">Speed:</span>
+          <select class="anim-speed-select" id="animSpeed">
+            <option value="0.25">0.25×</option><option value="0.5">0.5×</option>
+            <option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- MESH VISIBILITY -->
+    <section id="meshVisSection" class="hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem;">
+        <p><strong>👁 Mesh Visibility</strong></p>
+        <div style="display:flex;gap:.4rem;">
+          <button type="button" id="showAllMeshBtn" style="font-size:.75rem;padding:.25rem .55rem;">Show All</button>
+          <button type="button" id="hideAllMeshBtn" style="font-size:.75rem;padding:.25rem .55rem;">Hide All</button>
+        </div>
+      </div>
+      <div id="meshList" class="mesh-list"></div>
+    </section>
+
+    <!-- TEXTURE SLOTS -->
+    <section>
+      <p style="margin-bottom:.65rem;"><strong>Texture Slots</strong></p>
+      <div id="slotList" class="slot-list">
+        <div class="slot-item"><div class="slot-meta"><p class="muted">No textures found.</p></div></div>
+      </div>
+    </section>
+
+    <!-- TEXTURE LIBRARY -->
+    <section id="textureLibrarySection">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.55rem;flex-wrap:wrap;">
+        <p style="margin:0;"><strong>🧰 Texture Library</strong></p>
+        <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+          <select id="libraryTextureKey" class="step-select" style="font-size:.78rem;padding:.3rem .45rem;">
+            <option value="map">Base Color</option>
+            <option value="normalMap">Normal</option>
+            <option value="roughnessMap">Roughness</option>
+            <option value="metalnessMap">Metalness</option>
+            <option value="aoMap">AO</option>
+            <option value="emissiveMap">Emissive</option>
+            <option value="alphaMap">Alpha</option>
+            <option value="bumpMap">Bump</option>
+            <option value="displacementMap">Displacement</option>
+          </select>
+          <label class="file-trigger" style="font-size:.78rem;padding:.35rem .55rem;">
+            Add To Library
+            <input type="file" id="libraryTextureInput" accept="image/png,image/jpeg,image/webp" style="display:none;">
+          </label>
+        </div>
+      </div>
+      <div id="textureLibraryList" class="slot-list" style="max-height:24vh;">
+        <div class="slot-item"><div class="slot-meta"><p class="muted">Texture library is empty.</p></div></div>
+      </div>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ATTACH SECTION -->
+    <section id="attachSection">
+      <p style="margin-bottom:.65rem;"><strong>🔗 Attach Accessory GLB</strong> <span class="tiny">— attach to a node</span></p>
+
+      <div id="nodeSection" class="hidden">
+        <p class="section-label" style="margin-bottom:.5rem;">Select Target Node</p>
+        <div style="margin-bottom:.6rem;display:flex;gap:.5rem;flex-wrap:wrap;">
+          <button type="button" id="filterAllNodes" class="btn-primary" style="font-size:.8rem;padding:.4rem .7rem;">All</button>
+          <button type="button" id="filterBonesOnly" style="font-size:.8rem;padding:.4rem .7rem;">Bones Only</button>
+          <button type="button" id="filterMeshOnly" style="font-size:.8rem;padding:.4rem .7rem;">Meshes Only</button>
+        </div>
+        <div id="nodeList" class="node-list"></div>
+      </div>
+
+      <div id="attachPanel" class="attach-panel hidden" style="margin-top:var(--space-4);">
+        <h3 id="attachPanelTitle">📎 Attach to: —</h3>
+
+        <!-- Accessories on this node -->
+        <div id="nodeAccSection" class="hidden">
+          <p class="section-label" style="margin-bottom:.4rem;">Accessories on this node</p>
+          <div id="nodeAccList" class="node-acc-list"></div>
+        </div>
+
+        <!-- Add new accessory -->
+        <div>
+          <p class="section-label" style="margin-bottom:.5rem;">Add Accessory GLB</p>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+            <label class="file-trigger" style="font-size:.85rem;padding:.55rem .75rem;">
+              Choose Accessory GLB
+              <input type="file" id="accessoryInput" accept=".glb,model/gltf-binary" style="display:none;">
+            </label>
+            <select id="effectSelect" class="step-select" style="min-width:150px;font-size:.85rem;padding:.55rem .65rem;" title="Select VFX">
+              <option value="">No effect loaded</option>
+            </select>
+            <label class="tiny" for="effectColor" style="display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .4rem;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-2);">
+              Color
+              <input id="effectColor" type="color" value="#ffffff" title="VFX Color" style="width:1.8rem;height:1.4rem;padding:0;border:none;background:transparent;cursor:pointer;">
+            </label>
+            <label class="tiny" for="effectOpacity" style="display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .4rem;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-2);">
+              Opacity
+              <input id="effectOpacity" type="range" min="0" max="1" step="0.05" value="1" title="VFX Opacity" style="width:88px;">
+              <span id="effectOpacityLabel" style="min-width:2.2em;text-align:right;">1.00</span>
+            </label>
+            <button type="button" id="playEffectBtn" style="font-size:.85rem;padding:.55rem .75rem;" disabled>Play Effect</button>
+          </div>
+        </div>
+
+        <!-- Transform editor -->
+        <div id="transformControls" class="hidden">
+          <p class="section-label" style="margin-bottom:.5rem;color:var(--color-primary);">Editing: <span id="editingAccName">—</span></p>
+          <!-- Position -->
+          <div class="transform-group">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem;">
+              <p class="section-label">Position</p>
+              <select class="step-select" id="posStep">
+                <option value="0.002">0.002</option>
+                <option value="0.01">0.01</option><option value="0.1" selected>0.1</option>
+                <option value="1">1</option><option value="10">10</option><option value="50">50</option>
+              </select>
+            </div>
+            <div class="transform-row"><div class="axis-inputs">
+              <div class="axis-input-wrap"><span>X</span><button type="button" class="axis-btn" data-axis="posX" data-dir="-1">−</button><input type="number" class="num-input" id="posX" value="0" step="0.1"><button type="button" class="axis-btn" data-axis="posX" data-dir="1">+</button></div>
+              <div class="axis-input-wrap"><span>Y</span><button type="button" class="axis-btn" data-axis="posY" data-dir="-1">−</button><input type="number" class="num-input" id="posY" value="0" step="0.1"><button type="button" class="axis-btn" data-axis="posY" data-dir="1">+</button></div>
+              <div class="axis-input-wrap"><span>Z</span><button type="button" class="axis-btn" data-axis="posZ" data-dir="-1">−</button><input type="number" class="num-input" id="posZ" value="0" step="0.1"><button type="button" class="axis-btn" data-axis="posZ" data-dir="1">+</button></div>
+            </div></div>
+          </div>
+          <!-- Rotation -->
+          <div class="transform-group" style="margin-top:var(--space-3);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem;">
+              <p class="section-label">Rotation (deg)</p>
+              <select class="step-select" id="rotStep">
+                <option value="0.1">0.1°</option><option value="1" selected>1°</option><option value="5">5°</option>
+                <option value="15">15°</option><option value="30">30°</option><option value="45">45°</option>
+                <option value="90">90°</option><option value="180">180°</option>
+              </select>
+            </div>
+            <div class="transform-row"><div class="axis-inputs">
+              <div class="axis-input-wrap"><span>X</span><button type="button" class="axis-btn" data-axis="rotX" data-dir="-1">−</button><input type="number" class="num-input" id="rotX" value="0" step="1"><button type="button" class="axis-btn" data-axis="rotX" data-dir="1">+</button></div>
+              <div class="axis-input-wrap"><span>Y</span><button type="button" class="axis-btn" data-axis="rotY" data-dir="-1">−</button><input type="number" class="num-input" id="rotY" value="0" step="1"><button type="button" class="axis-btn" data-axis="rotY" data-dir="1">+</button></div>
+              <div class="axis-input-wrap"><span>Z</span><button type="button" class="axis-btn" data-axis="rotZ" data-dir="-1">−</button><input type="number" class="num-input" id="rotZ" value="0" step="1"><button type="button" class="axis-btn" data-axis="rotZ" data-dir="1">+</button></div>
+            </div></div>
+          </div>
+          <!-- Scale -->
+          <div class="transform-group" style="margin-top:var(--space-3);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem;">
+              <p class="section-label">Scale</p>
+              <select class="step-select" id="scaleStep">
+                <option value="0.002">0.002</option>
+                <option value="0.01">0.01</option>
+                <option value="0.1" selected>0.1</option>
+                <option value="0.5">0.5</option>
+                <option value="1">1</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+            <div class="transform-row"><div class="axis-inputs">
+              <div class="axis-input-wrap"><span>X</span><button type="button" class="axis-btn" data-axis="scaleX" data-dir="-1">−</button><input type="number" class="num-input" id="scaleX" value="1" step="0.1"><button type="button" class="axis-btn" data-axis="scaleX" data-dir="1">+</button></div>
+              <div class="axis-input-wrap"><span>Y</span><button type="button" class="axis-btn" data-axis="scaleY" data-dir="-1">−</button><input type="number" class="num-input" id="scaleY" value="1" step="0.1"><button type="button" class="axis-btn" data-axis="scaleY" data-dir="1">+</button></div>
+              <div class="axis-input-wrap"><span>Z</span><button type="button" class="axis-btn" data-axis="scaleZ" data-dir="-1">−</button><input type="number" class="num-input" id="scaleZ" value="1" step="0.1"><button type="button" class="axis-btn" data-axis="scaleZ" data-dir="1">+</button></div>
+            </div></div>
+            <div style="display:flex;gap:.5rem;margin-top:.4rem;">
+              <button type="button" id="uniformScaleBtn" style="font-size:.78rem;padding:.35rem .6rem;">Lock Ratio</button>
+              <span id="uniformScaleStatus" class="tiny" style="align-self:center;">Off</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:var(--space-3);">
+            <button type="button" id="resetTransformBtn" style="font-size:.85rem;padding:.55rem .75rem;">Reset</button>
+            <button type="button" id="recordTransformBtn" class="btn-primary" style="font-size:.85rem;padding:.55rem .75rem;">📋 Record</button>
+            <button type="button" id="removeAttachBtn" class="btn-danger" style="font-size:.85rem;padding:.55rem .75rem;">Remove</button>
+          </div>
+
+          <!-- Accessory Texture Mapping -->
+          <div id="accTextureSection" class="hidden" style="margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid color-mix(in oklab,var(--color-text) 8%,transparent);">
+            <p class="section-label" style="margin-bottom:.5rem;color:var(--color-primary);">🎨 Use Texture Library</p>
+            <div id="accTextureSlotList" class="slot-list" style="max-height:24vh;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attached items summary -->
+      <div id="attachedListSection" class="hidden" style="margin-top:var(--space-4);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.5rem;flex-wrap:wrap;">
+          <p class="section-label" style="margin:0;">All Attached Accessories</p>
+        </div>
+        <div id="attachedList" class="attached-list"></div>
+        <div style="margin-top:var(--space-3);">
+          <button type="button" id="copyAllRecordsBtn" style="font-size:.82rem;padding:.5rem .8rem;">📋 Copy All Records</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="tips">
+      <p style="margin-bottom:.55rem;"><strong>How to Use</strong></p>
+      <ul>
+        <li>Load a <code>.glb</code> from <strong>model/</strong> folder or drag-and-drop — GLBs are auto-uploaded to <code>model/</code>.</li>
+        <li>Hover a node in the list to highlight it in the 3D view. Click to select.</li>
+        <li>Each node can hold <strong>multiple accessories</strong> — click one to edit its transform.</li>
+        <li>Use <strong>💾 Save Session</strong> to save your setup. Sessions remember file paths so everything reloads automatically.</li>
+        <li>When done, <strong>Export GLB</strong> downloads the model with all accessories baked in.</li>
+      </ul>
+    </section>
+  </aside>
+
+  <main class="viewer-wrap">
+    <div id="viewer" aria-label="3D viewer"></div>
+    <div class="viewer-overlay">
+      <div class="viewer-card">
+        <p><strong>Left-drag</strong> to orbit · <strong>Right-drag</strong> to pan · <strong>Scroll</strong> to zoom</p>
+        <p class="muted">Preview updates live when you replace textures or attach accessories.</p>
+      </div>
+      <div id="worldGizmoPanel" class="viewer-card world-gizmo-card hidden">
+        <p class="section-label" style="color:var(--color-primary);">World Gizmo</p>
+        <div class="world-gizmo-row">
+          <button type="button" id="gizmoMoveBtn" class="btn-primary">Move</button>
+          <button type="button" id="gizmoRotateBtn">Rotate</button>
+        </div>
+        <p id="worldGizmoTarget" class="world-gizmo-hint">Select an accessory to enable world-space controls.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TransformControls as ThreeTransformControls } from 'three/addons/controls/TransformControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+// ─── File-based Session Store (Server-side) ─────────────────────────────────
+// API endpoints: /api/sessions, /api/session/save, /api/session/load, etc.
+
+const SERVER_BASE = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+
+async function apiCall(endpoint, options = {}) {
+  try {
+    const method = options.method || 'GET';
+    const res = await fetch(`${SERVER_BASE}${endpoint}`, {
+      method,
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      cache: options.cache || 'default',
+    });
+    if (!res.ok) {
+      console.error(`API call failed (${endpoint}): HTTP ${res.status}`);
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error(`API call failed (${endpoint}):`, err);
+    return null;
+  }
+}
+
+async function serverSaveSession(name, mainGlb, accessories, mode = 'new', overwriteId = null) {
+  const payload = { name, mainGlb, accessories, mode };
+  if (mode === 'overwrite' && overwriteId !== null) payload.overwriteId = overwriteId;
+  return apiCall('/api/session/save', { method: 'POST', body: payload });
+}
+
+async function serverLoadSession(sessionId) {
+  return apiCall(`/api/session/load?id=${sessionId}`);
+}
+
+async function serverDeleteSession(sessionId) {
+  return apiCall(`/api/session/delete?id=${sessionId}`, { method: 'DELETE' });
+}
+
+async function serverListSessions() {
+  return apiCall('/api/sessions');
+}
+
+async function serverListTextures() {
+  return apiCall('/api/textures');
+}
+
+async function serverAddTexture(texture) {
+  return apiCall('/api/texture/add', { method: 'POST', body: texture });
+}
+
+async function serverUpdateTexture(textureId, patch) {
+  return apiCall('/api/texture/update', { method: 'POST', body: { id: textureId, ...patch } });
+}
+
+async function serverDeleteTexture(textureId) {
+  return apiCall('/api/texture/delete', { method: 'DELETE', body: { id: textureId } });
+}
+
+// ─── State ───────────────────────────────────────────────────────────────────
+const state = {
+  fileName: '', gltf: null, sceneRoot: null, mixer: null,
+  clock: new THREE.Clock(), slots: [],
+  textureToFileName: new WeakMap(),
+  defaultCamera: { position: new THREE.Vector3(1.8, 1.4, 2.2), target: new THREE.Vector3(0, .9, 0) },
+  allNodes: [], selectedNode: null,
+  attachedItems: [],
+  activeAttachedItem: null,
+  worldGizmoMode: 'translate',
+  uniformScale: false, nodeFilter: 'all',
+  animations: [], activeAction: null, activeClip: null, animPlaying: false, animScrubbing: false,
+  externalAnimationPath: null,
+  externalAnimationClipCount: 0,
+  meshObjects: [],
+  spriteEffects: [],
+  highlightMarker: null, highlightMeshOriginals: new Map(),
+  // Session management
+  lastLoadedGlbFile: null,
+  lastSavedSessionId: null,
+  textureLibrary: [],
+  textureLibraryById: new Map(),
+};
+
+const el = {
+  viewer: document.getElementById('viewer'),
+  dropzone: document.getElementById('dropzone'),
+  glbInput: document.getElementById('glbInput'),
+  slotList: document.getElementById('slotList'),
+  status: document.getElementById('status'),
+  modelName: document.getElementById('modelName'),
+  textureCount: document.getElementById('textureCount'),
+  materialCount: document.getElementById('materialCount'),
+  animationCount: document.getElementById('animationCount'),
+  downloadGlb: document.getElementById('downloadGlb'),
+  resetCamera: document.getElementById('resetCamera'),
+  themeToggle: document.getElementById('themeToggle'),
+  loadSessionBtn: document.getElementById('loadSessionBtn'),
+  animSection: document.getElementById('animSection'),
+  animList: document.getElementById('animList'),
+  animPlayBtn: document.getElementById('animPlayBtn'),
+  animStopBtn: document.getElementById('animStopBtn'),
+  animSpeed: document.getElementById('animSpeed'),
+  animProgress: document.getElementById('animProgress'),
+  animTimeLabel: document.getElementById('animTimeLabel'),
+  meshVisSection: document.getElementById('meshVisSection'),
+  meshList: document.getElementById('meshList'),
+  showAllMeshBtn: document.getElementById('showAllMeshBtn'),
+  hideAllMeshBtn: document.getElementById('hideAllMeshBtn'),
+  nodeSection: document.getElementById('nodeSection'),
+  nodeList: document.getElementById('nodeList'),
+  attachPanel: document.getElementById('attachPanel'),
+  attachPanelTitle: document.getElementById('attachPanelTitle'),
+  nodeAccSection: document.getElementById('nodeAccSection'),
+  nodeAccList: document.getElementById('nodeAccList'),
+  accessoryInput: document.getElementById('accessoryInput'),
+  effectSelect: document.getElementById('effectSelect'),
+  effectColor: document.getElementById('effectColor'),
+  effectOpacity: document.getElementById('effectOpacity'),
+  effectOpacityLabel: document.getElementById('effectOpacityLabel'),
+  playEffectBtn: document.getElementById('playEffectBtn'),
+  transformControls: document.getElementById('transformControls'),
+  editingAccName: document.getElementById('editingAccName'),
+  posX: document.getElementById('posX'), posY: document.getElementById('posY'), posZ: document.getElementById('posZ'),
+  rotX: document.getElementById('rotX'), rotY: document.getElementById('rotY'), rotZ: document.getElementById('rotZ'),
+  scaleX: document.getElementById('scaleX'), scaleY: document.getElementById('scaleY'), scaleZ: document.getElementById('scaleZ'),
+  resetTransformBtn: document.getElementById('resetTransformBtn'),
+  recordTransformBtn: document.getElementById('recordTransformBtn'),
+  removeAttachBtn: document.getElementById('removeAttachBtn'),
+  uniformScaleBtn: document.getElementById('uniformScaleBtn'),
+  uniformScaleStatus: document.getElementById('uniformScaleStatus'),
+  attachedListSection: document.getElementById('attachedListSection'),
+  attachedList: document.getElementById('attachedList'),
+  copyAllRecordsBtn: document.getElementById('copyAllRecordsBtn'),
+  filterAllNodes: document.getElementById('filterAllNodes'),
+  filterBonesOnly: document.getElementById('filterBonesOnly'),
+  filterMeshOnly: document.getElementById('filterMeshOnly'),
+  posStep: document.getElementById('posStep'),
+  rotStep: document.getElementById('rotStep'),
+  scaleStep: document.getElementById('scaleStep'),
+  loadSessionBtn: document.getElementById('loadSessionBtn'),
+  saveSessionBtn: document.getElementById('saveSessionBtn'),
+  libraryTextureInput: document.getElementById('libraryTextureInput'),
+  libraryTextureKey: document.getElementById('libraryTextureKey'),
+  textureLibraryList: document.getElementById('textureLibraryList'),
+  saveSessionDialog: document.getElementById('saveSessionDialog'),
+  saveSessionName: document.getElementById('saveSessionName'),
+  lightingIntensity: document.getElementById('lightingIntensity'),
+  lightingIntensityLabel: document.getElementById('lightingIntensityLabel'),
+  saveSessionOptions: document.getElementById('saveSessionOptions'),
+  saveSessionNewBtn: document.getElementById('saveSessionNewBtn'),
+  saveSessionOverwriteBtn: document.getElementById('saveSessionOverwriteBtn'),
+  saveSessionCancelBtn: document.getElementById('saveSessionCancelBtn'),
+  browseModelBtn: document.getElementById('browseModelBtn'),
+  modelBrowser: document.getElementById('modelBrowser'),
+  modelFileList: document.getElementById('modelFileList'),
+  closeBrowserBtn: document.getElementById('closeBrowserBtn'),
+  accTextureSection: document.getElementById('accTextureSection'),
+  accTextureSlotList: document.getElementById('accTextureSlotList'),
+  worldGizmoPanel: document.getElementById('worldGizmoPanel'),
+  gizmoMoveBtn: document.getElementById('gizmoMoveBtn'),
+  gizmoRotateBtn: document.getElementById('gizmoRotateBtn'),
+  worldGizmoTarget: document.getElementById('worldGizmoTarget'),
+};
+
+// ─── Renderer / Scene ────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+el.viewer.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = null;
+const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 1000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.target.copy(state.defaultCamera.target);
+camera.position.copy(state.defaultCamera.position);
+const worldTransformControl = new ThreeTransformControls(camera, renderer.domElement);
+worldTransformControl.setSpace('world');
+worldTransformControl.setMode('translate');
+worldTransformControl.setSize(0.75);
+worldTransformControl.enabled = false;
+worldTransformControl.visible = false;
+scene.add(worldTransformControl);
+worldTransformControl.addEventListener('dragging-changed', (event) => {
+  controls.enabled = !event.value;
+});
+worldTransformControl.addEventListener('objectChange', () => {
+  if (!state.activeAttachedItem) return;
+  if (worldTransformControl.object !== state.activeAttachedItem.object3d) return;
+  syncItemTransformFromObject(state.activeAttachedItem, { updateInputs: true });
+});
+
+// 光源配置 - 保存為全局變數便於動態調整
+const lights = {
+  dir: new THREE.DirectionalLight(0xffffff, 1.8),
+  fill: new THREE.DirectionalLight(0x8899cc, 0.6),
+  // 初始強度
+  dirInitial: 1.8,
+  fillInitial: 0.6
+};
+lights.dir.position.set(5,8,5);
+lights.fill.position.set(-4,3,-5);
+scene.add(lights.dir);
+scene.add(lights.fill);
+const grid = new THREE.GridHelper(12,12,0x3b5b5f,0x2c2c2c);
+grid.material.transparent = true; grid.material.opacity = 0.23; scene.add(grid);
+
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+const loader = new GLTFLoader(); loader.setDRACOLoader(dracoLoader);
+const exporter = new GLTFExporter();
+
+const textureSlotKeys = [
+  ['map','Base Color'],['normalMap','Normal'],['roughnessMap','Roughness'],['metalnessMap','Metalness'],
+  ['aoMap','AO'],['emissiveMap','Emissive'],['alphaMap','Alpha'],['bumpMap','Bump'],['displacementMap','Displacement']
+];
+
+const DEFAULT_EXTERNAL_ANIMATION_PATH = 'model/animation.glb';
+
+// ─── Utilities ───────────────────────────────────────────────────────────────
+function setStatus(msg, type='') { el.status.textContent=msg; el.status.className='status'+(type?' '+type:''); }
+function sanitizeName(n) { return (n||'model').replace(/[^a-z0-9_-]+/gi,'_').replace(/^_+|_+$/g,'')||'model'; }
+function fmtTime(s) { return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`; }
+function uid() { return Math.random().toString(36).slice(2); }
+
+function refreshTextureLibrary(textures = []) {
+  state.textureLibrary = Array.isArray(textures) ? textures : [];
+  state.textureLibraryById = new Map(state.textureLibrary.filter(t => t?.id).map(t => [t.id, t]));
+  syncLinkedSlotsWithLibrary();
+  renderTextureLibraryPanel();
+}
+
+async function fetchTextureLibrary() {
+  const result = await serverListTextures();
+  if (result?.success) {
+    refreshTextureLibrary(result.textures || []);
+  }
+}
+
+el.libraryTextureInput?.addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  try {
+    const textureKey = el.libraryTextureKey?.value || 'map';
+    const img = await loadImg(file);
+    const base64 = await fileToBase64(file);
+    const label = textureSlotKeys.find(([key]) => key === textureKey)?.[1] || textureKey;
+    const result = await serverAddTexture({
+      key: textureKey,
+      label,
+      width: img.naturalWidth || img.width || 0,
+      height: img.naturalHeight || img.height || 0,
+      materialColor: '#ffffff',
+      repeatX: 1,
+      repeatY: 1,
+      base64,
+    });
+
+    if (result?.success && Array.isArray(result.textures)) {
+      refreshTextureLibrary(result.textures);
+      if (state.activeAttachedItem) renderAccessoryTextureSlots(state.activeAttachedItem);
+      setStatus(`Added texture to library as ${result.texture?.id || 'new id'}.`, 'ok');
+    } else {
+      setStatus('Failed to add texture to library.', 'error');
+    }
+  } catch (err) {
+    setStatus('Failed to add texture to library: ' + (err.message || err), 'error');
+  } finally {
+    if (el.libraryTextureInput) el.libraryTextureInput.value = '';
+  }
+});
+
+async function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderTextureLibraryPanel() {
+  if (!el.textureLibraryList) return;
+  el.textureLibraryList.innerHTML = '';
+
+  if (!state.textureLibrary.length) {
+    el.textureLibraryList.innerHTML = '<div class="slot-item"><div class="slot-meta"><p class="muted">Texture library is empty.</p></div></div>';
+    return;
+  }
+
+  state.textureLibrary.forEach((tex) => {
+    const row = document.createElement('div');
+    row.className = 'slot-item';
+    const repeatX = Number(tex.repeatX ?? 1);
+    const repeatY = Number(tex.repeatY ?? 1);
+    const colorHex = toColorInputHex(tex.materialColor || '#ffffff');
+    const preview = tex.base64
+      ? `<img src="data:image/png;base64,${tex.base64}" width="72" height="72" loading="lazy">`
+      : '<span class="muted">—</span>';
+    row.innerHTML = `<div class="thumb">${preview}</div>
+      <div class="slot-meta">
+        <h3>${tex.label || tex.key || 'Texture'}</h3>
+        <div class="tiny">ID: <code>${tex.id}</code></div>
+        <div class="tiny">Type: <code>${tex.key || 'any'}</code></div>
+        <div class="tiny">${tex.width || '?'} × ${tex.height || '?'}</div>
+        <div class="row" style="margin-top:.45rem;">
+          <label style="gap:.35rem;">Color
+            <input type="color" data-lib-color="${tex.id}" value="${colorHex}" style="width:1.9rem;height:1.5rem;padding:0;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:transparent;cursor:pointer;">
+          </label>
+          <label style="gap:.25rem;">Scale X
+            <input type="number" data-lib-repx="${tex.id}" value="${repeatX}" min="0.1" step="0.1" style="width:4.2rem;font-size:.78rem;padding:.2rem .35rem;">
+          </label>
+          <label style="gap:.25rem;">Scale Y
+            <input type="number" data-lib-repy="${tex.id}" value="${repeatY}" min="0.1" step="0.1" style="width:4.2rem;font-size:.78rem;padding:.2rem .35rem;">
+          </label>
+        </div>
+        <div class="row" style="margin-top:.35rem;">
+          <button data-lib-update="${tex.id}" style="font-size:.78rem;padding:.3rem .55rem;">Update</button>
+          <button data-lib-delete="${tex.id}" class="btn-danger" style="font-size:.78rem;padding:.3rem .55rem;">Delete</button>
+        </div>
+      </div>`;
+    el.textureLibraryList.appendChild(row);
+  });
+
+  el.textureLibraryList.querySelectorAll('[data-lib-update]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.libUpdate;
+      const colorInput = el.textureLibraryList.querySelector(`[data-lib-color="${id}"]`);
+      const repXInput = el.textureLibraryList.querySelector(`[data-lib-repx="${id}"]`);
+      const repYInput = el.textureLibraryList.querySelector(`[data-lib-repy="${id}"]`);
+      const patch = {
+        materialColor: toColorInputHex(colorInput?.value || '#ffffff'),
+        repeatX: Math.max(0.1, Number(repXInput?.value) || 1),
+        repeatY: Math.max(0.1, Number(repYInput?.value) || 1),
+      };
+      const result = await serverUpdateTexture(id, patch);
+      if (result?.success && Array.isArray(result.textures)) {
+        refreshTextureLibrary(result.textures);
+        if (state.activeAttachedItem) renderAccessoryTextureSlots(state.activeAttachedItem);
+        setStatus(`Updated texture library item ${id}.`, 'ok');
+      } else {
+        setStatus('Update texture library item failed.', 'error');
+      }
+    });
+  });
+
+  el.textureLibraryList.querySelectorAll('[data-lib-delete]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.libDelete;
+      if (!confirm(`Delete texture item ${id}?`)) return;
+      const result = await serverDeleteTexture(id);
+      if (result?.success && Array.isArray(result.textures)) {
+        refreshTextureLibrary(result.textures);
+        if (state.activeAttachedItem) renderAccessoryTextureSlots(state.activeAttachedItem);
+        setStatus(`Deleted texture library item ${id}.`, 'ok');
+      } else {
+        setStatus('Delete texture library item failed.', 'error');
+      }
+    });
+  });
+}
+
+function applyLibraryDefaultsToSlot(slot, texRef) {
+  if (!slot?.texture || !texRef) return;
+
+  const repX = Math.max(0.1, Number(texRef.repeatX ?? 1) || 1);
+  const repY = Math.max(0.1, Number(texRef.repeatY ?? 1) || 1);
+  slot.texture.wrapS = THREE.RepeatWrapping;
+  slot.texture.wrapT = THREE.RepeatWrapping;
+  slot.texture.repeat.set(repX, repY);
+  slot.texture.needsUpdate = true;
+
+  if (slot.key === 'emissiveMap' && slot.material?.emissive) {
+    const c = toColorInputHex(texRef.materialColor || '#ffffff');
+    slot.material.emissive.set(c);
+    slot.colorHex = c;
+  } else if (slot.material?.color) {
+    const c = toColorInputHex(texRef.materialColor || '#ffffff');
+    slot.material.color.set(c);
+    slot.colorHex = c;
+  }
+  slot.material.needsUpdate = true;
+}
+
+function syncLinkedSlotsWithLibrary() {
+  if (!state.attachedItems?.length) return;
+
+  state.attachedItems.forEach(item => {
+    if (!item?.textureSlots?.length) return;
+    item.textureSlots.forEach(slot => {
+      if (!slot?.textureId) return;
+      const texRef = state.textureLibraryById.get(slot.textureId);
+      if (!texRef) return;
+      applyLibraryDefaultsToSlot(slot, texRef);
+    });
+  });
+
+  if (state.activeAttachedItem) {
+    renderAccessoryTextureSlots(state.activeAttachedItem);
+  }
+}
+
+function base64ToBlob(base64, mimeType = 'image/png') {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: mimeType });
+}
+
+el.themeToggle.addEventListener('click', () => {
+  document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
+});
+function resize() {
+  const r = el.viewer.getBoundingClientRect();
+  camera.aspect = r.width/r.height; camera.updateProjectionMatrix();
+  renderer.setSize(r.width, r.height, false);
+}
+window.addEventListener('resize', resize);
+
+function animLoop() {
+  requestAnimationFrame(animLoop);
+  controls.update();
+  if (state.mixer && state.animPlaying && !state.animScrubbing) {
+    state.mixer.update(state.clock.getDelta()); updateAnimProgress();
+  } else { state.clock.getDelta(); }
+  renderer.render(scene, camera);
+}
+animLoop(); resize();
+
+// ─── Node Highlight ───────────────────────────────────────────────────────────
+const _hlMarkerGeo = new THREE.SphereGeometry(0.04, 10, 10);
+const _hlMarkerMat = new THREE.MeshBasicMaterial({ color: 0x00ffaa, depthTest: false });
+const _hlRingGeo = new THREE.TorusGeometry(0.08, 0.012, 8, 24);
+const _hlRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffaa, depthTest: false });
+
+function clearHighlight() {
+  if (state.highlightMarker) { scene.remove(state.highlightMarker); state.highlightMarker = null; }
+  state.highlightMeshOriginals.forEach((origEmissive, mesh) => {
+    if (mesh.material) {
+      mesh.material = mesh.material.clone();
+      mesh.material.emissive.copy(origEmissive);
+    }
+  });
+  state.highlightMeshOriginals.clear();
+}
+
+function highlightNode(obj) {
+  clearHighlight();
+  if (!obj) return;
+
+  if (obj.isBone || (!obj.isMesh && !obj.isSkinnedMesh)) {
+    // Bone: show a sphere + ring at world position
+    obj.updateWorldMatrix(true, false);
+    const wp = new THREE.Vector3();
+    obj.getWorldPosition(wp);
+    const group = new THREE.Group();
+    group.add(new THREE.Mesh(_hlMarkerGeo, _hlMarkerMat));
+    group.add(new THREE.Mesh(_hlRingGeo, _hlRingMat));
+    group.position.copy(wp);
+    group.renderOrder = 999;
+    scene.add(group);
+    state.highlightMarker = group;
+  } else {
+    // Mesh: emissive flash
+    const targets = obj.isMesh ? [obj] : [];
+    if (!targets.length) obj.traverse(c => { if (c.isMesh) targets.push(c); });
+    targets.forEach(mesh => {
+      if (!mesh.material) return;
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+      mats.forEach(mat => {
+        if (!state.highlightMeshOriginals.has(mesh)) {
+          state.highlightMeshOriginals.set(mesh, mat.emissive ? mat.emissive.clone() : new THREE.Color(0,0,0));
+        }
+        const clone = mat.clone();
+        clone.emissive = new THREE.Color(0x00ffaa);
+        clone.emissiveIntensity = 0.6;
+        if (Array.isArray(mesh.material)) mesh.material = mesh.material.map(m => m===mat ? clone : m);
+        else mesh.material = clone;
+      });
+    });
+  }
+  // Auto-clear after 2.5 s
+  setTimeout(clearHighlight, 2500);
+}
+
+// ─── Scene management ─────────────────────────────────────────────────────────
+function clearSceneRoot() {
+  clearHighlight();
+  if (!state.sceneRoot) return;
+  scene.remove(state.sceneRoot);
+  state.sceneRoot = null; state.mixer = null; state.slots = [];
+  state.externalAnimationPath = null;
+  state.externalAnimationClipCount = 0;
+}
+function fitCamera(root) {
+  const box = new THREE.Box3().setFromObject(root);
+  if (box.isEmpty()) return;
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const dist = Math.max(size.x, size.y, size.z) * 1.8 || 1;
+  camera.position.set(center.x+dist*.7, center.y+dist*.45, center.z+dist*.9);
+  controls.target.copy(center); controls.update();
+}
+
+// ─── Sprite VFX ──────────────────────────────────────────────────────────────
+const spriteTextureLoader = new THREE.TextureLoader();
+
+function normalizeEffectConfigs(raw) {
+  if (!raw || typeof raw !== 'object') return [];
+  return Object.entries(raw).map(([id, cfg]) => {
+    const safeCfg = cfg || {};
+    const fallbackFolder = `sprites/${id}`;
+    const parsedOpacity = Number(safeCfg.opacity);
+    const safeOpacity = Number.isFinite(parsedOpacity) ? Math.max(0, Math.min(1, parsedOpacity)) : 1;
+    const offset = safeCfg.offset && typeof safeCfg.offset === 'object' ? safeCfg.offset : {};
+    return {
+      id,
+      name: safeCfg.name || id,
+      pathFolder: safeCfg.pathFolder || fallbackFolder,
+      frames: Number(safeCfg.frames) || 1,
+      frameRate: Number(safeCfg.frameRate) || 12,
+      loop: Boolean(safeCfg.loop),
+      scale: Number(safeCfg.scale) || 2,
+      tint: safeCfg.tint || safeCfg.color || '#ffffff',
+      opacity: safeOpacity,
+      faceCamera: safeCfg.faceCamera !== false,
+      rotation: Number(safeCfg.rotation) || 0,
+      axis: ['x', 'y', 'z'].includes(String(safeCfg.axis).toLowerCase()) ? String(safeCfg.axis).toLowerCase() : 'z',
+      positionOffsetPreset: String(safeCfg.positionOffsetPreset || safeCfg.positionOffset || 'center'),
+      offset: {
+        x: Number(offset.x) || 0,
+        y: Number(offset.y) || 0,
+        z: Number(offset.z) || 0,
+      },
+    };
+  });
+}
+
+function resolveOffsetFactors(preset) {
+  const key = String(preset || 'center').trim().toLowerCase();
+  switch (key) {
+    case 'topleft':
+    case 'top-left':
+      return { x: -0.5, y: 0.5 };
+    case 'topright':
+    case 'top-right':
+      return { x: 0.5, y: 0.5 };
+    case 'bottomleft':
+    case 'bottom-left':
+      return { x: -0.5, y: -0.5 };
+    case 'bottomright':
+    case 'bottom-right':
+      return { x: 0.5, y: -0.5 };
+    // anchor* = selected node sits on that corner; inverse center-to-corner direction
+    case 'anchortopleft':
+    case 'anchor-top-left':
+      return { x: 0.5, y: -0.5 };
+    case 'anchortopright':
+    case 'anchor-top-right':
+      return { x: -0.5, y: -0.5 };
+    case 'anchorbottomleft':
+    case 'anchor-bottom-left':
+      return { x: 0.5, y: 0.5 };
+    case 'anchorbottomright':
+    case 'anchor-bottom-right':
+      return { x: -0.5, y: 0.5 };
+    default:
+      return { x: 0, y: 0 };
+  }
+}
+
+function buildWorldOffsetVector(scale, preset, customOffset, faceCamera, mesh) {
+  const factor = resolveOffsetFactors(preset);
+  const localX = (factor.x * scale) + (Number(customOffset?.x) || 0);
+  const localY = (factor.y * scale) + (Number(customOffset?.y) || 0);
+  const localZ = Number(customOffset?.z) || 0;
+
+  if (faceCamera) {
+    const camRight = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+    const camUp = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1).normalize();
+    const camForward = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 2).normalize().negate();
+    return camRight.multiplyScalar(localX)
+      .add(camUp.multiplyScalar(localY))
+      .add(camForward.multiplyScalar(localZ));
+  }
+
+  const offset = new THREE.Vector3(localX, localY, localZ);
+  offset.applyQuaternion(mesh.quaternion);
+  return offset;
+}
+
+function toColorInputHex(value) {
+  try {
+    const c = new THREE.Color(value || '#ffffff');
+    return `#${c.getHexString()}`;
+  } catch {
+    return '#ffffff';
+  }
+}
+
+function applyEffectDefaultsToControls(effectConfig) {
+  if (!effectConfig) return;
+  el.effectColor.value = toColorInputHex(effectConfig.tint);
+  el.effectOpacity.value = String(effectConfig.opacity ?? 1);
+  el.effectOpacityLabel.textContent = (Number(el.effectOpacity.value) || 0).toFixed(2);
+}
+
+async function loadSpriteEffects() {
+  try {
+    const res = await fetch('./data/sprite.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    state.spriteEffects = normalizeEffectConfigs(data);
+    renderEffectOptions();
+  } catch (err) {
+    console.warn('Failed to load sprite effects:', err);
+    state.spriteEffects = [];
+    renderEffectOptions();
+  }
+}
+
+function renderEffectOptions() {
+  el.effectSelect.innerHTML = '';
+  if (!state.spriteEffects.length) {
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = 'No effect loaded';
+    el.effectSelect.appendChild(empty);
+    el.playEffectBtn.disabled = true;
+    return;
+  }
+  state.spriteEffects.forEach((fx, idx) => {
+    const option = document.createElement('option');
+    option.value = fx.id;
+    option.textContent = fx.name;
+    if (idx === 0) option.selected = true;
+    el.effectSelect.appendChild(option);
+  });
+  applyEffectDefaultsToControls(state.spriteEffects[0]);
+  el.playEffectBtn.disabled = !state.selectedNode;
+}
+
+el.effectSelect.addEventListener('change', () => {
+  const effectConfig = state.spriteEffects.find(fx => fx.id === el.effectSelect.value);
+  applyEffectDefaultsToControls(effectConfig);
+});
+
+function frameBaseFolders(effectConfig) {
+  const raw = String(effectConfig.pathFolder || '').replace(/\\/g, '/').replace(/^\.\//, '');
+  const out = [];
+  if (raw) out.push(raw);
+  if (raw.startsWith('assets/')) out.push(raw.replace(/^assets\//, ''));
+  if (!raw.startsWith('sprites/')) out.push(`sprites/${effectConfig.id}`);
+  out.push(`./sprites/${effectConfig.id}`);
+  return [...new Set(out)];
+}
+
+function loadTexture(url) {
+  return new Promise((resolve, reject) => {
+    spriteTextureLoader.load(url, resolve, undefined, reject);
+  });
+}
+
+async function loadSpriteFrameTextures(effectConfig) {
+  const bases = frameBaseFolders(effectConfig);
+  const frameCount = Math.max(1, effectConfig.frames);
+  let lastErr = null;
+  for (const base of bases) {
+    try {
+      const textures = [];
+      for (let i = 0; i < frameCount; i++) {
+        const tex = await loadTexture(`${base}/frame-${i}.png`);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.needsUpdate = true;
+        textures.push(tex);
+      }
+      return textures;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error('Failed to load sprite frames');
+}
+
+async function playSpriteVFX(position, effectConfig, options = {}) {
+  const {
+    loop = effectConfig.loop,
+    faceCamera = effectConfig.faceCamera ?? true,
+    rotation = effectConfig.rotation ?? 0,
+    axis = effectConfig.axis || 'z',
+    tint = effectConfig.tint || '#ffffff',
+    opacity = effectConfig.opacity ?? 1,
+    positionOffsetPreset = effectConfig.positionOffsetPreset || 'center',
+    offset = effectConfig.offset || { x: 0, y: 0, z: 0 },
+    onComplete = null,
+  } = options;
+
+  const textures = await loadSpriteFrameTextures(effectConfig);
+  const fps = Math.max(1, effectConfig.frameRate || 12);
+  const scale = effectConfig.scale || 1;
+
+  let mesh;
+  if (faceCamera) {
+    const mat = new THREE.SpriteMaterial({
+      map: textures[0],
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      color: new THREE.Color(tint),
+      opacity: Math.max(0, Math.min(1, Number(opacity) || 0)),
+      depthWrite: false,
+    });
+    mesh = new THREE.Sprite(mat);
+    mesh.scale.set(scale, scale, 1);
+  } else {
+    const geo = new THREE.PlaneGeometry(scale, scale);
+    const mat = new THREE.MeshBasicMaterial({
+      map: textures[0],
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      color: new THREE.Color(tint),
+      opacity: Math.max(0, Math.min(1, Number(opacity) || 0)),
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    mesh = new THREE.Mesh(geo, mat);
+    mesh.rotation[axis] = rotation;
+  }
+
+  mesh.position.copy(position);
+  const worldOffset = buildWorldOffsetVector(scale, positionOffsetPreset, offset, faceCamera, mesh);
+  mesh.position.add(worldOffset);
+  scene.add(mesh);
+
+  let frame = 0;
+  const intervalMs = 1000 / fps;
+  const interval = setInterval(() => {
+    mesh.material.map = textures[frame];
+    mesh.material.needsUpdate = true;
+    frame += 1;
+
+    if (frame >= textures.length) {
+      if (loop) {
+        frame = 0;
+        return;
+      }
+      clearInterval(interval);
+      scene.remove(mesh);
+      mesh.material.dispose();
+      if (mesh.geometry) mesh.geometry.dispose();
+      textures.forEach(t => t.dispose());
+      if (onComplete) onComplete();
+    }
+  }, intervalMs);
+}
+
+// ─── Animation ────────────────────────────────────────────────────────────────
+function mergeAnimationClips(baseClips = [], externalClips = []) {
+  const merged = [];
+  const usedNames = new Set();
+  console.log(externalClips)
+
+  function pushWithUniqueName(clips, sourceTag = '') {
+    clips.forEach((clip, idx) => {
+      if (!clip) return;
+      const cloned = clip.clone();
+      const baseName = (clip.name || `Animation_${idx + 1}`).trim() || `Animation_${idx + 1}`;
+      const taggedName = sourceTag ? `${baseName} (${sourceTag})` : baseName;
+      let uniqueName = taggedName;
+      let counter = 2;
+      while (usedNames.has(uniqueName)) {
+        uniqueName = `${taggedName} ${counter}`;
+        counter += 1;
+      }
+      cloned.name = uniqueName;
+      usedNames.add(uniqueName);
+      merged.push(cloned);
+    });
+  }
+
+  //pushWithUniqueName(baseClips, '');
+  pushWithUniqueName(externalClips, 'ext');
+  return merged;
+}
+
+async function loadExternalAnimationClips(animationPath = DEFAULT_EXTERNAL_ANIMATION_PATH) {
+  const result = { path: null, clips: [] };
+  const normalizedPath = String(animationPath || '').replace(/^\/+/, '');
+  if (!normalizedPath) return result;
+
+  try {
+    const response = await fetch(`/${normalizedPath}`, { cache: 'no-cache' });
+    if (!response.ok) return result;
+
+    const buf = await response.arrayBuffer();
+    const animGltf = await new Promise((resolve, reject) => loader.parse(buf, '', resolve, reject));
+    const clips = Array.isArray(animGltf.animations) ? animGltf.animations : [];
+    if (!clips.length) return result;
+
+    result.path = normalizedPath;
+    result.clips = clips;
+    return result;
+  } catch (err) {
+    console.warn(`Failed to load external animation file (${normalizedPath}):`, err);
+    return result;
+  }
+}
+
+function buildAnimPanel(gltf) {
+  const anims = gltf.animations || [];
+  state.animations = anims; state.activeAction = null; state.activeClip = null; state.animPlaying = false;
+  if (!anims.length) { el.animSection.classList.add('hidden'); return; }
+  el.animSection.classList.remove('hidden');
+  renderAnimList();
+  playAnim(anims[0], false);
+}
+function renderAnimList() {
+  el.animList.innerHTML = '';
+  state.animations.forEach(clip => {
+    const d = document.createElement('div');
+    d.className = 'anim-item' + (state.activeClip===clip ? ' active' : '');
+    d.innerHTML = `<span class="anim-item-name" title="${clip.name}">${clip.name}</span><span class="anim-item-dur">${fmtTime(clip.duration)}</span>`;
+    d.addEventListener('click', () => playAnim(clip, state.animPlaying));
+    el.animList.appendChild(d);
+  });
+}
+function playAnim(clip, autoPlay=true) {
+  if (!state.mixer) return;
+  if (state.activeAction) { state.activeAction.stop(); state.activeAction=null; }
+  state.activeClip = clip;
+  const action = state.mixer.clipAction(clip);
+  action.reset().setEffectiveTimeScale(parseFloat(el.animSpeed.value)||1).play();
+  action.paused = !autoPlay; state.animPlaying = autoPlay;
+  state.activeAction = action;
+  el.animProgress.max = clip.duration; el.animProgress.value = 0;
+  el.animTimeLabel.textContent = `${fmtTime(0)} / ${fmtTime(clip.duration)}`;
+  el.animPlayBtn.textContent = autoPlay ? '⏸ Pause' : '▶ Play';
+  renderAnimList(); state.clock.getDelta();
+}
+function updateAnimProgress() {
+  if (!state.activeAction||!state.activeClip) return;
+  const t = state.activeAction.time;
+  el.animProgress.value = t;
+  el.animTimeLabel.textContent = `${fmtTime(t)} / ${fmtTime(state.activeClip.duration)}`;
+}
+el.animPlayBtn.addEventListener('click', () => {
+  if (!state.activeAction) return;
+  state.animPlaying = !state.animPlaying; state.activeAction.paused = !state.animPlaying;
+  el.animPlayBtn.textContent = state.animPlaying ? '⏸ Pause' : '▶ Play';
+  if (state.animPlaying) state.clock.getDelta();
+});
+el.animStopBtn.addEventListener('click', () => {
+  if (!state.activeAction) return;
+  state.activeAction.stop(); state.activeAction.reset(); state.activeAction.play(); state.activeAction.paused = true;
+  state.animPlaying = false; el.animPlayBtn.textContent = '▶ Play';
+  el.animProgress.value = 0; el.animTimeLabel.textContent = `0:00 / ${fmtTime(state.activeClip?.duration||0)}`;
+  state.mixer.update(0);
+});
+el.animSpeed.addEventListener('change', () => { if (state.activeAction) state.activeAction.setEffectiveTimeScale(parseFloat(el.animSpeed.value)||1); });
+el.animProgress.addEventListener('mousedown', () => state.animScrubbing=true);
+el.animProgress.addEventListener('touchstart', () => state.animScrubbing=true);
+el.animProgress.addEventListener('input', () => {
+  if (!state.activeAction||!state.activeClip) return;
+  const t = parseFloat(el.animProgress.value);
+  state.activeAction.time = t; state.mixer.update(0);
+  el.animTimeLabel.textContent = `${fmtTime(t)} / ${fmtTime(state.activeClip.duration)}`;
+});
+el.animProgress.addEventListener('mouseup', () => { state.animScrubbing=false; if (state.animPlaying) state.clock.getDelta(); });
+el.animProgress.addEventListener('touchend', () => { state.animScrubbing=false; if (state.animPlaying) state.clock.getDelta(); });
+
+// ─── Mesh Visibility ──────────────────────────────────────────────────────────
+function buildMeshList(root) {
+  state.meshObjects = [];
+  root.traverse(obj => { if (obj.isMesh||obj.isSkinnedMesh) state.meshObjects.push({ obj, name: obj.name||'(unnamed)', type: obj.isSkinnedMesh?'Skinned':'Mesh' }); });
+  if (!state.meshObjects.length) { el.meshVisSection.classList.add('hidden'); return; }
+  el.meshVisSection.classList.remove('hidden'); renderMeshList();
+}
+function renderMeshList() {
+  el.meshList.innerHTML = '';
+  state.meshObjects.forEach((e,i) => {
+    const d = document.createElement('div'); d.className='mesh-item';
+    d.innerHTML=`<button type="button" class="vis-btn ${e.obj.visible?'':'hidden-mesh'}" data-idx="${i}" title="${e.obj.visible?'Click to hide':'Click to show'}">${e.obj.visible?'👁':'🚫'}</button><span class="mesh-item-name" title="${e.name}">${e.name}</span><span class="mesh-item-type">${e.type}</span>`;
+    el.meshList.appendChild(d);
+  });
+  el.meshList.querySelectorAll('.vis-btn').forEach(btn => btn.addEventListener('click', () => {
+    const e = state.meshObjects[Number(btn.dataset.idx)]; if (!e) return;
+    e.obj.visible = !e.obj.visible; renderMeshList();
+  }));
+}
+el.showAllMeshBtn.addEventListener('click', () => { state.meshObjects.forEach(e=>e.obj.visible=true); renderMeshList(); });
+el.hideAllMeshBtn.addEventListener('click', () => { state.meshObjects.forEach(e=>e.obj.visible=false); renderMeshList(); });
+
+// ─── Texture Slots ────────────────────────────────────────────────────────────
+function renderSlotList() {
+  el.slotList.innerHTML = '';
+  if (!state.slots.length) { el.slotList.innerHTML='<div class="slot-item"><div class="slot-meta"><p class="muted">No common texture slots detected.</p></div></div>'; return; }
+  state.slots.forEach((slot,i) => {
+    const item = document.createElement('div'); item.className='slot-item';
+    const fileLabel = state.textureToFileName.get(slot.texture)||'embedded.png';
+    item.innerHTML=`<div class="thumb">${slot.preview?`<img src="${slot.preview}" width="72" height="72" loading="lazy">`:'<span class="muted">—</span>'}</div>
+      <div class="slot-meta"><h3>${slot.materialName} · ${slot.label}</h3>
+      <div class="tiny">Slot: <code>${slot.key}</code></div>
+      <div class="tiny">${slot.width||'?'} × ${slot.height||'?'}</div>
+      <div class="tiny"><code>${fileLabel}</code></div>
+      <div class="row"><button data-download="${i}">Download</button><label>Replace<input type="file" accept="image/png,image/jpeg,image/webp" data-upload="${i}"></label><button data-reset="${i}">Revert</button></div></div>`;
+    el.slotList.appendChild(item);
+  });
+  el.slotList.querySelectorAll('[data-download]').forEach(b=>b.addEventListener('click',()=>downloadTexture(+b.dataset.download)));
+  el.slotList.querySelectorAll('[data-upload]').forEach(inp=>inp.addEventListener('change',e=>replaceTexture(+inp.dataset.upload,e.target.files?.[0])));
+  el.slotList.querySelectorAll('[data-reset]').forEach(b=>b.addEventListener('click',()=>resetTextureSlot(+b.dataset.reset)));
+}
+async function textureToBlob(tex) {
+  const img = tex?.image; if (!img) throw new Error('No image');
+  const c = document.createElement('canvas');
+  if (img instanceof HTMLCanvasElement) return new Promise(r=>img.toBlob(r,'image/png'));
+  if (img instanceof ImageBitmap) { c.width=img.width; c.height=img.height; c.getContext('2d').drawImage(img,0,0); return new Promise(r=>c.toBlob(r,'image/png')); }
+  c.width=img.naturalWidth||img.width; c.height=img.naturalHeight||img.height;
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  return new Promise(r=>c.toBlob(r,'image/png'));
+}
+async function makePreview(tex) { try { return URL.createObjectURL(await textureToBlob(tex)); } catch { return ''; } }
+async function buildTextureSlots(root) {
+  const seen=new Set(); const slots=[];
+  root.traverse(obj => {
+    if (!obj.isMesh||!obj.material) return;
+    (Array.isArray(obj.material)?obj.material:[obj.material]).forEach((mat,mi) => {
+      if (!mat) return;
+      textureSlotKeys.forEach(([key,label]) => {
+        const tex=mat[key]; if (!tex||seen.has(tex)) return;
+        seen.add(tex);
+        state.textureToFileName.set(tex,`${sanitizeName(mat.name||obj.name||'mat')}_${key}.png`);
+        slots.push({key,label,material:mat,materialName:mat.name||`${obj.name||'Mesh'} #${mi+1}`,texture:tex,originalTexture:tex.clone(),width:tex.image?.width||0,height:tex.image?.height||0,preview:''});
+      });
+    });
+  });
+  for (const s of slots) s.preview = await makePreview(s.texture);
+  state.slots=slots; el.textureCount.textContent=String(slots.length); renderSlotList();
+}
+async function downloadTexture(i) {
+  const s=state.slots[i]; if (!s) return;
+  try { const blob=await textureToBlob(s.texture); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=state.textureToFileName.get(s.texture)||`tex${i}.png`; a.click(); URL.revokeObjectURL(url); }
+  catch(err) { setStatus('Download failed: '+(err.message||err),'error'); }
+}
+function loadImg(file) { return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();img.onload=()=>{URL.revokeObjectURL(url);res(img);};img.onerror=rej;img.src=url;}); }
+async function replaceTexture(i,file) {
+  const s=state.slots[i]; if (!s||!file) return;
+  try {
+    const img=await loadImg(file);
+    const tex=new THREE.Texture(img);
+    tex.colorSpace=s.key==='map'||s.key==='emissiveMap'?THREE.SRGBColorSpace:THREE.NoColorSpace;
+    tex.flipY=false; tex.needsUpdate=true;
+    tex.wrapS=s.texture.wrapS; tex.wrapT=s.texture.wrapT;
+    tex.repeat.copy(s.texture.repeat); tex.offset.copy(s.texture.offset);
+    tex.rotation=s.texture.rotation; tex.center.copy(s.texture.center);
+    tex.magFilter=s.texture.magFilter; tex.minFilter=s.texture.minFilter;
+    s.material[s.key]=tex; s.material.needsUpdate=true;
+    state.textureToFileName.set(tex,file.name);
+    s.texture=tex; s.width=img.naturalWidth||img.width; s.height=img.naturalHeight||img.height;
+    if (s.preview) URL.revokeObjectURL(s.preview);
+    s.preview=URL.createObjectURL(file);
+    renderSlotList(); setStatus(`Replaced ${s.materialName} · ${s.label}.`,'ok');
+  } catch(err) { setStatus('Replace failed: '+(err.message||err),'error'); }
+}
+async function resetTextureSlot(i) {
+  const s=state.slots[i]; if (!s) return;
+  try { const blob=await textureToBlob(s.originalTexture); await replaceTexture(i,new File([blob],`${s.key}.png`,{type:'image/png'})); setStatus(`Reverted ${s.materialName} · ${s.label}.`,'ok'); }
+  catch(err) { setStatus('Revert failed: '+(err.message||err),'error'); }
+}
+
+// ─── Load GLB ─────────────────────────────────────────────────────────────────
+async function loadGlbFromBuffer(arrayBuffer, fileName) {
+  removeAllAttachedItems(); clearSceneRoot();
+  el.animSection.classList.add('hidden'); el.meshVisSection.classList.add('hidden');
+  state.fileName = fileName; el.modelName.textContent = fileName;
+  const gltf = await new Promise((res,rej)=>loader.parse(arrayBuffer,'',res,rej));
+  // 強制所有 mesh 使用 MeshStandardMaterial，貼圖真實，改控光源
+  gltf.scene.traverse(obj => {
+    if (obj.isMesh) {
+      const map = obj.material.map;
+      obj.material = new THREE.MeshStandardMaterial({
+        map: map,
+        color: obj.material.color,
+        transparent: obj.material.transparent,
+        opacity: obj.material.opacity,
+        roughness: 0.8,
+        metalness: 0,
+        envMapIntensity: 0
+      });
+      if (obj.material.map) obj.material.map.colorSpace = THREE.SRGBColorSpace;
+      obj.material.needsUpdate = true;
+    }
+  });
+
+  let externalAnimations = [];
+  if (!/animation\.glb$/i.test(fileName)) {
+    const external = await loadExternalAnimationClips(DEFAULT_EXTERNAL_ANIMATION_PATH);
+    externalAnimations = external.clips;
+    state.externalAnimationPath = external.path;
+    state.externalAnimationClipCount = external.clips.length;
+  }
+  const allAnimations = mergeAnimationClips(gltf.animations || [], externalAnimations);
+  gltf.animations = allAnimations;
+
+  state.gltf=gltf; state.sceneRoot=gltf.scene; scene.add(gltf.scene);
+  const anims=gltf.animations||[];
+  if (anims.length) state.mixer=new THREE.AnimationMixer(gltf.scene);
+  el.animationCount.textContent=String(anims.length);
+  const mats=new Set();
+  gltf.scene.traverse(obj=>{ if (!obj.isMesh||!obj.material) return; (Array.isArray(obj.material)?obj.material:[obj.material]).forEach(m=>m&&mats.add(m)); });
+  el.materialCount.textContent=String(mats.size);
+  fitCamera(gltf.scene);
+  await buildTextureSlots(gltf.scene);
+  buildNodeList(gltf.scene);
+  buildAnimPanel(gltf);
+  buildMeshList(gltf.scene);
+  el.downloadGlb.disabled=false;
+  el.saveSessionBtn.disabled=false;
+  const externalAnimInfo = state.externalAnimationClipCount > 0
+    ? ` + ${state.externalAnimationClipCount} external animations`
+    : '';
+  setStatus(`Loaded ${fileName} - ${state.slots.length} texture slots${externalAnimInfo}.`,'ok');
+}
+// ─── Upload GLB to model/ folder on server ───────────────────────────────────
+async function uploadGlbToModel(file) {
+  try {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    const res = await fetch(`${SERVER_BASE}/api/upload-glb`, { method: 'POST', body: formData });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (data.success) {
+      console.log(`✓ Uploaded to model/${data.name}`);
+      return data.path; // e.g. "model/hero.glb"
+    }
+    console.warn('Upload failed:', data.error);
+    return null;
+  } catch (err) {
+    console.warn('Could not upload GLB to server model/ folder:', err.message);
+    return null;
+  }
+}
+
+async function loadGlbFile(file, modelPath = null) {
+  try {
+    setStatus('Reading GLB…');
+    el.downloadGlb.disabled = true;
+    const buf = await file.arrayBuffer();
+    await loadGlbFromBuffer(buf, file.name);
+    // If a path was already provided (loaded from model/ browser), use it.
+    // Otherwise try to upload to model/ and record the resulting path.
+    let resolvedPath = modelPath;
+    if (!resolvedPath) {
+      setStatus(`Uploading ${file.name} to model/…`);
+      resolvedPath = await uploadGlbToModel(file);
+    }
+    state.lastLoadedGlbFile = { name: file.name, buffer: buf, path: resolvedPath };
+    if (resolvedPath) setStatus(`Loaded ${file.name} (saved to ${resolvedPath}).`, 'ok');
+  } catch(err) { console.error(err); setStatus('Load failed: '+(err?.message||err),'error'); }
+}
+
+// ─── Node List ────────────────────────────────────────────────────────────────
+function getNodeType(obj) {
+  if (obj.isBone) return 'Bone';
+  if (obj.isSkinnedMesh) return 'SkinnedMesh';
+  if (obj.isMesh) return 'Mesh';
+  if (obj.isGroup) return 'Group';
+  return 'Object3D';
+}
+function buildNodeList(root) {
+  state.allNodes=[];
+  function traverse(obj,d) { if (obj!==root) state.allNodes.push({obj,name:obj.name||`(unnamed ${getNodeType(obj)})`,type:getNodeType(obj),depth:d}); for (const c of obj.children) traverse(c,d+1); }
+  traverse(root,0);
+  el.nodeSection.classList.remove('hidden'); renderNodeList();
+}
+function renderNodeList() {
+  el.nodeList.innerHTML='';
+  const filtered=state.allNodes.filter(n => {
+    if (state.nodeFilter==='bone') return n.type==='Bone';
+    if (state.nodeFilter==='mesh') return n.type==='Mesh'||n.type==='SkinnedMesh';
+    return true;
+  });
+  if (!filtered.length) { el.nodeList.innerHTML='<div style="padding:1rem;color:var(--color-text-muted);font-size:.875rem;">No matching nodes.</div>'; return; }
+  filtered.forEach(({obj,name,type,depth})=>{
+    const accCount = state.attachedItems.filter(a=>a.nodeRef===obj).length;
+    const item=document.createElement('div');
+    item.className='node-item'+(state.selectedNode===obj?' selected':'')+(accCount?' has-accessories':'');
+    item.innerHTML=`<span class="node-type-badge">${type}</span><span class="node-name" style="padding-left:${Math.min(depth,6)*8}px">${name}</span>${accCount?`<span class="node-acc-count">${accCount}</span>`:''}`;
+    // Hover = highlight
+    item.addEventListener('mouseenter', () => highlightNode(obj));
+    item.addEventListener('mouseleave', clearHighlight);
+    item.addEventListener('click', () => { clearHighlight(); selectNode(obj,name,type); });
+    el.nodeList.appendChild(item);
+  });
+}
+el.filterAllNodes.addEventListener('click', ()=>{state.nodeFilter='all'; renderNodeList();});
+el.filterBonesOnly.addEventListener('click', ()=>{state.nodeFilter='bone'; renderNodeList();});
+el.filterMeshOnly.addEventListener('click', ()=>{state.nodeFilter='mesh'; renderNodeList();});
+
+function selectNode(obj, name, type) {
+  state.selectedNode=obj;
+  renderNodeList();
+  el.attachPanelTitle.textContent=`📎 ${name} (${type})`;
+  el.attachPanel.classList.remove('hidden');
+  el.playEffectBtn.disabled = !state.spriteEffects.length;
+  refreshNodeAccPanel();
+  state.activeAttachedItem=null;
+  detachWorldGizmo();
+  el.transformControls.classList.add('hidden');
+}
+
+el.playEffectBtn.addEventListener('click', async () => {
+  if (!state.selectedNode) {
+    setStatus('Select a target node first.', 'error');
+    return;
+  }
+  const effectId = el.effectSelect.value;
+  const effectConfig = state.spriteEffects.find(fx => fx.id === effectId);
+  if (!effectConfig) {
+    setStatus('No VFX selected.', 'error');
+    return;
+  }
+
+  try {
+    state.selectedNode.updateWorldMatrix(true, false);
+    const worldPos = new THREE.Vector3();
+    state.selectedNode.getWorldPosition(worldPos);
+    await playSpriteVFX(worldPos, effectConfig, {
+      tint: el.effectColor.value || effectConfig.tint || '#ffffff',
+      opacity: Number(el.effectOpacity.value),
+    });
+    setStatus(`Played effect: ${effectConfig.name}.`, 'ok');
+  } catch (err) {
+    console.error(err);
+    setStatus(`Play effect failed: ${err?.message || err}`, 'error');
+  }
+});
+
+el.effectOpacity.addEventListener('input', () => {
+  el.effectOpacityLabel.textContent = (Number(el.effectOpacity.value) || 0).toFixed(2);
+});
+
+function refreshNodeAccPanel() {
+  const node=state.selectedNode; if (!node) return;
+  const accs=state.attachedItems.filter(a=>a.nodeRef===node);
+  if (!accs.length) { el.nodeAccSection.classList.add('hidden'); return; }
+  el.nodeAccSection.classList.remove('hidden');
+  el.nodeAccList.innerHTML='';
+  accs.forEach(item=>{
+    const d=document.createElement('div');
+    d.className='node-acc-item'+(state.activeAttachedItem===item?' active-edit':'');
+    d.innerHTML=`<span class="node-acc-item-name">📦 ${item.name}</span>${item.record?'<span class="node-acc-item-rec">📋</span>':''}
+      <button type="button" style="font-size:.72rem;padding:.2rem .45rem;">Edit</button>
+      <button type="button" style="font-size:.72rem;padding:.2rem .45rem;color:var(--color-error);" data-del-id="${item.id}">✕</button>`;
+    d.querySelector('button:not([data-del-id])').addEventListener('click', ()=>startEditItem(item));
+    d.querySelector('[data-del-id]').addEventListener('click', ()=>removeItemById(item.id));
+    el.nodeAccList.appendChild(d);
+  });
+}
+
+// ─── Accessory Texture Handling ───────────────────────────────────────────────
+async function buildAccessoryTextureSlots(item) {
+  if (!item || !item.object3d) {
+    if (!item.textureSlots) item.textureSlots = [];
+    if (!item.meshes) item.meshes = [];
+    return;
+  }
+  
+  const seen = new Set();
+  const slots = [];
+  const meshes = []; // 为了后续添加纹理
+  
+  item.object3d.traverse(obj => {
+    if (!obj.isMesh || !obj.material) return;
+    
+    meshes.push({ obj, name: obj.name || '(unnamed)' });
+    
+    (Array.isArray(obj.material) ? obj.material : [obj.material]).forEach((mat, mi) => {
+      if (!mat) return;
+      textureSlotKeys.forEach(([key, label]) => {
+        const tex = mat[key];
+        if (!tex || seen.has(tex)) return;
+        seen.add(tex);
+        const fileName = `acc_${sanitizeName(mat.name || obj.name || 'mat')}_${key}.png`;
+        slots.push({
+          key, label, material: mat, materialName: mat.name || `${obj.name || 'Mesh'} #${mi + 1}`,
+          texture: tex, originalTexture: tex.clone(),
+          width: tex.image?.width || 0, height: tex.image?.height || 0, preview: '',
+          fileName: fileName,
+          meshName: obj.name || 'Mesh'
+        });
+      });
+    });
+  });
+  
+  for (const s of slots) {
+    s.preview = await makePreview(s.texture);
+  }
+  
+  item.textureSlots = slots;
+  item.meshes = meshes;
+  renderAccessoryTextureSlots(item);
+}
+
+function renderAccessoryTextureSlots(item) {
+  el.accTextureSection.classList.remove('hidden');
+  el.accTextureSlotList.innerHTML = '';
+  
+  if (!item || !item.textureSlots) {
+    item.textureSlots = [];
+  }
+  
+  // 使用 texture library 做映射
+  if (item.textureSlots.length > 0) {
+    item.textureSlots.forEach((slot, i) => {
+      const libraryCandidates = state.textureLibrary.filter(t => !t?.key || t.key === slot.key);
+      const selectedTextureId = slot.textureId || '';
+      const slotItem = document.createElement('div');
+      slotItem.className = 'slot-item';
+      slotItem.innerHTML = `<div class="thumb">${slot.preview ? `<img src="${slot.preview}" width="72" height="72" loading="lazy">` : '<span class="muted">—</span>'}</div>
+        <div class="slot-meta"><h3>${slot.materialName} · ${slot.label}</h3>
+        <div class="tiny">Slot: <code>${slot.key}</code></div>
+        <div class="tiny">Current Texture ID: <code>${slot.textureId || 'local-only'}</code></div>
+        <div class="tiny">${slot.width || '?'} × ${slot.height || '?'}</div>
+        ${libraryCandidates.length > 0 ? `<div class="row">
+          <select data-acc-lib-select="${i}" class="step-select" style="min-width:16rem;font-size:.78rem;padding:.35rem .5rem;">
+            <option value="">Select texture ID...</option>
+            ${libraryCandidates.map(tex => `<option value="${tex.id}" ${tex.id === selectedTextureId ? 'selected' : ''}>${tex.id} (${tex.width || '?'}x${tex.height || '?'})</option>`).join('')}
+          </select>
+          <button data-acc-lib-apply="${i}" style="font-size:.78rem;padding:.35rem .6rem;">Apply Texture ID</button>
+        </div>` : `<div class="tiny">No shared texture in library for this slot yet.</div>`}
+        </div>`;
+      el.accTextureSlotList.appendChild(slotItem);
+    });
+    el.accTextureSlotList.querySelectorAll('[data-acc-lib-apply]').forEach(b =>
+      b.addEventListener('click', async () => {
+        const idx = +b.dataset.accLibApply;
+        const select = el.accTextureSlotList.querySelector(`[data-acc-lib-select="${idx}"]`);
+        const textureId = select?.value;
+        if (!textureId) return;
+        await applyLibraryTextureToSlot(item, idx, textureId);
+      })
+    );
+  } else {
+    // 没有纹理时，从库中选一个并挂到 mesh + slot
+    const noTexDiv = document.createElement('div');
+    noTexDiv.style.cssText = 'padding:var(--space-4);text-align:center;';
+    noTexDiv.innerHTML = `
+      <p class="muted" style="margin-bottom:var(--space-3);">No textures found in this accessory.</p>
+      <p style="font-size:.85rem;margin-bottom:var(--space-3);color:var(--color-text-muted);">Choose a texture from library and assign it to a mesh slot.</p>
+      <div style="display:flex;flex-direction:column;gap:.5rem;">
+        <select id="accAddMeshSelect" class="step-select" style="width:100%;font-size:.85rem;padding:.55rem .65rem;">
+          <option value="">Select a mesh...</option>
+          ${item.meshes && item.meshes.length > 0 ? item.meshes.map((m, idx) => 
+            `<option value="${idx}">${m.name}</option>`
+          ).join('') : '<option disabled>No meshes found</option>'}
+        </select>
+        <select id="accAddTextureTypeSelect" class="step-select" style="width:100%;font-size:.85rem;padding:.55rem .65rem;">
+          <option value="">Select texture type...</option>
+          ${textureSlotKeys.map(([key, label]) => 
+            `<option value="${key}">${label}</option>`
+          ).join('')}
+        </select>
+        <select id="accAddTextureLibrarySelect" class="step-select" style="width:100%;font-size:.85rem;padding:.55rem .65rem;">
+          <option value="">Select texture ID...</option>
+        </select>
+        <button id="accAddTextureBtn" class="btn-primary" style="font-size:.85rem;padding:.55rem .75rem;" disabled>Assign Texture ID</button>
+      </div>
+    `;
+    el.accTextureSlotList.appendChild(noTexDiv);
+    
+    const meshSelect = document.getElementById('accAddMeshSelect');
+    const typeSelect = document.getElementById('accAddTextureTypeSelect');
+    const librarySelect = document.getElementById('accAddTextureLibrarySelect');
+    const addBtn = document.getElementById('accAddTextureBtn');
+
+    const updateLibraryOptions = () => {
+      const type = typeSelect.value;
+      const candidates = state.textureLibrary.filter(t => !t?.key || !type || t.key === type);
+      librarySelect.innerHTML = `<option value="">Select texture ID...</option>${candidates.map(t => `<option value="${t.id}">${t.id} (${t.width || '?'}x${t.height || '?'})</option>`).join('')}`;
+    };
+    
+    const updateBtnState = () => {
+      addBtn.disabled = !meshSelect.value || !typeSelect.value || !librarySelect.value;
+    };
+    
+    updateLibraryOptions();
+    meshSelect.addEventListener('change', updateBtnState);
+    typeSelect.addEventListener('change', () => {
+      updateLibraryOptions();
+      updateBtnState();
+    });
+    librarySelect.addEventListener('change', updateBtnState);
+    
+    addBtn.addEventListener('click', async () => {
+      const meshIdx = +meshSelect.value;
+      const textureKey = typeSelect.value;
+      const textureId = librarySelect.value;
+      
+      if (!item.meshes[meshIdx] || !textureKey || !textureId) return;
+      
+      await applyLibraryTextureToMesh(item, item.meshes[meshIdx], textureKey, textureId);
+    });
+  }
+}
+
+async function replaceAccessoryTexture(item, slotIdx, file) {
+  const slot = item.textureSlots[slotIdx];
+  if (!slot || !file) return;
+  try {
+    const img = await loadImg(file);
+    const tex = new THREE.Texture(img);
+    tex.colorSpace = slot.key === 'map' || slot.key === 'emissiveMap' ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    tex.flipY = false;
+    tex.needsUpdate = true;
+    
+    // ✅ 确保包裹模式为 REPEAT
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    
+    // 复制其他属性
+    tex.repeat.copy(slot.texture.repeat);
+    tex.offset.copy(slot.texture.offset);
+    tex.rotation = slot.texture.rotation;
+    tex.center.copy(slot.texture.center);
+    tex.magFilter = slot.texture.magFilter || THREE.LinearFilter;
+    tex.minFilter = slot.texture.minFilter || THREE.LinearMipMapLinearFilter;
+    
+    slot.material[slot.key] = tex;
+    slot.material.needsUpdate = true;
+    
+    // ✅ Base Color 专用处理：确保材质颜色为白色，让贴图完全显示
+    if (slot.key === 'map' && slot.material.color) {
+      const tint = slot.colorHex || '#ffffff';
+      slot.material.color.set(tint);
+      slot.colorHex = toColorInputHex(slot.material.color);
+    }
+    if (slot.key === 'emissiveMap' && slot.material.emissive) {
+      const tint = slot.colorHex || toColorInputHex(slot.material.emissive);
+      slot.material.emissive.set(tint);
+      slot.colorHex = toColorInputHex(slot.material.emissive);
+    }
+    slot.textureId = null;
+    
+    slot.texture = tex;
+    slot.width = img.naturalWidth || img.width;
+    slot.height = img.naturalHeight || img.height;
+    if (slot.preview) URL.revokeObjectURL(slot.preview);
+    slot.preview = URL.createObjectURL(file);
+    renderAccessoryTextureSlots(item);
+    setStatus(`Replaced ${slot.materialName} · ${slot.label}.`, 'ok');
+    autoSaveSession();
+  } catch (err) {
+    setStatus('Replace failed: ' + (err.message || err), 'error');
+  }
+}
+
+async function addTextureToAccessoryMesh(item, meshEntry, textureKey, file) {
+  try {
+    setStatus(`Adding texture to ${meshEntry.name}…`);
+    const meshObj = meshEntry.obj;
+    if (!meshObj.material) {
+      setStatus('Mesh has no material.', 'error');
+      return;
+    }
+    
+    const img = await loadImg(file);
+    const tex = new THREE.Texture(img);
+    tex.colorSpace = textureKey === 'map' || textureKey === 'emissiveMap' ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    tex.flipY = false;
+    tex.needsUpdate = true;
+    
+    // ✅ 确保包裹模式为 REPEAT，允许纹理重复
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.magFilter = THREE.LinearFilter;
+    tex.minFilter = THREE.LinearMipMapLinearFilter;
+    
+    // 获取或创建材质
+    let targetMat = Array.isArray(meshObj.material) ? meshObj.material[0] : meshObj.material;
+    if (!targetMat) {
+      targetMat = new THREE.MeshStandardMaterial();
+      meshObj.material = targetMat;
+    }
+    
+    // 添加纹理
+    targetMat[textureKey] = tex;
+    targetMat.needsUpdate = true;
+    
+    // ✅ Base Color 专用处理：确保材质颜色为白色，让贴图完全显示
+    if (textureKey === 'map' && targetMat.color) {
+      targetMat.color.set(0xffffff); // 设为白色，不会改变贴图颜色
+    }
+    if (textureKey === 'emissiveMap' && targetMat.emissive) {
+      targetMat.emissive.set('#ffffff');
+    }
+    
+    // 添加到 textureSlots 数组
+    const label = textureSlotKeys.find(([key]) => key === textureKey)?.[1] || textureKey;
+    const newSlot = {
+      key: textureKey,
+      label: label,
+      material: targetMat,
+      materialName: targetMat.name || meshObj.name || 'Mesh',
+      texture: tex,
+      originalTexture: tex.clone(),
+      width: img.naturalWidth || img.width,
+      height: img.naturalHeight || img.height,
+      preview: URL.createObjectURL(file),
+      fileName: file.name,
+      meshName: meshObj.name || 'Mesh',
+      colorHex: textureKey === 'map' || textureKey === 'emissiveMap' ? '#ffffff' : null,
+      textureId: null,
+    };
+    
+    item.textureSlots.push(newSlot);
+    
+    // 重新渲染
+    renderAccessoryTextureSlots(item);
+    setStatus(`Added ${label} to ${meshEntry.name}.`, 'ok');
+    autoSaveSession();
+  } catch (err) {
+    console.error(err);
+    setStatus('Add texture failed: ' + (err.message || err), 'error');
+  }
+}
+
+async function resetAccessoryTextureSlot(item, slotIdx) {
+  const slot = item.textureSlots[slotIdx];
+  if (!slot) return;
+  try {
+    const blob = await textureToBlob(slot.originalTexture);
+    await replaceAccessoryTexture(item, slotIdx, new File([blob], `${slot.key}.png`, { type: 'image/png' }));
+    setStatus(`Reverted ${slot.materialName} · ${slot.label}.`, 'ok');
+  } catch (err) {
+    setStatus('Revert failed: ' + (err.message || err), 'error');
+  }
+}
+
+// ─── Delete Texture ───────────────────────────────────────────────────────────
+function deleteAccessoryTexture(item, slotIdx) {
+  const slot = item.textureSlots[slotIdx];
+  if (!slot) return;
+  
+  // 从材质中移除纹理
+  slot.material[slot.key] = null;
+  slot.material.needsUpdate = true;
+  
+  // 从数组中移除
+  item.textureSlots.splice(slotIdx, 1);
+  
+  // 重新渲染
+  renderAccessoryTextureSlots(item);
+  setStatus(`Deleted ${slot.materialName} · ${slot.label}.`, 'ok');
+  autoSaveSession();
+}
+
+function updateAccessoryTextureColor(item, slotIdx, colorHex) {
+  const slot = item.textureSlots?.[slotIdx];
+  if (!slot || !colorHex) return;
+
+  const normalized = toColorInputHex(colorHex);
+  if (slot.key === 'emissiveMap' && slot.material?.emissive) {
+    slot.material.emissive.set(normalized);
+  } else if (slot.material?.color) {
+    slot.material.color.set(normalized);
+  } else {
+    return;
+  }
+
+  slot.colorHex = normalized;
+  slot.material.needsUpdate = true;
+  setStatus(`Updated color for ${slot.materialName} · ${slot.label}.`, 'ok');
+  autoSaveSession();
+}
+
+async function applyLibraryTextureToSlot(item, slotIdx, textureId) {
+  const slot = item.textureSlots?.[slotIdx];
+  if (!slot || !textureId) return;
+  const texRef = state.textureLibraryById.get(textureId);
+  if (!texRef?.base64) {
+    setStatus(`Texture ID ${textureId} has no image data.`, 'error');
+    return;
+  }
+
+  try {
+    const updatedSlot = item.textureSlots?.[slotIdx];
+    if (updatedSlot) {
+      updatedSlot.textureId = textureId;
+      updatedSlot.width = texRef.width || updatedSlot.width;
+      updatedSlot.height = texRef.height || updatedSlot.height;
+      const img = await loadImg(new File([base64ToBlob(texRef.base64)], 'tex.png', { type: 'image/png' }));
+      const tex = new THREE.Texture(img);
+      tex.colorSpace = updatedSlot.key === 'map' || updatedSlot.key === 'emissiveMap' ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+      tex.flipY = false;
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.needsUpdate = true;
+      updatedSlot.material[updatedSlot.key] = tex;
+      updatedSlot.material.needsUpdate = true;
+      updatedSlot.texture = tex;
+      updatedSlot.preview = `data:image/png;base64,${texRef.base64}`;
+      applyLibraryDefaultsToSlot(updatedSlot, texRef);
+    }
+    renderAccessoryTextureSlots(item);
+    setStatus(`Linked texture ID ${textureId} to ${slot.materialName} · ${slot.label}.`, 'ok');
+    autoSaveSession();
+  } catch (err) {
+    setStatus('Apply texture ID failed: ' + (err.message || err), 'error');
+  }
+}
+
+async function applyLibraryTextureToMesh(item, meshEntry, textureKey, textureId) {
+  const texRef = state.textureLibraryById.get(textureId);
+  if (!texRef?.base64) {
+    setStatus(`Texture ID ${textureId} has no image data.`, 'error');
+    return;
+  }
+
+  try {
+    const meshObj = meshEntry.obj;
+    if (!meshObj.material) {
+      setStatus('Mesh has no material.', 'error');
+      return;
+    }
+
+    const img = await loadImg(new File([base64ToBlob(texRef.base64)], 'tex.png', { type: 'image/png' }));
+    const tex = new THREE.Texture(img);
+    tex.colorSpace = textureKey === 'map' || textureKey === 'emissiveMap' ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    tex.flipY = false;
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.magFilter = THREE.LinearFilter;
+    tex.minFilter = THREE.LinearMipMapLinearFilter;
+    tex.needsUpdate = true;
+
+    let targetMat = Array.isArray(meshObj.material) ? meshObj.material[0] : meshObj.material;
+    if (!targetMat) {
+      targetMat = new THREE.MeshStandardMaterial();
+      meshObj.material = targetMat;
+    }
+
+    targetMat[textureKey] = tex;
+    targetMat.needsUpdate = true;
+
+    if (textureKey === 'map' && targetMat.color) {
+      targetMat.color.set(texRef.materialColor || '#ffffff');
+    }
+    if (textureKey === 'emissiveMap' && targetMat.emissive) {
+      targetMat.emissive.set(texRef.materialColor || '#ffffff');
+    }
+
+    const label = textureSlotKeys.find(([key]) => key === textureKey)?.[1] || textureKey;
+    const newSlot = {
+      key: textureKey,
+      label,
+      material: targetMat,
+      materialName: targetMat.name || meshObj.name || 'Mesh',
+      texture: tex,
+      originalTexture: tex.clone(),
+      width: img.naturalWidth || img.width || texRef.width || 0,
+      height: img.naturalHeight || img.height || texRef.height || 0,
+      preview: `data:image/png;base64,${texRef.base64}`,
+      fileName: `${textureId}.png`,
+      meshName: meshObj.name || 'Mesh',
+      repeatX: texRef.repeatX || 1,
+      repeatY: texRef.repeatY || 1,
+      offsetX: 0,
+      offsetY: 0,
+      colorHex: texRef.materialColor || '#ffffff',
+      textureId: textureId,
+    };
+
+    item.textureSlots.push(newSlot);
+    renderAccessoryTextureSlots(item);
+    setStatus(`Linked texture ID ${textureId} to ${meshEntry.name}.`, 'ok');
+    autoSaveSession();
+  } catch (err) {
+    setStatus('Assign texture ID to mesh failed: ' + (err.message || err), 'error');
+  }
+}
+
+// ─── Texture Scale Editor ─────────────────────────────────────────────────
+function openTextureScaleEditor(item, slotIdx) {
+  const slot = item.textureSlots[slotIdx];
+  if (!slot) return;
+
+  // 创建模态框
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;`;
+  
+  const box = document.createElement('div');
+  box.style.cssText = `background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:1.5rem;min-width:360px;max-width:480px;width:90%;box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:1rem;`;
+  
+  const repeatX = slot.texture.repeat?.x || 1;
+  const repeatY = slot.texture.repeat?.y || 1;
+  const offsetX = slot.texture.offset?.x || 0;
+  const offsetY = slot.texture.offset?.y || 0;
+  
+  box.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <strong style="font-size:.95rem;">📐 Texture Scale Editor</strong>
+      <button id="_closeTexEditor" style="font-size:.8rem;padding:.2rem .5rem;cursor:pointer;">✕</button>
+    </div>
+    
+    <div><strong style="font-size:.85rem;">${slot.materialName} · ${slot.label}</strong></div>
+    
+    <div>
+      <label style="display:block;margin-bottom:.5rem;font-size:.85rem;font-weight:600;">Repeat (贴图重复次数)</label>
+      <div style="display:flex;gap:.5rem;margin-bottom:.5rem;">
+        <div style="flex:1;"><span style="font-size:.75rem;">X</span><input type="number" id="repX" value="${repeatX}" step="0.1" min="0.1" style="width:100%;padding:.4rem;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-2);color:var(--color-text);font-size:.85rem;"></div>
+        <div style="flex:1;"><span style="font-size:.75rem;">Y</span><input type="number" id="repY" value="${repeatY}" step="0.1" min="0.1" style="width:100%;padding:.4rem;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-2);color:var(--color-text);font-size:.85rem;"></div>
+      </div>
+    </div>
+    
+    <div>
+      <label style="display:block;margin-bottom:.5rem;font-size:.85rem;font-weight:600;">Offset (贴图偏移)</label>
+      <div style="display:flex;gap:.5rem;">
+        <div style="flex:1;"><span style="font-size:.75rem;">X</span><input type="number" id="offX" value="${offsetX}" step="0.05" style="width:100%;padding:.4rem;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-2);color:var(--color-text);font-size:.85rem;"></div>
+        <div style="flex:1;"><span style="font-size:.75rem;">Y</span><input type="number" id="offY" value="${offsetY}" step="0.05" style="width:100%;padding:.4rem;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-2);color:var(--color-text);font-size:.85rem;"></div>
+      </div>
+    </div>
+    
+    <div style="display:flex;gap:.5rem;margin-top:1rem;">
+      <button id="applyTexScale" class="btn-primary" style="flex:1;font-size:.85rem;padding:.55rem .75rem;cursor:pointer;">Apply</button>
+      <button id="resetTexScale" style="flex:1;font-size:.85rem;padding:.55rem .75rem;cursor:pointer;">Reset</button>
+    </div>
+  `;
+  
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  
+  const repXInput = document.getElementById('repX');
+  const repYInput = document.getElementById('repY');
+  const offXInput = document.getElementById('offX');
+  const offYInput = document.getElementById('offY');
+  
+  document.getElementById('_closeTexEditor').onclick = () => overlay.remove();
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  
+  document.getElementById('applyTexScale').onclick = () => {
+    // 确保纹理包裹模式为 REPEAT
+    slot.texture.wrapS = THREE.RepeatWrapping;
+    slot.texture.wrapT = THREE.RepeatWrapping;
+    
+    slot.texture.repeat.x = parseFloat(repXInput.value) || 1;
+    slot.texture.repeat.y = parseFloat(repYInput.value) || 1;
+    slot.texture.offset.x = parseFloat(offXInput.value) || 0;
+    slot.texture.offset.y = parseFloat(offYInput.value) || 0;
+    slot.texture.needsUpdate = true;
+    
+    // 保存到 slot 数据
+    slot.repeatX = slot.texture.repeat.x;
+    slot.repeatY = slot.texture.repeat.y;
+    slot.offsetX = slot.texture.offset.x;
+    slot.offsetY = slot.texture.offset.y;
+    
+    setStatus(`Updated ${slot.label} scale (Repeat: ${slot.repeatX.toFixed(1)}×${slot.repeatY.toFixed(1)}).`, 'ok');
+    autoSaveSession();
+    overlay.remove();
+  };
+  
+  document.getElementById('resetTexScale').onclick = () => {
+    repXInput.value = 1;
+    repYInput.value = 1;
+    offXInput.value = 0;
+    offYInput.value = 0;
+  };
+}
+
+async function startEditItem(item) {
+  state.activeAttachedItem = item;
+  loadTransformFromItem(item);
+  el.editingAccName.textContent = item.name;
+  el.transformControls.classList.remove('hidden');
+  attachWorldGizmo(item);
+  await buildAccessoryTextureSlots(item);
+  refreshNodeAccPanel();
+}
+
+setWorldGizmoMode('translate');
+
+// ─── Restore Textures from Session ───────────────────────────────────────────
+async function restoreAccessoryTextures(item, texturesData) {
+  if (!item || !texturesData || !texturesData.length) return;
+  
+  try {
+    for (let i = 0; i < texturesData.length; i++) {
+      const texData = texturesData[i];
+      const poolTex = texData.textureId ? state.textureLibraryById.get(texData.textureId) : null;
+      const base64 = texData.base64 || poolTex?.base64;
+      if (!base64) {
+        console.warn('Missing texture data for textureId:', texData.textureId);
+        continue;
+      }
+      const blob = base64ToBlob(base64, 'image/png');
+
+      // New compact linked format: { textureId } only, map by existing slot order.
+      const existingSlot = (!texData.key && !texData.materialName) ? item.textureSlots?.[i] : null;
+      const resolvedKey = existingSlot?.key || texData.key || poolTex?.key || 'map';
+      const resolvedMaterialName = existingSlot?.materialName || texData.materialName;
+      const resolvedLabel = texData.label || textureSlotKeys.find(([key]) => key === resolvedKey)?.[1] || resolvedKey;
+      
+      // 找到对应的材质
+      let targetMat = null;
+      if (existingSlot?.material) {
+        targetMat = existingSlot.material;
+      }
+      item.object3d.traverse(obj => {
+        if (!obj.isMesh || !obj.material || targetMat || !resolvedMaterialName) return;
+        if (obj.name.includes(resolvedMaterialName) || 
+            (Array.isArray(obj.material) && obj.material[0]?.name === resolvedMaterialName)) {
+          targetMat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+        }
+      });
+      
+      if (!targetMat) {
+        // 如果没找到，用第一个 mesh 的第一个 material
+        item.object3d.traverse(obj => {
+          if (!obj.isMesh || !obj.material || targetMat) return;
+          targetMat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+        });
+      }
+      
+      if (!targetMat) continue;
+      
+      // 创建纹理
+      const img = await loadImg(new File([blob], 'texture.png', { type: 'image/png' }));
+      const tex = new THREE.Texture(img);
+      tex.colorSpace = resolvedKey === 'map' || resolvedKey === 'emissiveMap' ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+      tex.flipY = false;
+      
+      // ✅ 确保包裹模式为 REPEAT
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.magFilter = THREE.LinearFilter;
+      tex.minFilter = THREE.LinearMipMapLinearFilter;
+      
+      const isLinkedTexture = !!texData.textureId && !!poolTex;
+      const resolvedRepeatX = isLinkedTexture
+        ? (Number(poolTex.repeatX ?? 1) || 1)
+        : (Number(texData.repeatX ?? poolTex?.repeatX ?? 1) || 1);
+      const resolvedRepeatY = isLinkedTexture
+        ? (Number(poolTex.repeatY ?? 1) || 1)
+        : (Number(texData.repeatY ?? poolTex?.repeatY ?? 1) || 1);
+      const resolvedColor = isLinkedTexture
+        ? (poolTex.materialColor || '#ffffff')
+        : (texData.materialColor || poolTex?.materialColor || '#ffffff');
+
+      tex.repeat.set(resolvedRepeatX, resolvedRepeatY);
+      tex.offset.set(texData.offsetX || 0, texData.offsetY || 0);
+      tex.needsUpdate = true;
+      
+      targetMat[resolvedKey] = tex;
+      targetMat.needsUpdate = true;
+      
+      // ✅ Base Color 专用处理：确保材质颜色为白色，让贴图完全显示
+      if (resolvedKey === 'map' && targetMat.color) {
+        targetMat.color.set(resolvedColor);
+      }
+      if (resolvedKey === 'emissiveMap' && targetMat.emissive) {
+        targetMat.emissive.set(resolvedColor);
+      }
+
+      if (existingSlot) {
+        existingSlot.key = existingSlot.key || resolvedKey;
+        existingSlot.label = existingSlot.label || resolvedLabel;
+        existingSlot.materialName = existingSlot.materialName || resolvedMaterialName || existingSlot.material?.name || '(linked material)';
+        existingSlot.texture = tex;
+        existingSlot.originalTexture = tex.clone();
+        existingSlot.width = existingSlot.width || texData.width || poolTex?.width || tex.image?.width || 0;
+        existingSlot.height = existingSlot.height || texData.height || poolTex?.height || tex.image?.height || 0;
+        existingSlot.preview = existingSlot.preview || `data:image/png;base64,${base64}`;
+        existingSlot.repeatX = resolvedRepeatX;
+        existingSlot.repeatY = resolvedRepeatY;
+        existingSlot.offsetX = texData.offsetX || 0;
+        existingSlot.offsetY = texData.offsetY || 0;
+        existingSlot.colorHex = resolvedColor;
+        existingSlot.textureId = texData.textureId || null;
+        continue;
+      }
+
+      // 添加到 textureSlots (legacy path)
+      const newSlot = {
+        key: resolvedKey,
+        label: resolvedLabel,
+        material: targetMat,
+        materialName: resolvedMaterialName || targetMat.name || '(linked material)',
+        texture: tex,
+        originalTexture: tex.clone(),
+        width: texData.width || poolTex?.width || tex.image?.width || 0,
+        height: texData.height || poolTex?.height || tex.image?.height || 0,
+        preview: `data:image/png;base64,${base64}`,
+        fileName: texData.label || `${texData.textureId || resolvedKey}.png`,
+        repeatX: resolvedRepeatX,
+        repeatY: resolvedRepeatY,
+        offsetX: texData.offsetX || 0,
+        offsetY: texData.offsetY || 0,
+        colorHex: resolvedColor,
+        textureId: texData.textureId || null,
+      };
+      
+      if (!item.textureSlots) item.textureSlots = [];
+      item.textureSlots.push(newSlot);
+    }
+
+    if (state.activeAttachedItem === item) {
+      renderAccessoryTextureSlots(item);
+    }
+    
+    console.log(`✓ Restored ${texturesData.length} textures for ${item.name}`);
+  } catch (err) {
+    console.warn('Failed to restore textures:', err);
+  }
+}
+
+// ─── Accessory Attach ─────────────────────────────────────────────────────────
+el.accessoryInput.addEventListener('change', async e=>{
+  const file=e.target.files?.[0]; if (!file||!state.selectedNode) return;
+  e.target.value=''; // allow re-selecting same file
+  await attachAccessory(file, state.selectedNode);
+});
+
+async function attachAccessory(file, targetNode, existingTransform=null, existingPath=null) {
+  try {
+    setStatus(`Loading ${file.name}…`);
+    const buf = await file.arrayBuffer();
+    const gltf = await new Promise((res,rej)=>loader.parse(buf,'',res,rej));
+    const root3d = gltf.scene;
+    // 強制 accessory 也用 MeshStandardMaterial，貼圖真實，改控光源
+    root3d.traverse(obj => {
+      if (obj.isMesh) {
+        const map = obj.material.map;
+        obj.material = new THREE.MeshStandardMaterial({
+          map: map,
+          color: obj.material.color,
+          transparent: obj.material.transparent,
+          opacity: obj.material.opacity,
+          roughness: 0.8,
+          metalness: 0,
+          envMapIntensity: 0
+        });
+        if (obj.material.map) obj.material.map.colorSpace = THREE.SRGBColorSpace;
+        obj.material.needsUpdate = true;
+      }
+    });
+    root3d.name = file.name;
+    targetNode.add(root3d);
+    const t = existingTransform || { px:0,py:0,pz:0,rx:0,ry:0,rz:0,sx:1,sy:1,sz:1 };
+    root3d.position.set(t.px,t.py,t.pz);
+    root3d.rotation.set(t.rx*Math.PI/180, t.ry*Math.PI/180, t.rz*Math.PI/180);
+    root3d.scale.set(t.sx,t.sy,t.sz);
+
+    // Upload to model/ if not already from there
+    let modelPath = existingPath;
+    if (!modelPath) {
+      modelPath = await uploadGlbToModel(file);
+    }
+
+    const item = { id:uid(), file, name:file.name, nodeName:targetNode.name||'(unnamed)', nodeRef:targetNode, object3d:root3d, arrayBuffer:buf, modelPath, transform:{...t}, record:null, textureSlots:[] };
+    state.attachedItems.push(item);
+    await startEditItem(item);
+    renderNodeList();
+    renderAttachedList();
+    setStatus(`Attached ${file.name} → ${targetNode.name||'(unnamed)'}.`,'ok');
+    autoSaveSession();
+  } catch(err) { console.error(err); setStatus('Attach failed: '+(err.message||err),'error'); }
+}
+
+function removeItemById(id) {
+  const idx=state.attachedItems.findIndex(a=>a.id===id); if (idx===-1) return;
+  const item=state.attachedItems[idx];
+  item.nodeRef.remove(item.object3d);
+  if (state.activeAttachedItem===item) {
+    state.activeAttachedItem=null;
+    detachWorldGizmo();
+    el.transformControls.classList.add('hidden');
+  }
+  state.attachedItems.splice(idx,1);
+  refreshNodeAccPanel(); renderNodeList(); renderAttachedList();
+  setStatus('Accessory removed.','ok');
+  autoSaveSession();
+}
+
+function removeAllAttachedItems() {
+  state.attachedItems.forEach(item=>{ try { item.nodeRef?.remove(item.object3d); } catch{} });
+  state.attachedItems=[]; state.activeAttachedItem=null; state.selectedNode=null;
+  detachWorldGizmo();
+  el.nodeSection.classList.add('hidden'); el.attachPanel.classList.add('hidden'); el.attachedListSection.classList.add('hidden');
+}
+
+// ─── Transform Controls ───────────────────────────────────────────────────────
+function resetTransformInputs() { el.posX.value=el.posY.value=el.posZ.value='0'; el.rotX.value=el.rotY.value=el.rotZ.value='0'; el.scaleX.value=el.scaleY.value=el.scaleZ.value='1'; }
+
+function roundTransformValue(value) {
+  return Math.round((Number(value) || 0) * 1e6) / 1e6;
+}
+
+function syncItemTransformFromObject(item, { updateInputs = false } = {}) {
+  if (!item?.object3d) return;
+  const obj = item.object3d;
+  const t = {
+    px: roundTransformValue(obj.position.x),
+    py: roundTransformValue(obj.position.y),
+    pz: roundTransformValue(obj.position.z),
+    rx: roundTransformValue(THREE.MathUtils.radToDeg(obj.rotation.x)),
+    ry: roundTransformValue(THREE.MathUtils.radToDeg(obj.rotation.y)),
+    rz: roundTransformValue(THREE.MathUtils.radToDeg(obj.rotation.z)),
+    sx: roundTransformValue(obj.scale.x),
+    sy: roundTransformValue(obj.scale.y),
+    sz: roundTransformValue(obj.scale.z),
+  };
+
+  item.transform = t;
+  item.record = { ...t };
+
+  if (updateInputs) {
+    el.posX.value=t.px; el.posY.value=t.py; el.posZ.value=t.pz;
+    el.rotX.value=t.rx; el.rotY.value=t.ry; el.rotZ.value=t.rz;
+    el.scaleX.value=t.sx; el.scaleY.value=t.sy; el.scaleZ.value=t.sz;
+  }
+
+  if (state.activeAttachedItem === item) {
+    refreshNodeAccPanel();
+    renderAttachedList();
+  }
+  scheduleSessionAccessoriesSave();
+}
+
+function applyWorldGizmoSnap() {
+  const posStep = parseFloat(el.posStep.value) || 0;
+  const rotStepDeg = parseFloat(el.rotStep.value) || 0;
+  worldTransformControl.setTranslationSnap(state.worldGizmoMode === 'translate' && posStep > 0 ? posStep : null);
+  worldTransformControl.setRotationSnap(state.worldGizmoMode === 'rotate' && rotStepDeg > 0 ? THREE.MathUtils.degToRad(rotStepDeg) : null);
+}
+
+function setWorldGizmoMode(mode) {
+  state.worldGizmoMode = mode === 'rotate' ? 'rotate' : 'translate';
+  worldTransformControl.setMode(state.worldGizmoMode);
+  el.gizmoMoveBtn.classList.toggle('btn-primary', state.worldGizmoMode === 'translate');
+  el.gizmoRotateBtn.classList.toggle('btn-primary', state.worldGizmoMode === 'rotate');
+  applyWorldGizmoSnap();
+}
+
+function attachWorldGizmo(item) {
+  if (!item?.object3d) return;
+  worldTransformControl.attach(item.object3d);
+  worldTransformControl.enabled = true;
+  worldTransformControl.visible = true;
+  el.worldGizmoPanel.classList.remove('hidden');
+  el.worldGizmoTarget.textContent = `Editing: ${item.name}`;
+  applyWorldGizmoSnap();
+}
+
+function detachWorldGizmo() {
+  worldTransformControl.detach();
+  worldTransformControl.enabled = false;
+  worldTransformControl.visible = false;
+  controls.enabled = true;
+  el.worldGizmoPanel.classList.add('hidden');
+  el.worldGizmoTarget.textContent = 'Select an accessory to enable world-space controls.';
+}
+
+function loadTransformFromItem(item) {
+  const t=item.transform;
+  el.posX.value=t.px; el.posY.value=t.py; el.posZ.value=t.pz;
+  el.rotX.value=t.rx; el.rotY.value=t.ry; el.rotZ.value=t.rz;
+  el.scaleX.value=t.sx; el.scaleY.value=t.sy; el.scaleZ.value=t.sz;
+}
+function applyTransformToItem(item) {
+  if (!item?.object3d) return;
+  const px=parseFloat(el.posX.value)||0, py=parseFloat(el.posY.value)||0, pz=parseFloat(el.posZ.value)||0;
+  const rx=(parseFloat(el.rotX.value)||0)*Math.PI/180, ry=(parseFloat(el.rotY.value)||0)*Math.PI/180, rz=(parseFloat(el.rotZ.value)||0)*Math.PI/180;
+  const sx=parseFloat(el.scaleX.value)||1, sy=parseFloat(el.scaleY.value)||1, sz=parseFloat(el.scaleZ.value)||1;
+  item.object3d.position.set(px,py,pz); item.object3d.rotation.set(rx,ry,rz); item.object3d.scale.set(sx,sy,sz);
+  syncItemTransformFromObject(item, { updateInputs: false });
+}
+['posX','posY','posZ','rotX','rotY','rotZ'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{if(state.activeAttachedItem)applyTransformToItem(state.activeAttachedItem);}));
+document.querySelectorAll('.axis-btn').forEach(btn=>btn.addEventListener('click',()=>{
+  const axisId=btn.dataset.axis, dir=Number(btn.dataset.dir);
+  const input=document.getElementById(axisId); if (!input) return;
+  let step = axisId.startsWith('pos') ? parseFloat(el.posStep.value)||0.1 : axisId.startsWith('rot') ? parseFloat(el.rotStep.value)||1 : parseFloat(el.scaleStep.value)||0.1;
+  let val=Math.round(((parseFloat(input.value)||0)+dir*step)*1e6)/1e6;
+  input.value=val;
+  if (axisId.startsWith('scale')&&state.uniformScale) { el.scaleX.value=el.scaleY.value=el.scaleZ.value=val; }
+  if (state.activeAttachedItem) applyTransformToItem(state.activeAttachedItem);
+}));
+['scaleX','scaleY','scaleZ'].forEach(id=>document.getElementById(id).addEventListener('input',e=>{
+  if (state.uniformScale) { const v=parseFloat(e.target.value)||1; el.scaleX.value=el.scaleY.value=el.scaleZ.value=v; }
+  if (state.activeAttachedItem) applyTransformToItem(state.activeAttachedItem);
+}));
+el.uniformScaleBtn.addEventListener('click',()=>{
+  state.uniformScale=!state.uniformScale;
+  el.uniformScaleStatus.textContent=state.uniformScale?'On':'Off';
+  el.uniformScaleBtn.style.background=state.uniformScale?'var(--color-primary-highlight)':'';
+});
+el.gizmoMoveBtn?.addEventListener('click', () => setWorldGizmoMode('translate'));
+el.gizmoRotateBtn?.addEventListener('click', () => setWorldGizmoMode('rotate'));
+el.posStep?.addEventListener('change', applyWorldGizmoSnap);
+el.rotStep?.addEventListener('change', applyWorldGizmoSnap);
+el.resetTransformBtn.addEventListener('click',()=>{ if (!state.activeAttachedItem) return; resetTransformInputs(); applyTransformToItem(state.activeAttachedItem); setStatus('Transform reset.','ok'); });
+el.recordTransformBtn.addEventListener('click',()=>{
+  const item=state.activeAttachedItem; if (!item) return;
+  item.record={...item.transform}; refreshNodeAccPanel(); renderAttachedList(); scheduleSessionAccessoriesSave(); setStatus(`Recorded transform for ${item.name}.`,'ok');
+});
+el.removeAttachBtn.addEventListener('click',()=>{ if (state.activeAttachedItem) removeItemById(state.activeAttachedItem.id); });
+
+function renderAttachedList() {
+  el.attachedList.innerHTML='';
+  if (!state.attachedItems.length) { el.attachedListSection.classList.add('hidden'); return; }
+  el.attachedListSection.classList.remove('hidden');
+  state.attachedItems.forEach((item,i)=>{
+    const d=document.createElement('div'); d.className='attached-item';
+    const r=item.record||item.transform;
+    d.innerHTML=`<div style="flex:1">
+      <div class="attached-item-name">📦 ${item.name}</div>
+      <div class="attached-item-node">→ ${item.nodeName}</div>
+      ${item.record?`<div class="tiny" style="margin-top:.3rem;color:var(--color-primary);">📋 Pos(${r.px.toFixed(2)},${r.py.toFixed(2)},${r.pz.toFixed(2)}) Rot(${r.rx.toFixed(1)}°,${r.ry.toFixed(1)}°,${r.rz.toFixed(1)}°) Scale(${r.sx.toFixed(2)},${r.sy.toFixed(2)},${r.sz.toFixed(2)})</div>`:'<div class="tiny" style="margin-top:.3rem;">Not recorded</div>'}
+    </div>
+    <div style="display:flex;gap:.4rem;flex-direction:column;">
+      <button type="button" data-edit="${i}" style="font-size:.78rem;padding:.35rem .6rem;">Edit</button>
+      <button type="button" data-rm="${i}" style="font-size:.78rem;padding:.35rem .6rem;color:var(--color-error);">✕</button>
+    </div>`;
+    el.attachedList.appendChild(d);
+  });
+  el.attachedList.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>{
+    const item=state.attachedItems[+b.dataset.edit]; if (!item) return;
+    state.selectedNode=item.nodeRef; selectNode(item.nodeRef,item.nodeName,'');
+    startEditItem(item);
+  }));
+  el.attachedList.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{
+    const item=state.attachedItems[+b.dataset.rm]; if (item) removeItemById(item.id);
+  }));
+}
+
+el.copyAllRecordsBtn.addEventListener('click',()=>{
+  const lines=state.attachedItems.map(item=>{
+    const r=item.record||item.transform;
+    return `[${item.name}] → Node: ${item.nodeName}\n  Position: (${r.px.toFixed(4)}, ${r.py.toFixed(4)}, ${r.pz.toFixed(4)})\n  Rotation: (${r.rx.toFixed(2)}°, ${r.ry.toFixed(2)}°, ${r.rz.toFixed(2)}°)\n  Scale:    (${r.sx.toFixed(4)}, ${r.sy.toFixed(4)}, ${r.sz.toFixed(4)})`;
+  });
+  navigator.clipboard.writeText(lines.join('\n\n')).then(()=>setStatus('All records copied to clipboard.','ok')).catch(()=>prompt('Copy:',lines.join('\n\n')));
+});
+
+// ─── Export GLB ───────────────────────────────────────────────────────────────
+async function exportCurrentGlb() {
+  if (!state.gltf?.scene) return;
+  try {
+    setStatus('Exporting GLB…');
+    state.gltf.scene.updateMatrixWorld(true);
+    const buf = await exporter.parseAsync(state.gltf.scene, { binary:true, onlyVisible:false, trs:false, includeCustomExtensions:true, animations:state.gltf.animations||[], maxTextureSize:Infinity });
+    const blob=new Blob([buf],{type:'model/gltf-binary'});
+    const outName=state.fileName.replace(/\.glb$/i,'')+'_edited.glb';
+    const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=outName; a.click(); URL.revokeObjectURL(url);
+    setStatus(`Exported ${outName} (${state.attachedItems.length} accessories).`,'ok');
+  } catch(err) { console.error(err); setStatus('Export failed: '+(err.message||err),'error'); }
+}
+el.downloadGlb.addEventListener('click', exportCurrentGlb);
+el.resetCamera.addEventListener('click',()=>{ if (state.sceneRoot) fitCamera(state.sceneRoot); else { camera.position.copy(state.defaultCamera.position); controls.target.copy(state.defaultCamera.target); controls.update(); } });
+// 光暗強度控制
+el.lightingIntensity.addEventListener('input', e => {
+  const intensity = parseFloat(e.target.value);
+  const percent = Math.round(intensity * 100);
+  el.lightingIntensityLabel.textContent = percent + '%';
+  lights.dir.intensity = lights.dirInitial * intensity;
+  lights.fill.intensity = lights.fillInitial * intensity;
+});
+el.glbInput.addEventListener('change',e=>{ const f=e.target.files?.[0]; if (f) loadGlbFile(f); });
+['dragenter','dragover'].forEach(t=>el.dropzone.addEventListener(t,e=>{e.preventDefault();el.dropzone.classList.add('dragover');}));
+['dragleave','drop'].forEach(t=>el.dropzone.addEventListener(t,e=>{e.preventDefault();el.dropzone.classList.remove('dragover');}));
+el.dropzone.addEventListener('drop',e=>{ const f=[...(e.dataTransfer?.files||[])].find(f=>/\.glb$/i.test(f.name)); if (f) loadGlbFile(f); else setStatus('Please drop a .glb file.','error'); });
+
+// ─── Session Save / Restore ───────────────────────────────────────────────────
+async function saveSessionAccessories(sessionName = null, mode = 'new', overwriteId = null) {
+  if (!state.lastLoadedGlbFile) {
+    setStatus('Load a GLB first before saving.', 'error');
+    return;
+  }
+
+  const name = sessionName || state.lastLoadedGlbFile.name.replace(/\.glb$/i, '') + '_' + Date.now();
+  const mainGlb = { name: state.lastLoadedGlbFile.name, path: state.lastLoadedGlbFile.path || null };
+  
+  const accessories = await Promise.all(state.attachedItems.map(async item => {
+    const accData = {
+      id: item.id,
+      name: item.name,
+      nodeName: item.nodeName,
+      transform: { ...item.transform },
+      record: item.record ? { ...item.record } : null,
+      path: item.modelPath || null,
+      buffer: (!item.modelPath && item.arrayBuffer) ? Array.from(new Uint8Array(item.arrayBuffer)) : null,
+      textures: [] // 新增：保存纹理数据
+    };
+    
+    // 保存纹理数据
+    if (item.textureSlots && item.textureSlots.length > 0) {
+      for (const slot of item.textureSlots) {
+        try {
+          const linkedTex = slot.textureId ? state.textureLibraryById.get(slot.textureId) : null;
+          if (slot.textureId) {
+            // Linked format: keep reference only. All settings come from texture library.
+            accData.textures.push({ textureId: slot.textureId });
+            continue;
+          }
+
+          const texEntry = {
+            key: slot.key,
+            label: slot.label,
+            materialName: slot.materialName,
+            width: slot.width,
+            height: slot.height,
+            textureId: slot.textureId || null,
+            repeatX: slot.texture.repeat?.x || 1,
+            repeatY: slot.texture.repeat?.y || 1,
+            offsetX: slot.texture.offset?.x || 0,
+            offsetY: slot.texture.offset?.y || 0,
+            materialColor: slot.key === 'emissiveMap'
+              ? (slot.colorHex || (slot.material?.emissive ? toColorInputHex(slot.material.emissive) : null))
+              : (slot.key === 'map'
+                ? (slot.colorHex || (slot.material?.color ? toColorInputHex(slot.material.color) : '#ffffff'))
+                : null),
+          };
+
+          // New texture (not in library yet): send base64 once, server will pool and assign textureId.
+          if (!texEntry.textureId) {
+            const texBlob = await textureToBlob(slot.texture);
+            const reader = new FileReader();
+            texEntry.base64 = await new Promise((resolve, reject) => {
+              reader.onload = () => resolve(reader.result.split(',')[1]);
+              reader.onerror = reject;
+              reader.readAsDataURL(texBlob);
+            });
+          }
+
+          accData.textures.push(texEntry);
+        } catch (err) {
+          console.warn('Failed to save texture:', slot.label, err);
+        }
+      }
+    }
+    
+    return accData;
+  }));
+
+  const result = await serverSaveSession(name, mainGlb, accessories, mode, overwriteId);
+  if (result?.success) {
+    if (Array.isArray(result.textures)) {
+      refreshTextureLibrary(result.textures);
+    }
+    setStatus(`Session "${name}" saved with ${state.attachedItems.filter(a => a.textureSlots?.length).length} accessories' textures.`, 'ok');
+    state.lastSavedSessionId = result.sessionId;
+    return result.sessionId;
+  } else {
+    setStatus('Failed to save session: ' + (result?.error || 'Unknown error'), 'error');
+    return null;
+  }
+}
+
+let sessionSaveTimer = null;
+function autoSaveSession() {
+  // Only silently overwrite if the user has already explicitly saved a session.
+  // Never create new sessions automatically.
+  if (state.lastSavedSessionId === null || state.lastSavedSessionId === undefined) return;
+  if (sessionSaveTimer) clearTimeout(sessionSaveTimer);
+  sessionSaveTimer = setTimeout(async () => {
+    const name = state.lastLoadedGlbFile?.name.replace(/\.glb$/i, '') || 'session';
+    await saveSessionAccessories(name, 'overwrite', state.lastSavedSessionId);
+  }, 800); // debounce 800ms
+}
+
+// kept for call-site compatibility
+function scheduleSessionAccessoriesSave() { autoSaveSession(); }
+
+
+el.loadSessionBtn.addEventListener('click', async () => {
+  try {
+    const response = await serverListSessions();
+    
+    if (!response) {
+      setStatus('Failed to connect to server. Check your internet connection and server status.', 'error');
+      console.error('API returned null for serverListSessions');
+      return;
+    }
+
+    if (!response?.success) {
+      setStatus('Server error: ' + (response?.error || 'Unknown error'), 'error');
+      return;
+    }
+
+    if (!response.sessions || !response.sessions.length) {
+      setStatus('No saved sessions available.', 'error');
+      return;
+    }
+
+    console.log('📂 Found', response.sessions.length, 'saved sessions');
+
+    // Build inline picker UI inside a small overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;`;
+    const box = document.createElement('div');
+    box.style.cssText = `background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:1.25rem;min-width:320px;max-width:480px;width:90%;box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:.75rem;`;
+    box.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;"><strong style="font-size:.95rem;">📂 Load Session</strong><button id="_closeOverlay" style="font-size:.8rem;padding:.2rem .5rem;">✕</button></div>
+      <div id="_sessionPickerList" style="display:flex;flex-direction:column;gap:.4rem;max-height:320px;overflow-y:auto;"></div>`;
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    const list = box.querySelector('#_sessionPickerList');
+    box.querySelector('#_closeOverlay').onclick = () => overlay.remove();
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    response.sessions.forEach((s, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:.5rem;padding:.5rem .65rem;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-2);';
+      const date = new Date(s.savedAt).toLocaleDateString('en', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+      row.innerHTML = `<div style="flex:1;overflow:hidden;"><div style="font-size:.88rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📁 ${s.name}</div>
+        <div style="font-size:.72rem;color:var(--color-text-muted);">${s.mainGlbName} · ${s.accessoryCount} accessories · ${date}</div></div>
+        <button data-load="${i}" class="btn-primary" style="font-size:.78rem;padding:.35rem .7rem;flex-shrink:0;">Load</button>
+        <button data-del="${i}" class="btn-danger" style="font-size:.78rem;padding:.35rem .55rem;flex-shrink:0;" title="Delete session">🗑</button>`;
+      row.querySelector('[data-load]').onclick = async () => {
+        overlay.remove();
+        await doLoadSession(i);
+      };
+      row.querySelector('[data-del]').onclick = async () => {
+        if (!confirm(`Delete session "${s.name}"?`)) return;
+        await serverDeleteSession(i);
+        setStatus(`Session "${s.name}" deleted.`, 'ok');
+        overlay.remove();
+      };
+      list.appendChild(row);
+    });
+  } catch (err) {
+    console.error(err);
+    setStatus('Could not list sessions: ' + err.message, 'error');
+  }
+});
+
+async function doLoadSession(sessionId) {
+  try {
+    setStatus('Loading session…');
+    const loadResult = await serverLoadSession(sessionId);
+
+    if (!loadResult) {
+      setStatus('Failed to connect to server. Check console for details.', 'error');
+      return;
+    }
+
+    if (!loadResult?.success || !loadResult.session) {
+      setStatus('Failed to load session: ' + (loadResult?.error || 'Unknown error'), 'error');
+      return;
+    }
+
+    const session = loadResult.session;
+    console.log('📂 Loading session:', session.name, 'with', session.accessories?.length || 0, 'accessories');
+    
+    if (Array.isArray(loadResult.textures)) {
+      refreshTextureLibrary(loadResult.textures);
+      console.log('📦 Loaded', loadResult.textures.length, 'textures from library');
+    }
+
+    // ── Restore main GLB ──────────────────────────────────────────────────────
+    // Try in order: 1) saved path  2) model/{name}  3) legacy buffer  4) ask user
+    let mainBuf = null;
+    let resolvedPath = session.mainGlb?.path || null;
+    const glbName = session.mainGlb?.name || '';
+
+    // Build candidate paths to try (saved path first, then derive from filename)
+    const pathsToTry = [];
+    if (resolvedPath) pathsToTry.push(resolvedPath);
+    if (glbName && resolvedPath !== `model/${glbName}`) pathsToTry.push(`model/${glbName}`);
+
+    // Try to fetch from paths
+    for (const tryPath of pathsToTry) {
+      try {
+        setStatus(`Fetching ${tryPath}…`);
+        const r = await fetch(`/${tryPath}`, { cache: 'no-cache' });
+        if (r.ok) { 
+          mainBuf = await r.arrayBuffer(); 
+          resolvedPath = tryPath; 
+          console.log(`✓ Loaded main GLB from: ${tryPath}`);
+          break; 
+        }
+      } catch (err) {
+        console.warn(`Failed to fetch ${tryPath}:`, err);
+        /* try next */
+      }
+    }
+
+    // Fallback: try to restore from legacy buffer (if available)
+    if (!mainBuf && session.mainGlb?.buffer) {
+      try {
+        console.log('Attempting to restore main GLB from legacy buffer...');
+        const buf = session.mainGlb.buffer;
+        if (Array.isArray(buf)) {
+          mainBuf = new Uint8Array(buf).buffer;
+        } else if (buf instanceof ArrayBuffer) {
+          mainBuf = buf;
+        } else {
+          console.warn('Buffer format not recognized, skipping legacy restore');
+        }
+        if (mainBuf) console.log('✓ Successfully restored main GLB from buffer');
+      } catch (err) {
+        console.error('Failed to restore from legacy buffer:', err);
+        mainBuf = null;
+      }
+    }
+
+    if (!mainBuf) {
+      // Last resort: ask user to pick the file manually
+      setStatus(`Could not find "${glbName}" in model/ — please select it manually.`, 'error');
+      mainBuf = await new Promise(resolve => {
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = '.glb,model/gltf-binary';
+        input.onchange = async () => {
+          if (input.files[0]) resolve(await input.files[0].arrayBuffer());
+          else resolve(null);
+        };
+        input.click();
+      });
+      if (!mainBuf) { setStatus('Session load cancelled.', 'error'); return; }
+    }
+
+    await loadGlbFromBuffer(mainBuf, glbName);
+    state.lastLoadedGlbFile = { name: glbName, buffer: mainBuf, path: resolvedPath };
+
+    // Restore accessories
+    for (const accData of (session.accessories || [])) {
+      const nodeEntry = state.allNodes.find(n => n.name === accData.nodeName || n.obj.name === accData.nodeName);
+      if (!nodeEntry) { console.warn('Could not find node:', accData.nodeName); continue; }
+
+      let accBuf = null;
+      let accPath = accData.path || null;
+
+      // 1. Prefer path fetch from model/ (with cache busting)
+      if (accPath) {
+        try {
+          const r = await fetch(`/${accPath}`, { cache: 'no-cache' });
+          if (r.ok) {
+            accBuf = await r.arrayBuffer();
+            console.log(`✓ Loaded accessory from path: ${accPath}`);
+          } else {
+            console.warn(`Failed to fetch ${accPath}: HTTP ${r.status}`);
+            accPath = null;
+          }
+        } catch (err) {
+          console.warn(`Error fetching ${accPath}:`, err);
+          accPath = null;
+        }
+      }
+
+      // 2. Fallback: legacy buffer stored in session
+      if (!accBuf && accData.buffer) {
+        try {
+          const buf = accData.buffer;
+          if (Array.isArray(buf)) {
+            accBuf = new Uint8Array(buf).buffer;
+            console.log(`✓ Restored accessory from buffer array: ${accData.name}`);
+          } else if (buf instanceof ArrayBuffer) {
+            accBuf = buf;
+            console.log(`✓ Restored accessory from buffer: ${accData.name}`);
+          } else {
+            console.warn(`Unknown buffer format for ${accData.name}`);
+          }
+        } catch (err) {
+          console.error(`Failed to restore buffer for ${accData.name}:`, err);
+          accBuf = null;
+        }
+      }
+
+      if (!accBuf) {
+        console.warn('No buffer for accessory:', accData.name, '— skipping this item');
+        continue;
+      }
+
+      const file = new File([accBuf], accData.name, { type: 'model/gltf-binary' });
+      await attachAccessory(file, nodeEntry.obj, accData.transform, accPath);
+      const item = state.attachedItems[state.attachedItems.length - 1];
+      if (item && accData.record) item.record = { ...accData.record };
+      
+      // ✨ 恢复纹理数据
+      if (item && accData.textures && accData.textures.length > 0) {
+        await restoreAccessoryTextures(item, accData.textures);
+      }
+    }
+
+    renderAttachedList();
+    state.lastSavedSessionId = sessionId;
+    console.log(`✨ Session loaded successfully with ${state.attachedItems.length} accessories`);
+    setStatus(`✨ Session loaded — ${state.attachedItems.length} accessories restored.`, 'ok');
+  } catch (err) {
+    console.error('❌ Session restore failed:', err);
+    setStatus('❌ Restore failed: ' + (err.message || err), 'error');
+  }
+}
+
+loadSpriteEffects();
+fetchTextureLibrary();
+
+// ─── Model Folder Browser ────────────────────────────────────────────────────
+el.browseModelBtn.addEventListener('click', async () => {
+  el.modelBrowser.classList.remove('hidden');
+  el.modelFileList.innerHTML = '<span style="color:var(--color-text-muted);">Loading…</span>';
+  try {
+    const res = await apiCall('/api/glb-list');
+    el.modelFileList.innerHTML = '';
+    if (!res?.success || !res.files.length) {
+      el.modelFileList.innerHTML = '<span style="color:var(--color-text-muted);">No GLB files found in model/ folder.</span>';
+      return;
+    }
+    res.files.forEach(f => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.3rem .4rem;border-radius:var(--radius-sm);cursor:pointer;transition:background var(--transition);';
+      row.innerHTML = `<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">🗂 ${f.name}</span>
+        <button style="font-size:.75rem;padding:.25rem .55rem;flex-shrink:0;" data-path="${f.path}" data-name="${f.name}">Load</button>`;
+      row.querySelector('button').addEventListener('click', async () => {
+        el.modelBrowser.classList.add('hidden');
+        setStatus(`Fetching ${f.name}…`);
+        try {
+          const r = await fetch(`/${f.path}`);
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const buf = await r.arrayBuffer();
+          const file = new File([buf], f.name, { type: 'model/gltf-binary' });
+          await loadGlbFile(file, f.path);   // pass path so session can remember it
+        } catch (err) {
+          setStatus('Failed to load: ' + err.message, 'error');
+        }
+      });
+      el.modelFileList.appendChild(row);
+    });
+  } catch (err) {
+    el.modelFileList.innerHTML = `<span style="color:var(--color-error);">Error: ${err.message}</span>`;
+  }
+});
+
+el.closeBrowserBtn.addEventListener('click', () => {
+  el.modelBrowser.classList.add('hidden');
+});
+
+// ─── Save Session UI ──────────────────────────────────────────────────────────
+el.saveSessionBtn.addEventListener('click', async () => {
+  if (!state.lastLoadedGlbFile) {
+    setStatus('Load a GLB first.', 'error');
+    return;
+  }
+
+  // Show save dialog and get existing sessions to offer overwrite option
+  const response = await serverListSessions();
+  el.saveSessionDialog.classList.remove('hidden');
+  el.saveSessionName.value = state.lastLoadedGlbFile.name.replace(/\.glb$/i, '');
+  el.saveSessionName.focus();
+
+  if (response?.success && response.sessions.length > 0) {
+    el.saveSessionOptions.innerHTML = `<strong>Existing sessions:</strong><br>${response.sessions.map((s, i) => `${i}: ${s.name}`).join(', ')}`;
+    el.saveSessionOverwriteBtn.style.display = 'inline-block';
+  } else {
+    el.saveSessionOptions.innerHTML = '';
+    el.saveSessionOverwriteBtn.style.display = 'none';
+  }
+});
+
+el.saveSessionNewBtn.addEventListener('click', async () => {
+  const name = el.saveSessionName.value.trim();
+  if (!name) {
+    setStatus('Enter a session name.', 'error');
+    return;
+  }
+  const result = await saveSessionAccessories(name, 'new', null);
+  if (result !== null) {
+    el.saveSessionDialog.classList.add('hidden');
+  }
+});
+
+el.saveSessionOverwriteBtn.addEventListener('click', async () => {
+  const name = el.saveSessionName.value.trim();
+  if (!name) {
+    setStatus('Enter a session name.', 'error');
+    return;
+  }
+
+  // Show ID selector
+  const idStr = prompt('Enter session ID to overwrite (from list above):', '0');
+  if (idStr === null) return;
+
+  const overwriteId = parseInt(idStr);
+  if (isNaN(overwriteId)) {
+    setStatus('Invalid session ID.', 'error');
+    return;
+  }
+
+  const result = await saveSessionAccessories(name, 'overwrite', overwriteId);
+  if (result !== null) {
+    el.saveSessionDialog.classList.add('hidden');
+  }
+});
+
+el.saveSessionCancelBtn.addEventListener('click', () => {
+  el.saveSessionDialog.classList.add('hidden');
+});
+</script>
+</body>
+</html>
