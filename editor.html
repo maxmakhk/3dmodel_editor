@@ -249,6 +249,7 @@
       <div class="actions" style="margin-top:1rem;">
         <label for="glbInput" class="file-trigger">Choose GLB</label>
         <input type="file" id="glbInput" accept=".glb,model/gltf-binary" />
+        <label for="mainGlbInput" class="file-trigger">Add Main GLB<input type="file" id="mainGlbInput" accept=".glb,model/gltf-binary" style="display:none;"></label>
         <button type="button" id="browseModelBtn" title="Browse GLB files in server model/ folder">📂 model/</button>
       </div>
     </section>
@@ -270,6 +271,22 @@
         <div class="kv"><strong>Animations</strong><span id="animationCount">0</span></div>
       </div>
       <p id="status" class="status" style="margin-top:1rem;">Load a GLB to get started.</p>
+    </section>
+
+    <section id="mainModelSection" class="hidden" style="margin-top:var(--space-4);">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.55rem;flex-wrap:wrap;">
+        <p style="margin:0;"><strong>🧱 Main GLBs</strong></p>
+        <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+          <button type="button" id="printMainGlbJsonBtn" style="font-size:.78rem;padding:.35rem .55rem;">📦 Log JSON</button>
+          <button type="button" id="exportSceneJsonBtn" style="font-size:.78rem;padding:.35rem .55rem;">🛰️ Export Scene JSON</button>
+          <div style="border-left:1px solid var(--color-border);height:1.2rem;margin:0 .2rem;"></div>
+          <button type="button" id="addSphereBtn" style="font-size:.78rem;padding:.35rem .55rem;" title="Add Sphere">⚫ Sphere</button>
+          <button type="button" id="addCubeBtn" style="font-size:.78rem;padding:.35rem .55rem;" title="Add Cube">🟦 Cube</button>
+          <button type="button" id="addCylinderBtn" style="font-size:.78rem;padding:.35rem .55rem;" title="Add Cylinder">🔶 Cylinder</button>
+          <button type="button" id="addConeBtn" style="font-size:.78rem;padding:.35rem .55rem;" title="Add Cone">🔺 Cone</button>
+        </div>
+      </div>
+      <div id="mainModelList" class="attached-list"></div>
     </section>
 
     <!-- ANIMATION -->
@@ -454,6 +471,24 @@
             <button type="button" id="removeAttachBtn" class="btn-danger" style="font-size:.85rem;padding:.55rem .75rem;">Remove</button>
           </div>
 
+          <!-- Quick numeric input: choose property/axis and apply exact value -->
+          <div style="display:flex;gap:.5rem;align-items:center;margin-top:var(--space-3);">
+            <label style="font-size:.85rem;color:var(--color-text-muted);">Direct Value</label>
+            <select id="quickProp" style="padding:.25rem .4rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+              <option value="pos">Position</option>
+              <option value="rot">Rotation (deg)</option>
+              <option value="scale">Scale</option>
+            </select>
+            <select id="quickAxis" style="padding:.25rem .4rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+              <option value="x">X</option>
+              <option value="y">Y</option>
+              <option value="z">Z</option>
+              <option value="all">All</option>
+            </select>
+            <input type="number" id="quickValue" style="width:100px;padding:.25rem .4rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);" step="0.1" value="0">
+            <button type="button" id="quickApplyBtn" class="btn-primary" style="font-size:.85rem;padding:.4rem .7rem;">Set</button>
+          </div>
+
           <!-- Accessory Texture Mapping -->
           <div id="accTextureSection" class="hidden" style="margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid color-mix(in oklab,var(--color-text) 8%,transparent);">
             <p class="section-label" style="margin-bottom:.5rem;color:var(--color-primary);">🎨 Use Texture Library</p>
@@ -478,6 +513,7 @@
       <p style="margin-bottom:.55rem;"><strong>How to Use</strong></p>
       <ul>
         <li>Load a <code>.glb</code> from <strong>model/</strong> folder or drag-and-drop — GLBs are auto-uploaded to <code>model/</code>.</li>
+        <li>Add more <strong>Main GLBs</strong> to build a scene, then move / rotate / scale / remove them from the main list.</li>
         <li>Hover a node in the list to highlight it in the 3D view. Click to select.</li>
         <li>Each node can hold <strong>multiple accessories</strong> — click one to edit its transform.</li>
         <li>Use <strong>💾 Save Session</strong> to save your setup. Sessions remember file paths so everything reloads automatically.</li>
@@ -498,8 +534,72 @@
         <div class="world-gizmo-row">
           <button type="button" id="gizmoMoveBtn" class="btn-primary">Move</button>
           <button type="button" id="gizmoRotateBtn">Rotate</button>
+          <button type="button" id="gizmoScaleBtn">Scale</button>
         </div>
-        <p id="worldGizmoTarget" class="world-gizmo-hint">Select an accessory to enable world-space controls.</p>
+        <div class="world-gizmo-row" style="align-items:center;">
+          <span class="tiny" style="min-width:2.8rem;color:var(--color-text-muted);">Snap</span>
+          <select id="gizmoSnapSelect" class="step-select" style="flex:1;font-size:.8rem;padding:.35rem .5rem;">
+            <option value="free">Free</option>
+            <option value="1">1</option>
+            <option value="0.1" selected>0.1</option>
+            <option value="0.01">0.01</option>
+          </select>
+        </div>
+        <div class="world-gizmo-row">
+          <button type="button" id="gizmoLockScaleBtn" class="btn-primary" style="font-size:.78rem;">Lock Ratio</button>
+          <button type="button" id="fitTargetBtn" style="font-size:.78rem;margin-left:.4rem;padding:.35rem .6rem;">Fit 3000</button>
+          <button type="button" id="autosaveToggleBtn" style="font-size:.78rem;margin-left:.4rem;padding:.35rem .6rem;">Autosave: On</button>
+        </div>
+        <p id="worldGizmoTarget" class="world-gizmo-hint">Select a main GLB or accessory to enable world-space controls.</p>
+        <div style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem;">
+          <select id="wg_quickProp" style="padding:.2rem .35rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);font-size:.82rem;">
+            <option value="pos">Pos</option>
+            <option value="rot">Rot</option>
+            <option value="scale">Scale</option>
+          </select>
+          <select id="wg_quickAxis" style="padding:.2rem .35rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);font-size:.82rem;">
+            <option value="x">X</option>
+            <option value="y">Y</option>
+            <option value="z">Z</option>
+            <option value="all">All</option>
+          </select>
+          <input type="number" id="wg_quickValue" value="0" step="0.1" style="width:90px;padding:.25rem .4rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);font-size:.85rem;">
+          <button type="button" id="wg_quickApplyBtn" class="btn-primary" style="font-size:.82rem;padding:.35rem .6rem;">Apply</button>
+        </div>
+        <div id="wg_liveControls" style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem;">
+          <label class="tiny" style="min-width:2.3rem;color:var(--color-text-muted);">Live</label>
+          <select id="wg_liveProp" style="padding:.2rem .35rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);font-size:.82rem;width:86px;">
+            <option value="pos">Position</option>
+            <option value="rot">Rotation</option>
+            <option value="scale">Scale</option>
+          </select>
+          <input type="number" id="wg_x" step="0.01" style="width:84px;padding:.25rem .4rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);font-size:.85rem;" placeholder="X">
+          <input type="number" id="wg_y" step="0.01" style="width:84px;padding:.25rem .4rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);font-size:.85rem;" placeholder="Y">
+          <input type="number" id="wg_z" step="0.01" style="width:84px;padding:.25rem .4rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);font-size:.85rem;" placeholder="Z">
+        </div>
+        <div id="wg_cameraControls" style="margin-top:.6rem;border-top:1px solid color-mix(in oklab,var(--color-text) 6%,transparent);padding-top:.5rem;display:flex;flex-direction:column;gap:.4rem;">
+          <div style="display:flex;gap:.4rem;align-items:center;">
+            <label class="tiny" style="min-width:3rem;color:var(--color-text-muted);">Cam Pos</label>
+            <input type="number" id="camPosX" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+            <input type="number" id="camPosY" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+            <input type="number" id="camPosZ" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+          </div>
+          <div style="display:flex;gap:.4rem;align-items:center;">
+            <label class="tiny" style="min-width:3rem;color:var(--color-text-muted);">Target</label>
+            <input type="number" id="camTgtX" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+            <input type="number" id="camTgtY" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+            <input type="number" id="camTgtZ" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+          </div>
+          <div style="display:flex;gap:.4rem;align-items:center;">
+            <label class="tiny" style="min-width:3rem;color:var(--color-text-muted);">FOV</label>
+            <input type="number" id="camFov" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);"> 
+            <label class="tiny" style="min-width:2.5rem;color:var(--color-text-muted);">Near</label>
+            <input type="number" id="camNear" step="0.01" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);"> 
+            <label class="tiny" style="min-width:2.5rem;color:var(--color-text-muted);">Far</label>
+            <input type="number" id="camFar" step="1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+            <button type="button" id="camApplyBtn" class="btn-primary" style="margin-left:.4rem;padding:.35rem .6rem;">Apply</button>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -542,8 +642,8 @@ async function apiCall(endpoint, options = {}) {
   }
 }
 
-async function serverSaveSession(name, mainGlb, accessories, mode = 'new', overwriteId = null) {
-  const payload = { name, mainGlb, accessories, mode };
+async function serverSaveSession(name, mainGlb, accessories, mode = 'new', overwriteId = null, mainGlbs = null) {
+  const payload = { name, mainGlb, mainGlbs, accessories, mode };
   if (mode === 'overwrite' && overwriteId !== null) payload.overwriteId = overwriteId;
   return apiCall('/api/session/save', { method: 'POST', body: payload });
 }
@@ -585,6 +685,8 @@ const state = {
   allNodes: [], selectedNode: null,
   attachedItems: [],
   activeAttachedItem: null,
+  activeSceneItem: null,
+  mainModels: [],
   worldGizmoMode: 'translate',
   uniformScale: false, nodeFilter: 'all',
   animations: [], activeAction: null, activeClip: null, animPlaying: false, animScrubbing: false,
@@ -593,6 +695,15 @@ const state = {
   meshObjects: [],
   spriteEffects: [],
   highlightMarker: null, highlightMeshOriginals: new Map(),
+  worldSnapPreset: '0.1',
+  // When loading large models, optionally normalize so largest dimension <= target
+  autoNormalizeMainModels: true,
+  worldTargetSize: 3000,
+  // When true, prevents auto-save from running while we're programmatically
+  // restoring a session (to avoid overwriting sessions on the server).
+  restoringSession: false,
+  // Allow user to disable autosave
+  autoSaveEnabled: true,
   // Session management
   lastLoadedGlbFile: null,
   lastSavedSessionId: null,
@@ -604,6 +715,7 @@ const el = {
   viewer: document.getElementById('viewer'),
   dropzone: document.getElementById('dropzone'),
   glbInput: document.getElementById('glbInput'),
+  mainGlbInput: document.getElementById('mainGlbInput'),
   slotList: document.getElementById('slotList'),
   status: document.getElementById('status'),
   modelName: document.getElementById('modelName'),
@@ -649,6 +761,10 @@ const el = {
   uniformScaleStatus: document.getElementById('uniformScaleStatus'),
   attachedListSection: document.getElementById('attachedListSection'),
   attachedList: document.getElementById('attachedList'),
+  mainModelSection: document.getElementById('mainModelSection'),
+  mainModelList: document.getElementById('mainModelList'),
+  printMainGlbJsonBtn: document.getElementById('printMainGlbJsonBtn'),
+  exportSceneJsonBtn: document.getElementById('exportSceneJsonBtn'),
   copyAllRecordsBtn: document.getElementById('copyAllRecordsBtn'),
   filterAllNodes: document.getElementById('filterAllNodes'),
   filterBonesOnly: document.getElementById('filterBonesOnly'),
@@ -678,12 +794,21 @@ const el = {
   worldGizmoPanel: document.getElementById('worldGizmoPanel'),
   gizmoMoveBtn: document.getElementById('gizmoMoveBtn'),
   gizmoRotateBtn: document.getElementById('gizmoRotateBtn'),
+  gizmoScaleBtn: document.getElementById('gizmoScaleBtn'),
+  gizmoSnapSelect: document.getElementById('gizmoSnapSelect'),
+  gizmoLockScaleBtn: document.getElementById('gizmoLockScaleBtn'),
   worldGizmoTarget: document.getElementById('worldGizmoTarget'),
+  addSphereBtn: document.getElementById('addSphereBtn'),
+  addCubeBtn: document.getElementById('addCubeBtn'),
+  addCylinderBtn: document.getElementById('addCylinderBtn'),
+  addConeBtn: document.getElementById('addConeBtn'),
 };
 
 // ─── Renderer / Scene ────────────────────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 el.viewer.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
@@ -704,9 +829,14 @@ worldTransformControl.addEventListener('dragging-changed', (event) => {
   controls.enabled = !event.value;
 });
 worldTransformControl.addEventListener('objectChange', () => {
-  if (!state.activeAttachedItem) return;
-  if (worldTransformControl.object !== state.activeAttachedItem.object3d) return;
-  syncItemTransformFromObject(state.activeAttachedItem, { updateInputs: true });
+  if (!state.activeSceneItem) return;
+  if (worldTransformControl.object !== state.activeSceneItem.object3d) return;
+  if (state.worldGizmoMode === 'scale' && state.uniformScale && worldTransformControl.object) {
+    const obj = worldTransformControl.object;
+    const uniform = (Math.abs(obj.scale.x) + Math.abs(obj.scale.y) + Math.abs(obj.scale.z)) / 3 || 1;
+    obj.scale.set(uniform, uniform, uniform);
+  }
+  syncItemTransformFromObject(state.activeSceneItem, { updateInputs: true });
 });
 
 // 光源配置 - 保存為全局變數便於動態調整
@@ -719,10 +849,27 @@ const lights = {
 };
 lights.dir.position.set(5,8,5);
 lights.fill.position.set(-4,3,-5);
+lights.dir.castShadow = true;
+lights.dir.shadow.mapSize.set(2048, 2048);
+lights.dir.shadow.camera.near = 0.5;
+lights.dir.shadow.camera.far = 25;
+lights.dir.shadow.camera.left = -8;
+lights.dir.shadow.camera.right = 8;
+lights.dir.shadow.camera.top = 8;
+lights.dir.shadow.camera.bottom = -8;
+lights.dir.shadow.bias = -0.00015;
 scene.add(lights.dir);
 scene.add(lights.fill);
-const grid = new THREE.GridHelper(12,12,0x3b5b5f,0x2c2c2c);
-grid.material.transparent = true; grid.material.opacity = 0.23; scene.add(grid);
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(300, 300, 2, 2),
+  new THREE.MeshStandardMaterial({ color: 0x121418, roughness: 1, metalness: 0, transparent: true, opacity: 0.6 })
+);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -0.001;
+floor.receiveShadow = true;
+scene.add(floor);
+const grid = new THREE.GridHelper(300, 30, 0x3b5b5f, 0x2c2c2c);
+grid.material.transparent = true; grid.material.opacity = 0.23; grid.position.y = 0.001; scene.add(grid);
 
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
@@ -741,6 +888,282 @@ function setStatus(msg, type='') { el.status.textContent=msg; el.status.classNam
 function sanitizeName(n) { return (n||'model').replace(/[^a-z0-9_-]+/gi,'_').replace(/^_+|_+$/g,'')||'model'; }
 function fmtTime(s) { return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`; }
 function uid() { return Math.random().toString(36).slice(2); }
+
+function normalizeSceneMaterials(root) {
+  if (!root) return;
+  root.traverse(obj => {
+    if (!obj.isMesh) return;
+    const map = obj.material?.map;
+    obj.material = new THREE.MeshStandardMaterial({
+      map,
+      color: obj.material?.color,
+      transparent: obj.material?.transparent,
+      opacity: obj.material?.opacity,
+      roughness: 0.8,
+      metalness: 0,
+      envMapIntensity: 0,
+    });
+    if (obj.material.map) obj.material.map.colorSpace = THREE.SRGBColorSpace;
+    obj.material.needsUpdate = true;
+    obj.castShadow = true;
+    obj.receiveShadow = true;
+  });
+}
+
+function enableShadowCasting(root) {
+  if (!root) return;
+  root.traverse(obj => {
+    if (!obj.isMesh) return;
+    obj.castShadow = true;
+    obj.receiveShadow = true;
+  });
+}
+
+function getActiveSceneItem() {
+  return state.activeSceneItem || state.activeAttachedItem || null;
+}
+
+function setActiveSceneItem(item) {
+  state.activeSceneItem = item || null;
+  state.activeAttachedItem = item?.kind === 'accessory' ? item : (item?.kind === 'main' ? null : state.activeAttachedItem);
+}
+
+function syncMainModelSection() {
+  const hasMainModels = state.mainModels.length > 0;
+  el.mainModelSection.classList.toggle('hidden', !hasMainModels);
+}
+
+function createMainModelItem({ object3d, fileName, modelPath = null, buffer = null, transform = null, primary = false }) {
+  const t = transform || { px: 0, py: 0, pz: 0, rx: 0, ry: 0, rz: 0, sx: 1, sy: 1, sz: 1 };
+  if (object3d) {
+    object3d.position.set(t.px, t.py, t.pz);
+    object3d.rotation.set((t.rx || 0) * Math.PI / 180, (t.ry || 0) * Math.PI / 180, (t.rz || 0) * Math.PI / 180);
+    object3d.scale.set(t.sx ?? 1, t.sy ?? 1, t.sz ?? 1);
+  }
+  const item = {
+    id: uid(),
+    kind: 'main',
+    primary: Boolean(primary),
+    fileName,
+    name: fileName,
+    nodeRef: scene,
+    object3d,
+    arrayBuffer: buffer,
+    modelPath,
+    transform: { ...t },
+    record: { ...t },
+  };
+  if (object3d) syncItemTransformFromObject(item, { updateInputs: false });
+  return item;
+}
+
+function renderMainModelList() {
+  el.mainModelList.innerHTML = '';
+  syncMainModelSection();
+  if (!state.mainModels.length) return;
+
+  state.mainModels.forEach((item, index) => {
+    const row = document.createElement('div');
+    row.className = 'attached-item';
+    const active = state.activeSceneItem?.id === item.id;
+    const r = item.record || item.transform;
+    const pathLabel = item.modelPath || 'buffer';
+    // compute bounding box size for display
+    let sizeLabel = '';
+    try {
+      if (item.object3d) {
+        const box = new THREE.Box3().setFromObject(item.object3d);
+        const sizeVec = new THREE.Vector3();
+        box.getSize(sizeVec);
+        sizeLabel = `${sizeVec.x.toFixed(2)} × ${sizeVec.y.toFixed(2)} × ${sizeVec.z.toFixed(2)}`;
+      }
+    } catch (err) { sizeLabel = ''; }
+    row.innerHTML = `
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
+          <input type="text" class="model-name-input" value="${item.name}" data-model-id="${item.id}" style="font-size:.9rem;padding:.25rem .4rem;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-2);color:var(--color-text);flex:1;min-width:80px;max-width:200px;">
+          <span class="node-type-badge">${item.primary ? 'Base' : 'Extra'}</span>
+        </div>
+        <div style="font-size:.76rem;color:var(--color-text-muted);margin-top:.2rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pathLabel}</div>
+        ${sizeLabel?`<div style="font-size:.72rem;color:var(--color-text-muted);margin-top:.2rem;">Size: ${sizeLabel}</div>`:''}
+        <div style="font-size:.72rem;color:var(--color-text-muted);margin-top:.2rem;">P (${r.px.toFixed(3)}, ${r.py.toFixed(3)}, ${r.pz.toFixed(3)}) · R (${r.rx.toFixed(1)}°, ${r.ry.toFixed(1)}°, ${r.rz.toFixed(1)}°) · S (${r.sx.toFixed(3)}, ${r.sy.toFixed(3)}, ${r.sz.toFixed(3)})</div>
+      </div>
+      <div style="display:flex;gap:.35rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
+        <button type="button" data-main-edit="${index}" style="font-size:.74rem;padding:.28rem .45rem;">Edit</button>
+        <button type="button" data-main-rm="${index}" class="btn-danger" style="font-size:.74rem;padding:.28rem .45rem;">Remove</button>
+      </div>`;
+    
+    // Handle name editing
+    const nameInput = row.querySelector('.model-name-input');
+    nameInput.addEventListener('change', () => {
+      item.name = nameInput.value.trim() || item.fileName;
+      nameInput.value = item.name;
+      el.editingAccName.textContent = item.name;
+      autoSaveSession();
+    });
+    
+    row.querySelector('[data-main-edit]').addEventListener('click', () => {
+      selectMainModelItem(item);
+    });
+    row.querySelector('[data-main-rm]').addEventListener('click', () => {
+      removeMainModelById(item.id);
+    });
+    el.mainModelList.appendChild(row);
+  });
+}
+
+function selectMainModelItem(item) {
+  if (!item) return;
+  setActiveSceneItem(item);
+  state.selectedNode = null;
+  el.attachPanel.classList.add('hidden');
+  el.transformControls.classList.remove('hidden');
+  el.accTextureSection.classList.add('hidden');
+  el.editingAccName.textContent = item.name;
+  loadTransformFromItem(item);
+  attachWorldGizmo(item);
+  renderMainModelList();
+}
+
+async function addMainModelFromBuffer(arrayBuffer, fileName, { modelPath = null, transform = null, primary = false } = {}) {
+  const gltf = await new Promise((resolve, reject) => loader.parse(arrayBuffer, '', resolve, reject));
+  normalizeSceneMaterials(gltf.scene);
+  const root = gltf.scene;
+  root.name = fileName;
+  scene.add(root);
+  const item = createMainModelItem({
+    object3d: root,
+    fileName,
+    modelPath,
+    buffer: arrayBuffer,
+    transform,
+    primary,
+  });
+  enableShadowCasting(root);
+  state.mainModels.push(item);
+  renderMainModelList();
+  return item;
+}
+
+function removeAllMainModels() {
+  state.mainModels.forEach(item => {
+    try {
+      item.nodeRef?.remove(item.object3d);
+    } catch {
+      try { scene.remove(item.object3d); } catch {}
+    }
+  });
+  state.mainModels = [];
+  state.activeSceneItem = null;
+  if (state.activeAttachedItem?.kind === 'main') state.activeAttachedItem = null;
+  detachWorldGizmo();
+  el.transformControls.classList.add('hidden');
+  el.accTextureSection.classList.add('hidden');
+  syncMainModelSection();
+}
+
+// ─── Create Primitive Geometries ──────────────────────────────────────────────
+async function createPrimitiveGeometry(geometryType) {
+  let geometry = null;
+  let name = 'Primitive';
+  
+  switch(geometryType) {
+    case 'sphere':
+      geometry = new THREE.SphereGeometry(1, 32, 32);
+      name = 'Sphere';
+      break;
+    case 'cube':
+      geometry = new THREE.BoxGeometry(2, 2, 2);
+      name = 'Cube';
+      break;
+    case 'cylinder':
+      geometry = new THREE.CylinderGeometry(1, 1, 2, 32);
+      name = 'Cylinder';
+      break;
+    case 'cone':
+      geometry = new THREE.ConeGeometry(1, 2, 32);
+      name = 'Cone';
+      break;
+    default:
+      return null;
+  }
+  
+  // 创建材质和网格
+  const material = new THREE.MeshStandardMaterial({
+    color: 0x888888,
+    roughness: 0.8,
+    metalness: 0,
+    envMapIntensity: 0
+  });
+  
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = name;
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+  
+  // 创建mainModel item
+  const item = createMainModelItem({
+    object3d: mesh,
+    fileName: name + '.geometry',
+    modelPath: null,
+    buffer: null,
+    primary: false,
+  });
+  
+  state.mainModels.push(item);
+  renderMainModelList();
+  selectMainModelItem(item);
+  setStatus(`Created ${name}.`, 'ok');
+  autoSaveSession();
+  
+  return item;
+}
+
+function removeMainModelById(id) {
+  const idx = state.mainModels.findIndex(item => item.id === id);
+  if (idx === -1) return;
+  const item = state.mainModels[idx];
+
+  if (item.primary) {
+    removeAllAttachedItems();
+    removeAllMainModels();
+    state.sceneRoot = null;
+    state.gltf = null;
+    state.fileName = '';
+    state.lastLoadedGlbFile = null;
+    state.animations = [];
+    state.meshObjects = [];
+    state.slots = [];
+    el.modelName.textContent = 'Not loaded';
+    el.materialCount.textContent = '0';
+    el.textureCount.textContent = '0';
+    el.animationCount.textContent = '0';
+    el.animSection.classList.add('hidden');
+    el.meshVisSection.classList.add('hidden');
+    el.slotList.innerHTML = '<div class="slot-item"><div class="slot-meta"><p class="muted">No textures found.</p></div></div>';
+    el.downloadGlb.disabled = true;
+    el.saveSessionBtn.disabled = true;
+    setStatus('Primary main GLB removed.', 'ok');
+    autoSaveSession();
+    return;
+  }
+
+  try {
+    item.nodeRef?.remove(item.object3d);
+  } catch {
+    try { scene.remove(item.object3d); } catch {}
+  }
+  if (state.activeSceneItem?.id === id) {
+    state.activeSceneItem = null;
+    detachWorldGizmo();
+    el.transformControls.classList.add('hidden');
+  }
+  state.mainModels.splice(idx, 1);
+  renderMainModelList();
+  setStatus(`Main GLB removed: ${item.name}.`, 'ok');
+  autoSaveSession();
+}
 
 function refreshTextureLibrary(textures = []) {
   state.textureLibrary = Array.isArray(textures) ? textures : [];
@@ -1008,6 +1431,7 @@ function highlightNode(obj) {
 // ─── Scene management ─────────────────────────────────────────────────────────
 function clearSceneRoot() {
   clearHighlight();
+  removeAllMainModels();
   if (!state.sceneRoot) return;
   scene.remove(state.sceneRoot);
   state.sceneRoot = null; state.mixer = null; state.slots = [];
@@ -1519,10 +1943,36 @@ async function loadGlbFromBuffer(arrayBuffer, fileName) {
     state.externalAnimationPath = external.path;
     state.externalAnimationClipCount = external.clips.length;
   }
+  // Auto-normalize scale if model is extremely large and option enabled
+  try {
+    if (state.autoNormalizeMainModels) {
+      const box = new THREE.Box3().setFromObject(gltf.scene);
+      if (!box.isEmpty()) {
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z) || 0;
+        const target = Number(state.worldTargetSize) || 3000;
+        if (maxDim > 0 && maxDim > target) {
+          const scale = target / maxDim;
+          gltf.scene.scale.multiplyScalar(scale);
+          console.log(`Auto-normalized main GLB by ${scale} to fit ${target}`);
+        }
+      }
+    }
+  } catch (err) { console.warn('Auto-normalize failed:', err); }
   const allAnimations = mergeAnimationClips(gltf.animations || [], externalAnimations);
   gltf.animations = allAnimations;
 
   state.gltf=gltf; state.sceneRoot=gltf.scene; scene.add(gltf.scene);
+  const primaryMainItem = createMainModelItem({
+    object3d: gltf.scene,
+    fileName,
+    modelPath: null,
+    buffer: arrayBuffer,
+    primary: true,
+  });
+  state.mainModels = [primaryMainItem];
+  renderMainModelList();
+  startEditMainItem(primaryMainItem);
   const anims=gltf.animations||[];
   if (anims.length) state.mixer=new THREE.AnimationMixer(gltf.scene);
   el.animationCount.textContent=String(anims.length);
@@ -1575,8 +2025,31 @@ async function loadGlbFile(file, modelPath = null) {
       resolvedPath = await uploadGlbToModel(file);
     }
     state.lastLoadedGlbFile = { name: file.name, buffer: buf, path: resolvedPath };
+    if (state.mainModels[0]) {
+      state.mainModels[0].arrayBuffer = buf;
+      state.mainModels[0].modelPath = resolvedPath || state.mainModels[0].modelPath || null;
+    }
     if (resolvedPath) setStatus(`Loaded ${file.name} (saved to ${resolvedPath}).`, 'ok');
   } catch(err) { console.error(err); setStatus('Load failed: '+(err?.message||err),'error'); }
+}
+
+async function loadAdditionalMainGlb(file, modelPath = null) {
+  try {
+    setStatus(`Loading main GLB ${file.name}…`);
+    const buf = await file.arrayBuffer();
+    const resolvedPath = modelPath || await uploadGlbToModel(file);
+    const item = await addMainModelFromBuffer(buf, file.name, { modelPath: resolvedPath, primary: false });
+    startEditMainItem(item);
+    if (resolvedPath) {
+      setStatus(`Added main GLB ${file.name} from ${resolvedPath}.`, 'ok');
+    } else {
+      setStatus(`Added main GLB ${file.name}.`, 'ok');
+    }
+    autoSaveSession();
+  } catch (err) {
+    console.error(err);
+    setStatus('Add main GLB failed: ' + (err?.message || err), 'error');
+  }
 }
 
 // ─── Node List ────────────────────────────────────────────────────────────────
@@ -2189,13 +2662,25 @@ function openTextureScaleEditor(item, slotIdx) {
 }
 
 async function startEditItem(item) {
-  state.activeAttachedItem = item;
+  setActiveSceneItem(item);
   loadTransformFromItem(item);
   el.editingAccName.textContent = item.name;
   el.transformControls.classList.remove('hidden');
   attachWorldGizmo(item);
   await buildAccessoryTextureSlots(item);
   refreshNodeAccPanel();
+}
+
+function startEditMainItem(item) {
+  setActiveSceneItem(item);
+  state.selectedNode = null;
+  el.attachPanel.classList.add('hidden');
+  loadTransformFromItem(item);
+  el.editingAccName.textContent = item.name;
+  el.transformControls.classList.remove('hidden');
+  el.accTextureSection.classList.add('hidden');
+  attachWorldGizmo(item);
+  renderMainModelList();
 }
 
 setWorldGizmoMode('translate');
@@ -2366,6 +2851,7 @@ async function attachAccessory(file, targetNode, existingTransform=null, existin
     });
     root3d.name = file.name;
     targetNode.add(root3d);
+    enableShadowCasting(root3d);
     const t = existingTransform || { px:0,py:0,pz:0,rx:0,ry:0,rz:0,sx:1,sy:1,sz:1 };
     root3d.position.set(t.px,t.py,t.pz);
     root3d.rotation.set(t.rx*Math.PI/180, t.ry*Math.PI/180, t.rz*Math.PI/180);
@@ -2377,7 +2863,7 @@ async function attachAccessory(file, targetNode, existingTransform=null, existin
       modelPath = await uploadGlbToModel(file);
     }
 
-    const item = { id:uid(), file, name:file.name, nodeName:targetNode.name||'(unnamed)', nodeRef:targetNode, object3d:root3d, arrayBuffer:buf, modelPath, transform:{...t}, record:null, textureSlots:[] };
+    const item = { id:uid(), kind:'accessory', file, name:file.name, nodeName:targetNode.name||'(unnamed)', nodeRef:targetNode, object3d:root3d, arrayBuffer:buf, modelPath, transform:{...t}, record:null, textureSlots:[] };
     state.attachedItems.push(item);
     await startEditItem(item);
     renderNodeList();
@@ -2391,7 +2877,8 @@ function removeItemById(id) {
   const idx=state.attachedItems.findIndex(a=>a.id===id); if (idx===-1) return;
   const item=state.attachedItems[idx];
   item.nodeRef.remove(item.object3d);
-  if (state.activeAttachedItem===item) {
+  if (state.activeSceneItem===item) {
+    state.activeSceneItem=null;
     state.activeAttachedItem=null;
     detachWorldGizmo();
     el.transformControls.classList.add('hidden');
@@ -2404,7 +2891,7 @@ function removeItemById(id) {
 
 function removeAllAttachedItems() {
   state.attachedItems.forEach(item=>{ try { item.nodeRef?.remove(item.object3d); } catch{} });
-  state.attachedItems=[]; state.activeAttachedItem=null; state.selectedNode=null;
+  state.attachedItems=[]; state.activeAttachedItem=null; state.activeSceneItem = state.activeSceneItem?.kind === 'main' ? state.activeSceneItem : null; state.selectedNode=null;
   detachWorldGizmo();
   el.nodeSection.classList.add('hidden'); el.attachPanel.classList.add('hidden'); el.attachedListSection.classList.add('hidden');
 }
@@ -2440,25 +2927,34 @@ function syncItemTransformFromObject(item, { updateInputs = false } = {}) {
     el.scaleX.value=t.sx; el.scaleY.value=t.sy; el.scaleZ.value=t.sz;
   }
 
-  if (state.activeAttachedItem === item) {
-    refreshNodeAccPanel();
-    renderAttachedList();
+  if (state.activeSceneItem === item) {
+    if (item.kind === 'accessory') {
+      refreshNodeAccPanel();
+      renderAttachedList();
+    } else if (item.kind === 'main') {
+      renderMainModelList();
+    }
   }
   scheduleSessionAccessoriesSave();
 }
 
 function applyWorldGizmoSnap() {
-  const posStep = parseFloat(el.posStep.value) || 0;
+  const preset = el.gizmoSnapSelect?.value || state.worldSnapPreset || '0.1';
+  const snapValue = preset === 'free' ? null : (parseFloat(preset) || null);
   const rotStepDeg = parseFloat(el.rotStep.value) || 0;
-  worldTransformControl.setTranslationSnap(state.worldGizmoMode === 'translate' && posStep > 0 ? posStep : null);
+  state.worldSnapPreset = preset;
+  worldTransformControl.setTranslationSnap(state.worldGizmoMode === 'translate' && snapValue ? snapValue : null);
+  worldTransformControl.setScaleSnap(state.worldGizmoMode === 'scale' && snapValue ? snapValue : null);
   worldTransformControl.setRotationSnap(state.worldGizmoMode === 'rotate' && rotStepDeg > 0 ? THREE.MathUtils.degToRad(rotStepDeg) : null);
 }
 
 function setWorldGizmoMode(mode) {
-  state.worldGizmoMode = mode === 'rotate' ? 'rotate' : 'translate';
+  state.worldGizmoMode = mode === 'rotate' ? 'rotate' : mode === 'scale' ? 'scale' : 'translate';
   worldTransformControl.setMode(state.worldGizmoMode);
   el.gizmoMoveBtn.classList.toggle('btn-primary', state.worldGizmoMode === 'translate');
   el.gizmoRotateBtn.classList.toggle('btn-primary', state.worldGizmoMode === 'rotate');
+  el.gizmoScaleBtn.classList.toggle('btn-primary', state.worldGizmoMode === 'scale');
+  el.gizmoLockScaleBtn.classList.toggle('btn-primary', state.uniformScale);
   applyWorldGizmoSnap();
 }
 
@@ -2468,7 +2964,7 @@ function attachWorldGizmo(item) {
   worldTransformControl.enabled = true;
   worldTransformControl.visible = true;
   el.worldGizmoPanel.classList.remove('hidden');
-  el.worldGizmoTarget.textContent = `Editing: ${item.name}`;
+  el.worldGizmoTarget.textContent = `Editing ${item.kind === 'main' ? 'main GLB' : 'accessory'}: ${item.name}`;
   applyWorldGizmoSnap();
 }
 
@@ -2478,7 +2974,7 @@ function detachWorldGizmo() {
   worldTransformControl.visible = false;
   controls.enabled = true;
   el.worldGizmoPanel.classList.add('hidden');
-  el.worldGizmoTarget.textContent = 'Select an accessory to enable world-space controls.';
+  el.worldGizmoTarget.textContent = 'Select a main GLB or accessory to enable world-space controls.';
 }
 
 function loadTransformFromItem(item) {
@@ -2495,7 +2991,7 @@ function applyTransformToItem(item) {
   item.object3d.position.set(px,py,pz); item.object3d.rotation.set(rx,ry,rz); item.object3d.scale.set(sx,sy,sz);
   syncItemTransformFromObject(item, { updateInputs: false });
 }
-['posX','posY','posZ','rotX','rotY','rotZ'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{if(state.activeAttachedItem)applyTransformToItem(state.activeAttachedItem);}));
+['posX','posY','posZ','rotX','rotY','rotZ'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{if(state.activeSceneItem)applyTransformToItem(state.activeSceneItem);}));
 document.querySelectorAll('.axis-btn').forEach(btn=>btn.addEventListener('click',()=>{
   const axisId=btn.dataset.axis, dir=Number(btn.dataset.dir);
   const input=document.getElementById(axisId); if (!input) return;
@@ -2503,11 +2999,11 @@ document.querySelectorAll('.axis-btn').forEach(btn=>btn.addEventListener('click'
   let val=Math.round(((parseFloat(input.value)||0)+dir*step)*1e6)/1e6;
   input.value=val;
   if (axisId.startsWith('scale')&&state.uniformScale) { el.scaleX.value=el.scaleY.value=el.scaleZ.value=val; }
-  if (state.activeAttachedItem) applyTransformToItem(state.activeAttachedItem);
+  if (state.activeSceneItem) applyTransformToItem(state.activeSceneItem);
 }));
 ['scaleX','scaleY','scaleZ'].forEach(id=>document.getElementById(id).addEventListener('input',e=>{
   if (state.uniformScale) { const v=parseFloat(e.target.value)||1; el.scaleX.value=el.scaleY.value=el.scaleZ.value=v; }
-  if (state.activeAttachedItem) applyTransformToItem(state.activeAttachedItem);
+  if (state.activeSceneItem) applyTransformToItem(state.activeSceneItem);
 }));
 el.uniformScaleBtn.addEventListener('click',()=>{
   state.uniformScale=!state.uniformScale;
@@ -2516,14 +3012,109 @@ el.uniformScaleBtn.addEventListener('click',()=>{
 });
 el.gizmoMoveBtn?.addEventListener('click', () => setWorldGizmoMode('translate'));
 el.gizmoRotateBtn?.addEventListener('click', () => setWorldGizmoMode('rotate'));
-el.posStep?.addEventListener('change', applyWorldGizmoSnap);
+el.gizmoScaleBtn?.addEventListener('click', () => setWorldGizmoMode('scale'));
+el.gizmoSnapSelect?.addEventListener('change', applyWorldGizmoSnap);
+el.gizmoLockScaleBtn?.addEventListener('click', () => {
+  state.uniformScale = !state.uniformScale;
+  el.uniformScaleStatus.textContent = state.uniformScale ? 'On' : 'Off';
+  el.uniformScaleBtn.style.background = state.uniformScale ? 'var(--color-primary-highlight)' : '';
+  el.gizmoLockScaleBtn.classList.toggle('btn-primary', state.uniformScale);
+  if (state.uniformScale && state.activeSceneItem && state.worldGizmoMode === 'scale') {
+    const obj = state.activeSceneItem.object3d;
+    const uniform = (Math.abs(obj.scale.x) + Math.abs(obj.scale.y) + Math.abs(obj.scale.z)) / 3 || 1;
+    obj.scale.set(uniform, uniform, uniform);
+    syncItemTransformFromObject(state.activeSceneItem, { updateInputs: true });
+  }
+});
+
+// Quick direct-value setter: choose prop (pos/rot/scale), axis (x/y/z/all), and set value
+const quickApplyBtn = document.getElementById('quickApplyBtn');
+if (quickApplyBtn) {
+  quickApplyBtn.addEventListener('click', () => {
+    const prop = document.getElementById('quickProp').value; // pos|rot|scale
+    const axis = document.getElementById('quickAxis').value; // x|y|z|all
+    const raw = document.getElementById('quickValue').value;
+    const v = Number(raw);
+    if (Number.isNaN(v)) { setStatus('Invalid value', 'error'); return; }
+
+    const applyToInput = (suffix, val) => {
+      const id = suffix;
+      const inp = document.getElementById(id);
+      if (!inp) return;
+      inp.value = String(val);
+      // trigger input handlers (they listen to 'input' events)
+      inp.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    if (prop === 'pos') {
+      if (axis === 'all') {
+        applyToInput('posX', v); applyToInput('posY', v); applyToInput('posZ', v);
+      } else {
+        applyToInput('pos' + axis.toUpperCase(), v);
+      }
+    } else if (prop === 'rot') {
+      if (axis === 'all') {
+        applyToInput('rotX', v); applyToInput('rotY', v); applyToInput('rotZ', v);
+      } else {
+        applyToInput('rot' + axis.toUpperCase(), v);
+      }
+    } else if (prop === 'scale') {
+      if (axis === 'all') {
+        applyToInput('scaleX', v); applyToInput('scaleY', v); applyToInput('scaleZ', v);
+      } else {
+        applyToInput('scale' + axis.toUpperCase(), v);
+      }
+      // if uniformScale is on, ensure inputs stay synced
+      if (state.uniformScale) {
+        const s = document.getElementById('scaleX').value;
+        document.getElementById('scaleY').value = s; document.getElementById('scaleZ').value = s;
+      }
+    }
+  });
+}
+  // World-Gizmo quick setter (mirrors quickApplyBtn behavior but in the gizmo panel)
+  const wgApplyBtn = document.getElementById('wg_quickApplyBtn');
+  if (wgApplyBtn) {
+    wgApplyBtn.addEventListener('click', () => {
+      const prop = document.getElementById('wg_quickProp').value;
+      const axis = document.getElementById('wg_quickAxis').value;
+      const raw = document.getElementById('wg_quickValue').value;
+      const v = Number(raw);
+      if (Number.isNaN(v)) { setStatus('Invalid value', 'error'); return; }
+
+      const applyToInput = (suffix, val) => {
+        const inp = document.getElementById(suffix);
+        if (!inp) return;
+        inp.value = String(val);
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+      };
+
+      if (prop === 'pos') {
+        if (axis === 'all') { applyToInput('posX', v); applyToInput('posY', v); applyToInput('posZ', v); }
+        else applyToInput('pos' + axis.toUpperCase(), v);
+      } else if (prop === 'rot') {
+        if (axis === 'all') { applyToInput('rotX', v); applyToInput('rotY', v); applyToInput('rotZ', v); }
+        else applyToInput('rot' + axis.toUpperCase(), v);
+      } else if (prop === 'scale') {
+        if (axis === 'all') { applyToInput('scaleX', v); applyToInput('scaleY', v); applyToInput('scaleZ', v); }
+        else applyToInput('scale' + axis.toUpperCase(), v);
+        if (state.uniformScale) { const s = document.getElementById('scaleX').value; document.getElementById('scaleY').value = s; document.getElementById('scaleZ').value = s; }
+      }
+    });
+  }
+  el.posStep?.addEventListener('change', applyWorldGizmoSnap);
 el.rotStep?.addEventListener('change', applyWorldGizmoSnap);
-el.resetTransformBtn.addEventListener('click',()=>{ if (!state.activeAttachedItem) return; resetTransformInputs(); applyTransformToItem(state.activeAttachedItem); setStatus('Transform reset.','ok'); });
+el.resetTransformBtn.addEventListener('click',()=>{ if (!state.activeSceneItem) return; resetTransformInputs(); applyTransformToItem(state.activeSceneItem); setStatus('Transform reset.','ok'); });
 el.recordTransformBtn.addEventListener('click',()=>{
-  const item=state.activeAttachedItem; if (!item) return;
+  const item=state.activeSceneItem; if (!item) return;
   item.record={...item.transform}; refreshNodeAccPanel(); renderAttachedList(); scheduleSessionAccessoriesSave(); setStatus(`Recorded transform for ${item.name}.`,'ok');
 });
-el.removeAttachBtn.addEventListener('click',()=>{ if (state.activeAttachedItem) removeItemById(state.activeAttachedItem.id); });
+el.removeAttachBtn.addEventListener('click',()=>{
+  const item = state.activeSceneItem;
+  if (!item) return;
+  if (item.kind === 'main') removeMainModelById(item.id);
+  else removeItemById(item.id);
+});
 
 function renderAttachedList() {
   el.attachedList.innerHTML='';
@@ -2585,19 +3176,116 @@ el.lightingIntensity.addEventListener('input', e => {
   lights.fill.intensity = lights.fillInitial * intensity;
 });
 el.glbInput.addEventListener('change',e=>{ const f=e.target.files?.[0]; if (f) loadGlbFile(f); });
+el.mainGlbInput.addEventListener('change', e => { const f = e.target.files?.[0]; if (f) loadAdditionalMainGlb(f); e.target.value = ''; });
+
+// 几何体按钮事件监听器
+el.addSphereBtn.addEventListener('click', () => createPrimitiveGeometry('sphere'));
+el.addCubeBtn.addEventListener('click', () => createPrimitiveGeometry('cube'));
+el.addCylinderBtn.addEventListener('click', () => createPrimitiveGeometry('cylinder'));
+el.addConeBtn.addEventListener('click', () => createPrimitiveGeometry('cone'));
+el.printMainGlbJsonBtn.addEventListener('click', () => {
+  const mainGlbArray = state.mainModels.map(item => ({
+    id: item.id,
+    name: item.name,
+    path: item.modelPath || null,
+    primary: Boolean(item.primary),
+    transform: { ...item.transform },
+  }));
+  console.log('Main GLB scene array:', mainGlbArray);
+  console.log(JSON.stringify(mainGlbArray, null, 2));
+  setStatus(`Logged ${mainGlbArray.length} main GLBs to console.`, 'ok');
+});
+
+if (el.exportSceneJsonBtn) {
+  el.exportSceneJsonBtn.addEventListener('click', () => {
+    // Open a small overlay to allow the user to add a prompt and copy the scene JSON
+    const overlay = document.createElement('div');
+  overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;`;
+  const box = document.createElement('div');
+  box.style.cssText = `background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);padding:1rem;min-width:340px;max-width:640px;width:90%;box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:.6rem;`;
+  box.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;"><strong style="font-size:.95rem;">🛰️ Export Scene JSON</strong><button id="_closeExp" style="font-size:.8rem;padding:.2rem .5rem;">✕</button></div>
+    <textarea id="_scenePrompt" placeholder="Optional prompt for Copilot (describe how to reconstruct the scene)" style="min-height:90px;width:100%;padding:.5rem;border:1px solid var(--color-border);border-radius:6px;background:var(--color-surface-2);"></textarea>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end;">
+      <button id="_copySceneJson" class="btn-primary" style="padding:.45rem .8rem">Copy JSON</button>
+      <button id="_downloadSceneJson" style="padding:.45rem .8rem">Download .json</button>
+      <button id="_cancelSceneJson" style="padding:.45rem .8rem">Cancel</button>
+    </div>`;
+  overlay.appendChild(box); document.body.appendChild(overlay);
+  const closeBtn = box.querySelector('#_closeExp');
+  if (closeBtn) closeBtn.onclick = () => overlay.remove();
+  const cancelBtn = box.querySelector('#_cancelSceneJson');
+  if (cancelBtn) cancelBtn.onclick = () => overlay.remove();
+
+  const buildPayload = (promptText) => {
+    const mainGlbs = state.mainModels.map(item => ({ id: item.id, name: item.name, path: item.modelPath || null, primary: Boolean(item.primary), transform: { ...item.transform } }));
+    const accessories = state.attachedItems.map(item => ({ id: item.id, name: item.name, nodeName: item.nodeName || null, kind: item.kind || 'accessory', transform: { ...(item.record || item.transform) }, modelPath: item.modelPath || null }));
+    const cam = { position: camera.position.toArray(), target: controls.target.toArray(), fov: camera.fov, near: camera.near, far: camera.far, zoom: camera.zoom || 1 };
+    return { prompt: promptText || '', metadata: { exportedAt: Date.now(), worldTargetSize: state.worldTargetSize, autoNormalizeMainModels: !!state.autoNormalizeMainModels }, camera: cam, mainGlbs, accessories };
+  };
+
+  const copyBtn = box.querySelector('#_copySceneJson');
+  if (copyBtn) copyBtn.addEventListener('click', async () => {
+    const promptText = box.querySelector('#_scenePrompt').value || '';
+    const payload = buildPayload(promptText);
+    const text = JSON.stringify(payload, null, 2);
+    try {
+      await navigator.clipboard.writeText(text);
+      console.log('Scene export JSON:', payload);
+      setStatus('Scene JSON copied to clipboard.', 'ok');
+    } catch (err) {
+      console.error('Copy failed:', err);
+      setStatus('Copy failed: ' + (err.message || err), 'error');
+    }
+    overlay.remove();
+  });
+
+  const downloadBtn = box.querySelector('#_downloadSceneJson');
+  if (downloadBtn) downloadBtn.addEventListener('click', () => {
+    const promptText = box.querySelector('#_scenePrompt').value || '';
+    const payload = buildPayload(promptText);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'scene-export.json'; a.click(); URL.revokeObjectURL(url);
+    setStatus('Scene JSON downloaded.', 'ok');
+    if (overlay) overlay.remove();
+  });
+  });
+}
 ['dragenter','dragover'].forEach(t=>el.dropzone.addEventListener(t,e=>{e.preventDefault();el.dropzone.classList.add('dragover');}));
 ['dragleave','drop'].forEach(t=>el.dropzone.addEventListener(t,e=>{e.preventDefault();el.dropzone.classList.remove('dragover');}));
 el.dropzone.addEventListener('drop',e=>{ const f=[...(e.dataTransfer?.files||[])].find(f=>/\.glb$/i.test(f.name)); if (f) loadGlbFile(f); else setStatus('Please drop a .glb file.','error'); });
 
 // ─── Session Save / Restore ───────────────────────────────────────────────────
 async function saveSessionAccessories(sessionName = null, mode = 'new', overwriteId = null) {
-  if (!state.lastLoadedGlbFile) {
-    setStatus('Load a GLB first before saving.', 'error');
+  if (!state.mainModels.length) {
+    setStatus('Load a main GLB first before saving.', 'error');
     return;
   }
 
-  const name = sessionName || state.lastLoadedGlbFile.name.replace(/\.glb$/i, '') + '_' + Date.now();
-  const mainGlb = { name: state.lastLoadedGlbFile.name, path: state.lastLoadedGlbFile.path || null };
+  const name = sessionName || (state.mainModels[0]?.name?.replace(/\.glb$/i, '') || 'session') + '_' + Date.now();
+  
+  // 保存camera设置
+  const cameraData = {
+    posX: camera.position.x,
+    posY: camera.position.y,
+    posZ: camera.position.z,
+    targetX: controls.target.x,
+    targetY: controls.target.y,
+    targetZ: controls.target.z,
+    fov: camera.fov,
+    near: camera.near,
+    far: camera.far
+  };
+  
+  const mainGlbs = state.mainModels.map(item => ({
+    id: item.id,
+    name: item.name,
+    path: item.modelPath || null,
+    primary: Boolean(item.primary),
+    transform: { ...item.transform },
+    buffer: (!item.modelPath && item.arrayBuffer) ? Array.from(new Uint8Array(item.arrayBuffer)) : null,
+  }));
+  const mainGlb = mainGlbs[0] || null;
   
   const accessories = await Promise.all(state.attachedItems.map(async item => {
     const accData = {
@@ -2661,12 +3349,16 @@ async function saveSessionAccessories(sessionName = null, mode = 'new', overwrit
     return accData;
   }));
 
-  const result = await serverSaveSession(name, mainGlb, accessories, mode, overwriteId);
+  // 在调用API之前，将camera数据添加到payload
+  const payload = { name, mainGlb, mainGlbs, accessories, mode, cameraData };
+  if (mode === 'overwrite' && overwriteId !== null) payload.overwriteId = overwriteId;
+  
+  const result = await apiCall('/api/session/save', { method: 'POST', body: payload });
   if (result?.success) {
     if (Array.isArray(result.textures)) {
       refreshTextureLibrary(result.textures);
     }
-    setStatus(`Session "${name}" saved with ${state.attachedItems.filter(a => a.textureSlots?.length).length} accessories' textures.`, 'ok');
+    setStatus(`Session "${name}" saved with camera settings and ${state.attachedItems.filter(a => a.textureSlots?.length).length} accessories' textures.`, 'ok');
     state.lastSavedSessionId = result.sessionId;
     return result.sessionId;
   } else {
@@ -2675,10 +3367,82 @@ async function saveSessionAccessories(sessionName = null, mode = 'new', overwrit
   }
 }
 
+// Fit button handler: rescale active main model or all main models to target
+const fitTargetBtn = document.getElementById('fitTargetBtn');
+if (fitTargetBtn) {
+  fitTargetBtn.addEventListener('click', () => {
+    const target = Number(state.worldTargetSize) || 3000;
+    const active = state.activeSceneItem;
+    const rescaleItem = (item) => {
+      if (!item?.object3d) return;
+      const box = new THREE.Box3().setFromObject(item.object3d);
+      if (box.isEmpty()) return;
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z) || 0;
+      if (maxDim <= 0) return;
+      const scale = target / maxDim;
+      item.object3d.scale.multiplyScalar(scale);
+      syncItemTransformFromObject(item, { updateInputs: false });
+    };
+
+    if (active && active.kind === 'main') {
+      rescaleItem(active);
+      renderMainModelList();
+      setStatus(`Rescaled active main model to fit ${target}.`, 'ok');
+    } else {
+      state.mainModels.forEach(m => rescaleItem(m));
+      renderMainModelList();
+      setStatus(`Rescaled ${state.mainModels.length} main model(s) to fit ${target}.`, 'ok');
+    }
+  });
+}
+
+// Camera controls handlers
+const camApplyBtn = document.getElementById('camApplyBtn');
+if (camApplyBtn) {
+  const setInputsFromCamera = () => {
+    try {
+      document.getElementById('camPosX').value = camera.position.x.toFixed(2);
+      document.getElementById('camPosY').value = camera.position.y.toFixed(2);
+      document.getElementById('camPosZ').value = camera.position.z.toFixed(2);
+      document.getElementById('camTgtX').value = controls.target.x.toFixed(2);
+      document.getElementById('camTgtY').value = controls.target.y.toFixed(2);
+      document.getElementById('camTgtZ').value = controls.target.z.toFixed(2);
+      document.getElementById('camFov').value = camera.fov;
+      document.getElementById('camNear').value = camera.near;
+      document.getElementById('camFar').value = camera.far;
+    } catch (err) {}
+  };
+  setInputsFromCamera();
+  camApplyBtn.addEventListener('click', () => {
+    try {
+      const px = parseFloat(document.getElementById('camPosX').value) || 0;
+      const py = parseFloat(document.getElementById('camPosY').value) || 0;
+      const pz = parseFloat(document.getElementById('camPosZ').value) || 0;
+      const tx = parseFloat(document.getElementById('camTgtX').value) || 0;
+      const ty = parseFloat(document.getElementById('camTgtY').value) || 0;
+      const tz = parseFloat(document.getElementById('camTgtZ').value) || 0;
+      const fov = parseFloat(document.getElementById('camFov').value) || camera.fov;
+      const near = parseFloat(document.getElementById('camNear').value) || camera.near;
+      const far = parseFloat(document.getElementById('camFar').value) || camera.far;
+      camera.position.set(px,py,pz);
+      controls.target.set(tx,ty,tz);
+      camera.fov = fov; camera.near = near; camera.far = far; camera.updateProjectionMatrix();
+      controls.update();
+      setStatus('Camera updated.', 'ok');
+    } catch (err) { setStatus('Camera update failed: '+(err.message||err), 'error'); }
+  });
+}
+
 let sessionSaveTimer = null;
 function autoSaveSession() {
   // Only silently overwrite if the user has already explicitly saved a session.
   // Never create new sessions automatically.
+  // If we're restoring a session programmatically, skip autosave to avoid
+  // accidentally overwriting sessions on the server.
+  if (state.restoringSession) return;
+  // Respect user preference to disable autosave entirely
+  if (!state.autoSaveEnabled) return;
   if (state.lastSavedSessionId === null || state.lastSavedSessionId === undefined) return;
   if (sessionSaveTimer) clearTimeout(sessionSaveTimer);
   sessionSaveTimer = setTimeout(async () => {
@@ -2732,7 +3496,7 @@ el.loadSessionBtn.addEventListener('click', async () => {
       row.style.cssText = 'display:flex;align-items:center;gap:.5rem;padding:.5rem .65rem;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-surface-2);';
       const date = new Date(s.savedAt).toLocaleDateString('en', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
       row.innerHTML = `<div style="flex:1;overflow:hidden;"><div style="font-size:.88rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📁 ${s.name}</div>
-        <div style="font-size:.72rem;color:var(--color-text-muted);">${s.mainGlbName} · ${s.accessoryCount} accessories · ${date}</div></div>
+        <div style="font-size:.72rem;color:var(--color-text-muted);">${s.mainGlbName} · ${s.mainGlbCount || 1} main glbs · ${s.accessoryCount} accessories · ${date}</div></div>
         <button data-load="${i}" class="btn-primary" style="font-size:.78rem;padding:.35rem .7rem;flex-shrink:0;">Load</button>
         <button data-del="${i}" class="btn-danger" style="font-size:.78rem;padding:.35rem .55rem;flex-shrink:0;" title="Delete session">🗑</button>`;
       row.querySelector('[data-load]').onclick = async () => {
@@ -2754,6 +3518,8 @@ el.loadSessionBtn.addEventListener('click', async () => {
 });
 
 async function doLoadSession(sessionId) {
+  // Prevent autosave while restoring a session
+  state.restoringSession = true;
   try {
     setStatus('Loading session…');
     const loadResult = await serverLoadSession(sessionId);
@@ -2776,39 +3542,45 @@ async function doLoadSession(sessionId) {
       console.log('📦 Loaded', loadResult.textures.length, 'textures from library');
     }
 
-    // ── Restore main GLB ──────────────────────────────────────────────────────
+    // ── Restore main GLBs ─────────────────────────────────────────────────────
+    const mainGlbEntries = Array.isArray(session.mainGlbs) && session.mainGlbs.length
+      ? session.mainGlbs
+      : (session.mainGlb ? [session.mainGlb] : []);
+    if (!mainGlbEntries.length) {
+      setStatus('Session has no main GLBs.', 'error');
+      return;
+    }
+
+    const primaryMainEntry = mainGlbEntries[0];
+
     // Try in order: 1) saved path  2) model/{name}  3) legacy buffer  4) ask user
     let mainBuf = null;
-    let resolvedPath = session.mainGlb?.path || null;
-    const glbName = session.mainGlb?.name || '';
+    let resolvedPath = primaryMainEntry?.path || null;
+    const glbName = primaryMainEntry?.name || '';
 
-    // Build candidate paths to try (saved path first, then derive from filename)
     const pathsToTry = [];
     if (resolvedPath) pathsToTry.push(resolvedPath);
     if (glbName && resolvedPath !== `model/${glbName}`) pathsToTry.push(`model/${glbName}`);
 
-    // Try to fetch from paths
     for (const tryPath of pathsToTry) {
       try {
         setStatus(`Fetching ${tryPath}…`);
         const r = await fetch(`/${tryPath}`, { cache: 'no-cache' });
-        if (r.ok) { 
-          mainBuf = await r.arrayBuffer(); 
-          resolvedPath = tryPath; 
+        if (r.ok) {
+          mainBuf = await r.arrayBuffer();
+          resolvedPath = tryPath;
           console.log(`✓ Loaded main GLB from: ${tryPath}`);
-          break; 
+          break;
         }
       } catch (err) {
         console.warn(`Failed to fetch ${tryPath}:`, err);
-        /* try next */
       }
     }
 
-    // Fallback: try to restore from legacy buffer (if available)
-    if (!mainBuf && session.mainGlb?.buffer) {
+    if (!mainBuf && primaryMainEntry?.buffer) {
       try {
         console.log('Attempting to restore main GLB from legacy buffer...');
-        const buf = session.mainGlb.buffer;
+        const buf = primaryMainEntry.buffer;
         if (Array.isArray(buf)) {
           mainBuf = new Uint8Array(buf).buffer;
         } else if (buf instanceof ArrayBuffer) {
@@ -2824,7 +3596,6 @@ async function doLoadSession(sessionId) {
     }
 
     if (!mainBuf) {
-      // Last resort: ask user to pick the file manually
       setStatus(`Could not find "${glbName}" in model/ — please select it manually.`, 'error');
       mainBuf = await new Promise(resolve => {
         const input = document.createElement('input');
@@ -2840,6 +3611,90 @@ async function doLoadSession(sessionId) {
 
     await loadGlbFromBuffer(mainBuf, glbName);
     state.lastLoadedGlbFile = { name: glbName, buffer: mainBuf, path: resolvedPath };
+    if (state.mainModels[0]) {
+      state.mainModels[0].modelPath = resolvedPath || state.mainModels[0].modelPath || null;
+      state.mainModels[0].arrayBuffer = mainBuf;
+    }
+    // 恢复camera设置
+    try {
+      if (session.cameraData) {
+        const cam = session.cameraData;
+        camera.position.set(cam.posX, cam.posY, cam.posZ);
+        controls.target.set(cam.targetX, cam.targetY, cam.targetZ);
+        camera.fov = cam.fov || 45;
+        camera.near = cam.near || 0.01;
+        camera.far = cam.far || 1000;
+        camera.updateProjectionMatrix();
+        controls.update();
+        console.log('✓ Camera settings restored');
+      }
+    } catch (err) {
+      console.warn('Failed to restore camera settings:', err);
+    }
+    
+    // If the saved session includes a transform for the primary main GLB,
+    // apply it now to the loaded main model. Extra main GLBs are handled
+    // earlier via addMainModelFromBuffer which accepts a transform arg.
+    try {
+      if (primaryMainEntry?.transform && state.mainModels[0]) {
+        const item = state.mainModels[0];
+        const t = primaryMainEntry.transform;
+        if (item && item.object3d) {
+          item.object3d.position.set(t.px || 0, t.py || 0, t.pz || 0);
+          item.object3d.rotation.set((t.rx || 0) * Math.PI / 180, (t.ry || 0) * Math.PI / 180, (t.rz || 0) * Math.PI / 180);
+          item.object3d.scale.set(t.sx || 1, t.sy || 1, t.sz || 1);
+          // Update the item's transform metadata from the object and refresh UI
+          syncItemTransformFromObject(item, { updateInputs: false });
+          // Also reflect transform in the transform inputs if a main model is active
+          if (state.activeSceneItem === item || !state.activeSceneItem) loadTransformFromItem(item);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to apply primary main GLB transform:', err);
+    }
+
+    for (const extraMainEntry of mainGlbEntries.slice(1)) {
+      let extraBuf = null;
+      let extraPath = extraMainEntry?.path || null;
+      const extraName = extraMainEntry?.name || '';
+
+      if (extraPath) {
+        try {
+          const r = await fetch(`/${extraPath}`, { cache: 'no-cache' });
+          if (r.ok) {
+            extraBuf = await r.arrayBuffer();
+          } else {
+            extraPath = null;
+          }
+        } catch {
+          extraPath = null;
+        }
+      }
+
+      if (!extraBuf && extraMainEntry?.buffer) {
+        try {
+          const buf = extraMainEntry.buffer;
+          if (Array.isArray(buf)) extraBuf = new Uint8Array(buf).buffer;
+          else if (buf instanceof ArrayBuffer) extraBuf = buf;
+        } catch {
+          extraBuf = null;
+        }
+      }
+
+      if (!extraBuf) {
+        console.warn(`Skipping main GLB ${extraName || '(unnamed)'} during restore.`);
+        continue;
+      }
+
+      const extraItem = await addMainModelFromBuffer(extraBuf, extraName || 'main.glb', {
+        modelPath: extraPath,
+        transform: extraMainEntry.transform || null,
+        primary: false,
+      });
+      if (extraMainEntry.transform) {
+        loadTransformFromItem(extraItem);
+      }
+    }
 
     // Restore accessories
     for (const accData of (session.accessories || [])) {
@@ -2908,6 +3763,9 @@ async function doLoadSession(sessionId) {
   } catch (err) {
     console.error('❌ Session restore failed:', err);
     setStatus('❌ Restore failed: ' + (err.message || err), 'error');
+  } finally {
+    // Always re-enable autosave after restore completes (success or failure).
+    state.restoringSession = false;
   }
 }
 

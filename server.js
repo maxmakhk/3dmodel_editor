@@ -93,6 +93,22 @@ function normalizeAndPoolTextures(store, accessories) {
   return normalizedAccessories;
 }
 
+function normalizeMainGlbs(session) {
+  const entries = Array.isArray(session?.mainGlbs) && session.mainGlbs.length
+    ? session.mainGlbs
+    : (session?.mainGlb ? [session.mainGlb] : []);
+  const normalized = entries.map((entry, index) => ({
+    ...entry,
+    primary: Boolean(entry?.primary || index === 0),
+  }));
+  const primaryIndex = normalized.findIndex(entry => entry.primary);
+  if (primaryIndex > 0) {
+    const [primary] = normalized.splice(primaryIndex, 1);
+    normalized.unshift(primary);
+  }
+  return normalized;
+}
+
 function saveSessions(data) {
   try {
     data.texture = Array.isArray(data.textures) ? data.textures : [];
@@ -156,7 +172,8 @@ const server = http.createServer((req, res) => {
         id: idx,
         name: s.name,
         savedAt: s.savedAt,
-        mainGlbName: s.mainGlb?.name || 'unknown',
+        mainGlbName: normalizeMainGlbs(s)[0]?.name || 'unknown',
+        mainGlbCount: normalizeMainGlbs(s).length,
         accessoryCount: (s.accessories || []).length,
       })),
       textureCount: (data.textures || []).length,
@@ -294,7 +311,7 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
       try {
         const payload = JSON.parse(body);
-        const { name, mainGlb, accessories, mode } = payload;
+        const { name, mainGlb, mainGlbs, accessories, mode } = payload;
         // mode: 'new' or 'overwrite'
         // if overwrite, payload.overwriteId should be set
 
@@ -306,10 +323,12 @@ const server = http.createServer((req, res) => {
         const data = loadSessions();
         if (!Array.isArray(data.textures)) data.textures = [];
         const normalizedAccessories = normalizeAndPoolTextures(data, accessories || []);
+        const normalizedMainGlbs = normalizeMainGlbs({ mainGlb, mainGlbs });
         const newSession = {
           name,
           savedAt: Date.now(),
-          mainGlb,
+          mainGlb: normalizedMainGlbs[0] || mainGlb || null,
+          mainGlbs: normalizedMainGlbs,
           accessories: normalizedAccessories,
         };
 
@@ -353,9 +372,11 @@ const server = http.createServer((req, res) => {
       sendJSON(res, 404, { success: false, error: 'Session not found' });
       return;
     }
+    const session = { ...data.sessions[sessionId] };
+    session.mainGlbs = normalizeMainGlbs(session);
     sendJSON(res, 200, {
       success: true,
-      session: data.sessions[sessionId],
+      session,
       textures: data.textures || [],
     });
     return;
