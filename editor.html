@@ -184,7 +184,10 @@
     .viewer-card{pointer-events:auto;max-width:min(38rem,100%);background:color-mix(in oklab,var(--color-surface) 88%,transparent);
       border:1px solid color-mix(in oklab,var(--color-text) 10%,transparent);border-radius:var(--radius-lg);
       padding:var(--space-4);backdrop-filter:blur(10px);box-shadow:var(--shadow-md);}
-    .world-gizmo-card{max-width:16rem;align-self:flex-end;display:flex;flex-direction:column;gap:var(--space-2);}
+    .world-gizmo-card{
+      max-width:16rem;align-self:flex-end;display:flex;flex-direction:column;gap:var(--space-2);
+      overflow: auto;
+    }
     .world-gizmo-row{display:flex;gap:.5rem;}
     .world-gizmo-row button{flex:1;padding:.45rem .7rem;font-size:.82rem;}
     .world-gizmo-hint{font-size:.76rem;color:var(--color-text-muted);line-height:1.4;}
@@ -526,6 +529,24 @@
     <div id="viewer" aria-label="3D viewer"></div>
     <div class="viewer-overlay">
 
+      <div id="sceneToolsPanel" class="viewer-card world-gizmo-card" style="max-width:20rem;align-self:flex-end;">
+        <p class="section-label" style="color:var(--color-primary);margin-bottom:.4rem;">Scene Tools</p>
+        <div class="world-gizmo-row">
+          <button type="button" id="raycastSelectBtn" style="background:var(--color-surface-2);border:1px solid var(--color-primary);color:var(--color-primary);font-weight:600;transition:all .2s ease;padding:.45rem .4rem;">
+            🔍 Select
+          </button>
+          <button type="button" id="moveToBtn" class="btn-primary" disabled style="opacity:0.5;cursor:not-allowed;transition:all .2s ease;padding:.45rem .4rem;">
+            🎯 Move To
+          </button>
+          <button type="button" id="cloneItemBtn" class="btn-primary" disabled style="opacity:0.5;cursor:not-allowed;transition:all .2s ease;padding:.45rem .4rem;">
+            👥 Clone
+          </button>
+        </div>
+        <p id="sceneToolsHint" class="world-gizmo-hint" style="margin-top:.3rem;line-height:1.35;">
+          Directly select, move, or clone active scene items.
+        </p>
+      </div>
+
       <div id="worldGizmoPanel" class="viewer-card world-gizmo-card hidden">
         <p class="section-label" style="color:var(--color-primary);">World Gizmo</p>
         <div class="world-gizmo-row">
@@ -563,7 +584,7 @@
           <input type="number" id="wg_quickValue" value="0" step="0.1" style="width:90px;padding:.25rem .4rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);font-size:.85rem;">
           <button type="button" id="wg_quickApplyBtn" class="btn-primary" style="font-size:.82rem;padding:.35rem .6rem;">Apply</button>
         </div>
-        <div id="wg_liveControls" style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem;">
+        <div id="wg_liveControls" style="display:none;gap:.5rem;align-items:center;margin-top:.5rem;">
           <label class="tiny" style="min-width:2.3rem;color:var(--color-text-muted);">Live</label>
           <select id="wg_liveProp" style="padding:.2rem .35rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);font-size:.82rem;width:86px;">
             <option value="pos">Position</option>
@@ -587,7 +608,7 @@
             <input type="number" id="camTgtY" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
             <input type="number" id="camTgtZ" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
           </div>
-          <div style="display:flex;gap:.4rem;align-items:center;">
+          <div style="display:flex;gap:.4rem;align-items:center;flex-wrap: wrap;">
             <label class="tiny" style="min-width:3rem;color:var(--color-text-muted);">FOV</label>
             <input type="number" id="camFov" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);"> 
             <label class="tiny" style="min-width:2.5rem;color:var(--color-text-muted);">Near</label>
@@ -691,7 +712,7 @@ const state = {
   externalAnimationClipCount: 0,
   meshObjects: [],
   spriteEffects: [],
-  highlightMarker: null, highlightMeshOriginals: new Map(),
+  highlightMarker: null, highlightMeshOriginals: new Map(), selectBoxHelper: null,
   worldSnapPreset: '0.1',
   // When loading large models, optionally normalize so largest dimension <= target
   autoNormalizeMainModels: true,
@@ -700,7 +721,7 @@ const state = {
   // restoring a session (to avoid overwriting sessions on the server).
   restoringSession: false,
   // Allow user to disable autosave
-  autoSaveEnabled: true,
+  autoSaveEnabled: false,
   // Session management
   lastLoadedGlbFile: null,
   lastSavedSessionId: null,
@@ -799,6 +820,10 @@ const el = {
   addCubeBtn: document.getElementById('addCubeBtn'),
   addCylinderBtn: document.getElementById('addCylinderBtn'),
   addConeBtn: document.getElementById('addConeBtn'),
+  raycastSelectBtn: document.getElementById('raycastSelectBtn'),
+  moveToBtn: document.getElementById('moveToBtn'),
+  cloneItemBtn: document.getElementById('cloneItemBtn'),
+  sceneToolsHint: document.getElementById('sceneToolsHint'),
 };
 
 // ─── Renderer / Scene ────────────────────────────────────────────────────────
@@ -868,6 +893,518 @@ scene.add(floor);
 const grid = new THREE.GridHelper(300, 30, 0x3b5b5f, 0x2c2c2c);
 grid.material.transparent = true; grid.material.opacity = 0.23; grid.position.y = 0.001; scene.add(grid);
 
+// Move-to mode: raycaster + yellow cursor
+const _moveRaycaster = new THREE.Raycaster();
+const _movePointer = new THREE.Vector2();
+let _moveCursor = null;
+state.moveMode = false;
+state.moveTargetItem = null;
+
+function startMoveToMode(item) {
+  if (!item || !item.object3d) return;
+  if (state.selectItemMode) stopSelectItemMode(true);
+  
+  state.moveMode = true;
+  state.moveTargetItem = item;
+  controls.enabled = false;
+
+  const btn = document.getElementById('moveToBtn');
+  if (btn) {
+    btn.style.background = 'gold';
+    btn.style.borderColor = 'orange';
+    btn.style.color = '#121418';
+    btn.textContent = '🟡 Moving...';
+  }
+
+  // Calculate size dynamically for the yellow sphere based on models loaded in the scene
+  let boundsSize = 10;
+  try {
+    const activeModels = state.mainModels.filter(m => m.object3d);
+    if (activeModels.length > 0) {
+      const box = new THREE.Box3();
+      activeModels.forEach(m => box.expandByObject(m.object3d));
+      const sizeVec = new THREE.Vector3();
+      box.getSize(sizeVec);
+      boundsSize = Math.max(sizeVec.x, sizeVec.y, sizeVec.z) || 10;
+    }
+  } catch (err) {}
+  
+  const sphereRadius = Math.max(0.06, boundsSize * 0.015);
+
+  if (_moveCursor) {
+    scene.remove(_moveCursor);
+    _moveCursor = null;
+  }
+
+  const ringGeo = new THREE.RingGeometry(sphereRadius * 0.85, sphereRadius, 32);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: 0xFFFF00,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.9,
+    depthWrite: false
+  });
+  
+  const circleGeo = new THREE.CircleGeometry(sphereRadius * 0.85, 32);
+  const circleMat = new THREE.MeshBasicMaterial({
+    color: 0xFFFF00,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.25,
+    depthWrite: false
+  });
+  
+  _moveCursor = new THREE.Group();
+  _moveCursor.add(new THREE.Mesh(ringGeo, ringMat));
+  _moveCursor.add(new THREE.Mesh(circleGeo, circleMat));
+  _moveCursor.renderOrder = 9999;
+  scene.add(_moveCursor);
+  _moveCursor.visible = true;
+
+  renderer.domElement.style.cursor = 'crosshair';
+  window.addEventListener('pointermove', _onMovePointer);
+  window.addEventListener('pointerdown', _onMovePointerDown);
+  window.addEventListener('contextmenu', _onMoveContextMenu);
+  setStatus('Move mode: left-click to place, right-click to cancel.');
+}
+
+function stopMoveToMode(cancel = false) {
+  state.moveMode = false;
+  state.moveTargetItem = null;
+  if (_moveCursor) _moveCursor.visible = false;
+  controls.enabled = true;
+  renderer.domElement.style.cursor = '';
+  
+  const btn = document.getElementById('moveToBtn');
+  if (btn) {
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    btn.textContent = '🎯 Move To';
+  }
+  
+  window.removeEventListener('pointermove', _onMovePointer);
+  window.removeEventListener('pointerdown', _onMovePointerDown);
+  window.removeEventListener('contextmenu', _onMoveContextMenu);
+  if (cancel) setStatus('Move cancelled.', ''); else setStatus('Move completed.', 'ok');
+  updateSceneToolsUI();
+}
+
+function _getMoveIntersections(pointer) {
+  // Hit test against floor and all model/accessory objects EXCEPT the one we are moving
+  const targets = [floor];
+  state.mainModels.forEach(m => {
+    if (m.object3d && m !== state.moveTargetItem) {
+      targets.push(m.object3d);
+    }
+  });
+  state.attachedItems.forEach(a => {
+    if (a.object3d && a !== state.moveTargetItem) {
+      targets.push(a.object3d);
+    }
+  });
+  return _moveRaycaster.intersectObjects(targets, true);
+}
+
+function _onMovePointer(e) {
+  if (!state.moveMode) return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  _movePointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  _movePointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  _moveRaycaster.setFromCamera(_movePointer, camera);
+  const intersects = _getMoveIntersections(_movePointer);
+  if (intersects && intersects.length) {
+    const hit = intersects[0];
+    const p = hit.point;
+    
+    // Calculate world normal of the intersected surface
+    let normal = new THREE.Vector3(0, 1, 0);
+    if (hit.face) {
+      normal.copy(hit.face.normal);
+      normal.transformDirection(hit.object.matrixWorld);
+    }
+    
+    if (_moveCursor) {
+      // Offset slightly along normal to prevent visual clipping / Z-fighting with surfaces
+      const visualOffset = normal.clone().multiplyScalar(0.015);
+      _moveCursor.position.copy(p).add(visualOffset);
+      
+      // Orient disk helper to face the surface normal
+      const lookAtPoint = _moveCursor.position.clone().add(normal);
+      _moveCursor.lookAt(lookAtPoint);
+      _moveCursor.visible = true;
+    }
+  } else {
+    if (_moveCursor) _moveCursor.visible = false;
+  }
+}
+
+function _onMovePointerDown(e) {
+  if (!state.moveMode) return;
+  
+  if (e.button === 0) { // Left click confirm
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const intersects = _getMoveIntersections(_movePointer);
+    if (!intersects || !intersects.length) return;
+    const hit = intersects[0].point.clone();
+    const item = state.moveTargetItem;
+    if (!item || !item.object3d) return;
+
+    // compute current world bbox and bottom center
+    const obj = item.object3d;
+    const box = new THREE.Box3().setFromObject(obj);
+    const bottomCenter = new THREE.Vector3(
+      (box.min.x + box.max.x) / 2,
+      box.min.y,
+      (box.min.z + box.max.z) / 2
+    );
+
+    // compute current world position of object's origin
+    const worldPos = new THREE.Vector3();
+    obj.getWorldPosition(worldPos);
+
+    // desired world position shifts the object so its bottom center aligns with hit point
+    const translation = hit.clone().sub(bottomCenter);
+    const desiredWorld = worldPos.clone().add(translation);
+
+    // convert desired world to parent-local and apply
+    const parent = obj.parent || scene;
+    const desiredLocal = desiredWorld.clone();
+    parent.worldToLocal(desiredLocal);
+    obj.position.copy(desiredLocal);
+
+    // If a TransformControls gizmo is attached, update its position
+    if (worldTransformControl.object === obj) {
+      worldTransformControl.attach(obj);
+    }
+
+    syncItemTransformFromObject(item, { updateInputs: true });
+    stopMoveToMode(false);
+  } else if (e.button === 2) { // Right click cancel
+    e.preventDefault();
+    e.stopPropagation();
+    stopMoveToMode(true);
+  }
+}
+
+function _onMoveContextMenu(e) {
+  if (!state.moveMode) return;
+  e.preventDefault();
+  stopMoveToMode(true);
+}
+
+// ─── Scene Tools: Raycast Select & Cloning ──────────────────────────────────
+const _selectRaycaster = new THREE.Raycaster();
+const _selectPointer = new THREE.Vector2();
+state.selectItemMode = false;
+
+function startSelectItemMode() {
+  if (state.moveMode) stopMoveToMode(true);
+  
+  state.selectItemMode = true;
+  controls.enabled = false;
+  renderer.domElement.style.cursor = 'cell';
+  
+  const btn = document.getElementById('raycastSelectBtn');
+  if (btn) {
+    btn.style.background = 'gold';
+    btn.style.borderColor = 'orange';
+    btn.style.color = '#121418';
+    btn.textContent = '🟡 Selecting...';
+  }
+  
+  window.addEventListener('pointermove', _onSelectPointerMove);
+  window.addEventListener('pointerdown', _onSelectPointerDown);
+  window.addEventListener('contextmenu', _onSelectContextMenu);
+  window.addEventListener('keydown', _onSelectKeyDown);
+  
+  setStatus('Raycast Select: Click on any 3D object to select it. Right-click or Esc to cancel.');
+}
+
+function stopSelectItemMode(cancelled = false) {
+  state.selectItemMode = false;
+  controls.enabled = true;
+  renderer.domElement.style.cursor = '';
+  clearHighlight();
+  
+  const btn = document.getElementById('raycastSelectBtn');
+  if (btn) {
+    btn.style.background = 'var(--color-surface-2)';
+    btn.style.borderColor = 'var(--color-primary)';
+    btn.style.color = 'var(--color-primary)';
+    btn.textContent = '🔍 Click Select';
+  }
+  
+  window.removeEventListener('pointermove', _onSelectPointerMove);
+  window.removeEventListener('pointerdown', _onSelectPointerDown);
+  window.removeEventListener('contextmenu', _onSelectContextMenu);
+  window.removeEventListener('keydown', _onSelectKeyDown);
+  
+  if (cancelled) {
+    setStatus('Selection cancelled.');
+  }
+}
+
+function findItemFromObject3D(obj) {
+  let current = obj;
+  while (current) {
+    const main = state.mainModels.find(m => m.object3d === current);
+    if (main) return main;
+    const acc = state.attachedItems.find(a => a.object3d === current);
+    if (acc) return acc;
+    current = current.parent;
+  }
+  return null;
+}
+
+function _onSelectPointerMove(e) {
+  if (!state.selectItemMode) return;
+  
+  const rect = renderer.domElement.getBoundingClientRect();
+  _selectPointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  _selectPointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  
+  _selectRaycaster.setFromCamera(_selectPointer, camera);
+  
+  const targets = [];
+  state.mainModels.forEach(m => { if (m.object3d) targets.push(m.object3d); });
+  state.attachedItems.forEach(a => { if (a.object3d) targets.push(a.object3d); });
+  
+  const intersects = _selectRaycaster.intersectObjects(targets, true);
+  if (intersects && intersects.length > 0) {
+    const item = findItemFromObject3D(intersects[0].object);
+    if (item && item.object3d) {
+      highlightNode(item.object3d);
+      return;
+    }
+  }
+  clearHighlight();
+}
+
+function _onSelectPointerDown(e) {
+  if (!state.selectItemMode) return;
+  
+  if (e.button === 0) { // Left click to select
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const rect = renderer.domElement.getBoundingClientRect();
+    _selectPointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    _selectPointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    
+    _selectRaycaster.setFromCamera(_selectPointer, camera);
+    const targets = [];
+    state.mainModels.forEach(m => { if (m.object3d) targets.push(m.object3d); });
+    state.attachedItems.forEach(a => { if (a.object3d) targets.push(a.object3d); });
+    
+    const intersects = _selectRaycaster.intersectObjects(targets, true);
+    if (intersects && intersects.length > 0) {
+      const item = findItemFromObject3D(intersects[0].object);
+      if (item) {
+        stopSelectItemMode(false);
+        if (item.kind === 'main') {
+          selectMainModelItem(item);
+          setStatus(`Selected main model: ${item.name}`, 'ok');
+        } else {
+          startEditItem(item);
+          setStatus(`Selected accessory: ${item.name}`, 'ok');
+        }
+      }
+    }
+  } else if (e.button === 2) { // Right click to cancel
+    e.preventDefault();
+    e.stopPropagation();
+    stopSelectItemMode(true);
+  }
+}
+
+function _onSelectContextMenu(e) {
+  if (!state.selectItemMode) return;
+  e.preventDefault();
+  stopSelectItemMode(true);
+}
+
+function _onSelectKeyDown(e) {
+  if (!state.selectItemMode) return;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    stopSelectItemMode(true);
+  }
+}
+
+// UI Synchronization
+function updateSceneToolsUI() {
+  const activeItem = getActiveSceneItem();
+  const cloneBtn = document.getElementById('cloneItemBtn');
+  const moveToBtn = document.getElementById('moveToBtn');
+  const hintText = document.getElementById('sceneToolsHint');
+  
+  const hasSelection = !!activeItem;
+  
+  [cloneBtn, moveToBtn].forEach(btn => {
+    if (btn) {
+      btn.disabled = !hasSelection;
+      btn.style.opacity = hasSelection ? '1' : '0.5';
+      btn.style.cursor = hasSelection ? 'pointer' : 'not-allowed';
+    }
+  });
+  
+  if (hintText) {
+    if (hasSelection) {
+      hintText.innerHTML = `Active: <strong style="color:var(--color-primary);">${activeItem.name}</strong>. Move, clone, or select.`;
+    } else {
+      hintText.textContent = 'Directly select, move, or clone active scene items.';
+    }
+  }
+}
+
+// Cloning Logic
+async function cloneSceneItem(item) {
+  if (!item || !item.object3d) return;
+  
+  setStatus('Cloning selected item...');
+  try {
+    let newRoot = null;
+    let arrayBuffer = item.arrayBuffer || null;
+    
+    if (arrayBuffer) {
+      // Re-parse GLB to ensure fresh hierarchy
+      const gltf = await new Promise((resolve, reject) => {
+        loader.parse(arrayBuffer, '', resolve, reject);
+      });
+      newRoot = gltf.scene;
+      
+      // Traverse and make materials standard standard
+      normalizeSceneMaterials(newRoot);
+    } else {
+      // Mesh / Geometry clone
+      newRoot = item.object3d.clone();
+      newRoot.traverse(child => {
+        if (child.isMesh && child.material) {
+          child.material = child.material.clone();
+        }
+      });
+    }
+    
+    newRoot.name = item.name + '_clone';
+    enableShadowCasting(newRoot);
+    
+    // Add to same parent or scene
+    const parent = item.nodeRef || scene;
+    parent.add(newRoot);
+    
+    // Calculate smart horizontal offset based on bounding box dimension
+    const box = new THREE.Box3().setFromObject(item.object3d);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const offset = size.x > 0 ? size.x * 1.25 : 1.0;
+    
+    const t = { ...item.transform };
+    t.px += offset;
+    
+    newRoot.position.set(t.px, t.py, t.pz);
+    newRoot.rotation.copy(item.object3d.rotation);
+    newRoot.scale.copy(item.object3d.scale);
+    
+    let clonedItem = null;
+    if (item.kind === 'main') {
+      clonedItem = createMainModelItem({
+        object3d: newRoot,
+        fileName: item.fileName,
+        modelPath: item.modelPath,
+        buffer: arrayBuffer,
+        transform: t,
+        primary: false
+      });
+      state.mainModels.push(clonedItem);
+      renderMainModelList();
+      selectMainModelItem(clonedItem);
+    } else {
+      // For accessories
+      clonedItem = {
+        id: uid(),
+        kind: 'accessory',
+        file: item.file || null,
+        name: item.name + ' (Copy)',
+        nodeName: item.nodeName,
+        nodeRef: item.nodeRef,
+        object3d: newRoot,
+        arrayBuffer: arrayBuffer,
+        modelPath: item.modelPath,
+        transform: t,
+        record: null,
+        textureSlots: []
+      };
+      
+      // Clone texture slots and re-map to new material references
+      if (item.textureSlots && item.textureSlots.length > 0) {
+        for (const slot of item.textureSlots) {
+          let clonedMaterial = null;
+          newRoot.traverse(child => {
+            if (child.isMesh && child.material && !clonedMaterial) {
+              if (child.material.name === slot.materialName || child.name.includes(slot.materialName)) {
+                clonedMaterial = Array.isArray(child.material) ? child.material[0] : child.material;
+              }
+            }
+          });
+          
+          if (!clonedMaterial) {
+            newRoot.traverse(child => {
+              if (child.isMesh && child.material && !clonedMaterial) {
+                clonedMaterial = Array.isArray(child.material) ? child.material[0] : child.material;
+              }
+            });
+          }
+          
+          if (clonedMaterial && slot.texture) {
+            const clonedTex = slot.texture.clone();
+            clonedTex.needsUpdate = true;
+            clonedMaterial[slot.key] = clonedTex;
+            clonedMaterial.needsUpdate = true;
+            
+            if (slot.key === 'map' && clonedMaterial.color) {
+              clonedMaterial.color.set(slot.colorHex || '#ffffff');
+            }
+            if (slot.key === 'emissiveMap' && clonedMaterial.emissive) {
+              clonedMaterial.emissive.set(slot.colorHex || '#ffffff');
+            }
+            
+            clonedItem.textureSlots.push({
+              key: slot.key,
+              label: slot.label,
+              material: clonedMaterial,
+              materialName: slot.materialName,
+              texture: clonedTex,
+              originalTexture: slot.originalTexture ? slot.originalTexture.clone() : clonedTex.clone(),
+              width: slot.width,
+              height: slot.height,
+              preview: slot.preview,
+              repeatX: slot.repeatX,
+              repeatY: slot.repeatY,
+              offsetX: slot.offsetX,
+              offsetY: slot.offsetY,
+              colorHex: slot.colorHex,
+              textureId: slot.textureId
+            });
+          }
+        }
+      }
+      
+      state.attachedItems.push(clonedItem);
+      renderAttachedList();
+      await startEditItem(clonedItem);
+    }
+    
+    setStatus(`Successfully cloned ${item.name}.`, 'ok');
+    autoSaveSession();
+  } catch (err) {
+    console.error('Cloning failed:', err);
+    setStatus('Cloning failed: ' + (err.message || err), 'error');
+  }
+}
+
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
 const loader = new GLTFLoader(); loader.setDRACOLoader(dracoLoader);
@@ -923,6 +1460,7 @@ function getActiveSceneItem() {
 function setActiveSceneItem(item) {
   state.activeSceneItem = item || null;
   state.activeAttachedItem = item?.kind === 'accessory' ? item : (item?.kind === 'main' ? null : state.activeAttachedItem);
+  updateSceneToolsUI();
 }
 
 function syncMainModelSection() {
@@ -987,6 +1525,7 @@ function renderMainModelList() {
       </div>
       <div style="display:flex;gap:.35rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
         <button type="button" data-main-edit="${index}" style="font-size:.74rem;padding:.28rem .45rem;">Edit</button>
+        <button type="button" data-main-moveto="${index}" style="font-size:.74rem;padding:.28rem .45rem;background:#003300;">Move To</button>
         <button type="button" data-main-rm="${index}" class="btn-danger" style="font-size:.74rem;padding:.28rem .45rem;">Remove</button>
       </div>`;
     
@@ -1002,6 +1541,8 @@ function renderMainModelList() {
     row.querySelector('[data-main-edit]').addEventListener('click', () => {
       selectMainModelItem(item);
     });
+    const mvBtn = row.querySelector('[data-main-moveto]');
+    if (mvBtn) mvBtn.addEventListener('click', () => { startMoveToMode(item); });
     row.querySelector('[data-main-rm]').addEventListener('click', () => {
       removeMainModelById(item.id);
     });
@@ -1377,6 +1918,7 @@ const _hlRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffaa, depthTest: fal
 
 function clearHighlight() {
   if (state.highlightMarker) { scene.remove(state.highlightMarker); state.highlightMarker = null; }
+  if (state.selectBoxHelper) { scene.remove(state.selectBoxHelper); state.selectBoxHelper = null; }
   state.highlightMeshOriginals.forEach((origEmissive, mesh) => {
     if (mesh.material) {
       mesh.material = mesh.material.clone();
@@ -1421,8 +1963,21 @@ function highlightNode(obj) {
       });
     });
   }
-  // Auto-clear after 2.5 s
-  setTimeout(clearHighlight, 2500);
+
+  // Active hover outlines for selection / move modes
+  if ((state.selectItemMode || state.moveMode) && obj) {
+    state.selectBoxHelper = new THREE.BoxHelper(obj, 0x00ffaa); // Glowing cyan box
+    state.selectBoxHelper.material.depthTest = false;
+    state.selectBoxHelper.material.transparent = true;
+    state.selectBoxHelper.material.opacity = 0.9;
+    state.selectBoxHelper.renderOrder = 9999;
+    scene.add(state.selectBoxHelper);
+  }
+
+  // Auto-clear after 2.5 s (only when not in select/move mode)
+  if (!state.selectItemMode && !state.moveMode) {
+    setTimeout(clearHighlight, 2500);
+  }
 }
 
 // ─── Scene management ─────────────────────────────────────────────────────────
@@ -2974,6 +3529,7 @@ function detachWorldGizmo() {
   controls.enabled = true;
   el.worldGizmoPanel.classList.add('hidden');
   el.worldGizmoTarget.textContent = 'Select a main GLB or accessory to enable world-space controls.';
+  updateSceneToolsUI();
 }
 
 function loadTransformFromItem(item) {
@@ -3129,6 +3685,7 @@ function renderAttachedList() {
     </div>
     <div style="display:flex;gap:.4rem;flex-direction:column;">
       <button type="button" data-edit="${i}" style="font-size:.78rem;padding:.35rem .6rem;">Edit</button>
+      <button type="button" data-moveto="${i}" style="font-size:.78rem;padding:.35rem .6rem;background:#00cc00;">Move To</button>
       <button type="button" data-rm="${i}" style="font-size:.78rem;padding:.35rem .6rem;color:var(--color-error);">✕</button>
     </div>`;
     el.attachedList.appendChild(d);
@@ -3140,6 +3697,9 @@ function renderAttachedList() {
   }));
   el.attachedList.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{
     const item=state.attachedItems[+b.dataset.rm]; if (item) removeItemById(item.id);
+  }));
+  el.attachedList.querySelectorAll('[data-moveto]').forEach(b=>b.addEventListener('click',()=>{
+    const item = state.attachedItems[+b.dataset.moveto]; if (!item) return; startMoveToMode(item);
   }));
 }
 
@@ -3437,23 +3997,12 @@ if (camApplyBtn) {
 
 let sessionSaveTimer = null;
 function autoSaveSession() {
-  // Only silently overwrite if the user has already explicitly saved a session.
-  // Never create new sessions automatically.
-  // If we're restoring a session programmatically, skip autosave to avoid
-  // accidentally overwriting sessions on the server.
-  if (state.restoringSession) return;
-  // Respect user preference to disable autosave entirely
-  if (!state.autoSaveEnabled) return;
-  if (state.lastSavedSessionId === null || state.lastSavedSessionId === undefined) return;
-  if (sessionSaveTimer) clearTimeout(sessionSaveTimer);
-  sessionSaveTimer = setTimeout(async () => {
-    const name = state.lastLoadedGlbFile?.name.replace(/\.glb$/i, '') || 'session';
-    await saveSessionAccessories(name, 'overwrite', state.lastSavedSessionId);
-  }, 800); // debounce 800ms
+  // Autosave disabled by user request — no-op.
+  return;
 }
 
 // kept for call-site compatibility
-function scheduleSessionAccessoriesSave() { autoSaveSession(); }
+function scheduleSessionAccessoriesSave() { /* autosave disabled */ }
 
 
 el.loadSessionBtn.addEventListener('click', async () => {
@@ -3772,6 +4321,41 @@ async function doLoadSession(sessionId) {
 
 loadSpriteEffects();
 fetchTextureLibrary();
+
+// ─── Scene Tools Panel Events ─────────────────────────────────────────────────
+if (el.raycastSelectBtn) {
+  el.raycastSelectBtn.addEventListener('click', () => {
+    if (state.selectItemMode) {
+      stopSelectItemMode(true);
+    } else {
+      startSelectItemMode();
+    }
+  });
+}
+
+if (el.cloneItemBtn) {
+  el.cloneItemBtn.addEventListener('click', () => {
+    const activeItem = getActiveSceneItem();
+    if (activeItem) {
+      cloneSceneItem(activeItem);
+    }
+  });
+}
+
+if (el.moveToBtn) {
+  el.moveToBtn.addEventListener('click', () => {
+    if (state.moveMode) {
+      stopMoveToMode(true);
+    } else {
+      const activeItem = getActiveSceneItem();
+      if (activeItem) {
+        startMoveToMode(activeItem);
+      }
+    }
+  });
+}
+
+updateSceneToolsUI();
 
 // ─── Model Folder Browser ────────────────────────────────────────────────────
 el.browseModelBtn.addEventListener('click', async () => {
