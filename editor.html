@@ -569,6 +569,18 @@
           <button type="button" id="autosaveToggleBtn" style="font-size:.78rem;margin-left:.4rem;padding:.35rem .6rem;">Autosave: On</button>
         </div>
         <p id="worldGizmoTarget" class="world-gizmo-hint">Select a main GLB or accessory to enable world-space controls.</p>
+        <div class="world-gizmo-row" style="align-items:center;margin-top:.35rem;">
+          <span class="tiny" style="min-width:2.8rem;color:var(--color-text-muted);">Name</span>
+          <input type="text" id="itemNameInput" placeholder="display name" disabled style="flex:1;font-size:.82rem;padding:.3rem .45rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);color:var(--color-text);">
+        </div>
+        <div class="world-gizmo-row" style="align-items:center;margin-top:.35rem;">
+          <span class="tiny" style="min-width:2.8rem;color:var(--color-text-muted);">ID</span>
+          <input type="text" id="itemIdInput" placeholder="item id" disabled style="flex:1;font-size:.82rem;padding:.3rem .45rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);color:var(--color-text);font-family:monospace;">
+        </div>
+        <div class="world-gizmo-row" style="align-items:center;margin-top:.35rem;">
+          <span class="tiny" style="min-width:2.8rem;color:var(--color-text-muted);">Tags</span>
+          <input type="text" id="itemTagsInput" placeholder="npc, wine" disabled style="flex:1;font-size:.82rem;padding:.3rem .45rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);color:var(--color-text);">
+        </div>
         <div style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem;">
           <select id="wg_quickProp" style="padding:.2rem .35rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);font-size:.82rem;">
             <option value="pos">Pos</option>
@@ -816,6 +828,9 @@ const el = {
   gizmoSnapSelect: document.getElementById('gizmoSnapSelect'),
   gizmoLockScaleBtn: document.getElementById('gizmoLockScaleBtn'),
   worldGizmoTarget: document.getElementById('worldGizmoTarget'),
+  itemNameInput: document.getElementById('itemNameInput'),
+  itemIdInput: document.getElementById('itemIdInput'),
+  itemTagsInput: document.getElementById('itemTagsInput'),
   addSphereBtn: document.getElementById('addSphereBtn'),
   addCubeBtn: document.getElementById('addCubeBtn'),
   addCylinderBtn: document.getElementById('addCylinderBtn'),
@@ -1316,7 +1331,8 @@ async function cloneSceneItem(item) {
         modelPath: item.modelPath,
         buffer: arrayBuffer,
         transform: t,
-        primary: false
+        primary: false,
+        tag: item.tag ? [...item.tag] : null,
       });
       state.mainModels.push(clonedItem);
       renderMainModelList();
@@ -1335,9 +1351,10 @@ async function cloneSceneItem(item) {
         modelPath: item.modelPath,
         transform: t,
         record: null,
-        textureSlots: []
+        textureSlots: [],
       };
-      
+      if (item.tag?.length) clonedItem.tag = [...item.tag];
+
       // Clone texture slots and re-map to new material references
       if (item.textureSlots && item.textureSlots.length > 0) {
         for (const slot of item.textureSlots) {
@@ -1468,15 +1485,148 @@ function syncMainModelSection() {
   el.mainModelSection.classList.toggle('hidden', !hasMainModels);
 }
 
-function createMainModelItem({ object3d, fileName, modelPath = null, buffer = null, transform = null, primary = false }) {
+function normalizeTagArray(tag) {
+  if (!tag) return null;
+  if (Array.isArray(tag)) {
+    const arr = tag.map(t => String(t).trim()).filter(Boolean);
+    return arr.length ? arr : null;
+  }
+  if (typeof tag === 'string' && tag.trim()) return [tag.trim()];
+  return null;
+}
+
+function formatTagForInput(tag) {
+  const arr = normalizeTagArray(tag);
+  return arr ? arr.join(', ') : '';
+}
+
+function syncTagInputFromItem(item) {
+  if (!el.itemTagsInput) return;
+  el.itemTagsInput.disabled = !item;
+  el.itemTagsInput.value = item ? formatTagForInput(item.tag) : '';
+}
+
+function applyTagFromInput(item) {
+  if (!item || !el.itemTagsInput) return;
+  const parsed = normalizeTagArray(
+    el.itemTagsInput.value.split(/[,;]+/).map(s => s.trim()).filter(Boolean)
+  );
+  if (!parsed) delete item.tag;
+  else item.tag = parsed;
+}
+
+function findSceneItemById(id, excludeItem = null) {
+  if (!id) return null;
+  return [...state.mainModels, ...state.attachedItems].find(item => item !== excludeItem && item.id === id) || null;
+}
+
+function defaultItemDisplayName(item) {
+  return item?.fileName || item?.name || 'item';
+}
+
+function updateActiveItemLabels(item) {
+  if (!item || state.activeSceneItem !== item) return;
+  if (el.editingAccName) el.editingAccName.textContent = item.name;
+  if (el.worldGizmoTarget && !el.worldGizmoPanel?.classList.contains('hidden')) {
+    el.worldGizmoTarget.textContent = `Editing ${item.kind === 'main' ? 'main GLB' : 'accessory'}: ${item.name}`;
+  }
+}
+
+function syncItemNameInputFromItem(item) {
+  if (!el.itemNameInput) return;
+  el.itemNameInput.disabled = !item;
+  el.itemNameInput.value = item?.name || '';
+}
+
+function syncItemIdInputFromItem(item) {
+  if (!el.itemIdInput) return;
+  el.itemIdInput.disabled = !item;
+  el.itemIdInput.value = item?.id || '';
+}
+
+function applyItemNameValue(item, rawValue) {
+  if (!item) return true;
+  item.name = (rawValue || '').trim() || defaultItemDisplayName(item);
+  updateActiveItemLabels(item);
+  return true;
+}
+
+function applyItemNameFromInput(item) {
+  if (!item || !el.itemNameInput) return true;
+  return applyItemNameValue(item, el.itemNameInput.value);
+}
+
+function applyItemIdValue(item, rawValue, inputEl = null) {
+  if (!item) return true;
+  const raw = (rawValue || '').trim();
+  if (!raw) {
+    if (inputEl) inputEl.value = item.id;
+    else if (el.itemIdInput && state.activeSceneItem?.id === item.id) el.itemIdInput.value = item.id;
+    return true;
+  }
+  if (raw === item.id) return true;
+  const conflict = findSceneItemById(raw, item);
+  if (conflict) {
+    setStatus(`ID "${raw}" already used by ${conflict.name}.`, 'error');
+    if (inputEl) inputEl.value = item.id;
+    else if (el.itemIdInput && state.activeSceneItem?.id === item.id) el.itemIdInput.value = item.id;
+    return false;
+  }
+  item.id = raw;
+  if (el.itemIdInput && state.activeSceneItem === item) el.itemIdInput.value = item.id;
+  return true;
+}
+
+function applyItemIdFromInput(item) {
+  if (!item || !el.itemIdInput) return true;
+  return applyItemIdValue(item, el.itemIdInput.value);
+}
+
+function syncItemMetaInputsFromItem(item) {
+  syncItemNameInputFromItem(item);
+  syncItemIdInputFromItem(item);
+  syncTagInputFromItem(item);
+}
+
+function applyItemMetaFromInputs(item) {
+  if (!item) return true;
+  applyItemNameFromInput(item);
+  const idOk = applyItemIdFromInput(item);
+  applyTagFromInput(item);
+  return idOk;
+}
+
+function bindItemMetaRowInputs(row, item) {
+  const nameInput = row.querySelector('.model-name-input');
+  const idInput = row.querySelector('.model-id-input');
+  if (nameInput) {
+    const onNameChange = () => {
+      applyItemNameValue(item, nameInput.value);
+      nameInput.value = item.name;
+      refreshItemMetaLists(item);
+    };
+    nameInput.addEventListener('change', onNameChange);
+    nameInput.addEventListener('blur', onNameChange);
+  }
+  if (idInput) {
+    const onIdChange = () => {
+      if (applyItemIdValue(item, idInput.value, idInput)) refreshItemMetaLists(item);
+    };
+    idInput.addEventListener('change', onIdChange);
+    idInput.addEventListener('blur', onIdChange);
+  }
+}
+
+function createMainModelItem({ object3d, fileName, modelPath = null, buffer = null, transform = null, primary = false, tag = null, id = null }) {
   const t = transform || { px: 0, py: 0, pz: 0, rx: 0, ry: 0, rz: 0, sx: 1, sy: 1, sz: 1 };
   if (object3d) {
     object3d.position.set(t.px, t.py, t.pz);
     object3d.rotation.set((t.rx || 0) * Math.PI / 180, (t.ry || 0) * Math.PI / 180, (t.rz || 0) * Math.PI / 180);
     object3d.scale.set(t.sx ?? 1, t.sy ?? 1, t.sz ?? 1);
   }
+  const nextId = id && String(id).trim() ? String(id).trim() : uid();
   const item = {
-    id: uid(),
+    id: nextId,
     kind: 'main',
     primary: Boolean(primary),
     fileName,
@@ -1488,6 +1638,8 @@ function createMainModelItem({ object3d, fileName, modelPath = null, buffer = nu
     transform: { ...t },
     record: { ...t },
   };
+  const normalizedTag = normalizeTagArray(tag);
+  if (normalizedTag) item.tag = normalizedTag;
   if (object3d) syncItemTransformFromObject(item, { updateInputs: false });
   return item;
 }
@@ -1515,9 +1667,14 @@ function renderMainModelList() {
     } catch (err) { sizeLabel = ''; }
     row.innerHTML = `
       <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;">
-          <input type="text" class="model-name-input" value="${item.name}" data-model-id="${item.id}" style="font-size:.9rem;padding:.25rem .4rem;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-2);color:var(--color-text);flex:1;min-width:80px;max-width:200px;">
+        <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;margin-bottom:.25rem;">
+          <span class="tiny" style="min-width:2.4rem;color:var(--color-text-muted);">Name</span>
+          <input type="text" class="model-name-input" value="${item.name}" style="font-size:.85rem;padding:.25rem .4rem;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-2);color:var(--color-text);flex:1;min-width:80px;">
           <span class="node-type-badge">${item.primary ? 'Base' : 'Extra'}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;">
+          <span class="tiny" style="min-width:2.4rem;color:var(--color-text-muted);">ID</span>
+          <input type="text" class="model-id-input" value="${item.id}" style="font-size:.82rem;padding:.25rem .4rem;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-2);color:var(--color-text);font-family:monospace;flex:1;min-width:80px;">
         </div>
         <div style="font-size:.76rem;color:var(--color-text-muted);margin-top:.2rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pathLabel}</div>
         ${sizeLabel?`<div style="font-size:.72rem;color:var(--color-text-muted);margin-top:.2rem;">Size: ${sizeLabel}</div>`:''}
@@ -1529,15 +1686,8 @@ function renderMainModelList() {
         <button type="button" data-main-rm="${index}" class="btn-danger" style="font-size:.74rem;padding:.28rem .45rem;">Remove</button>
       </div>`;
     
-    // Handle name editing
-    const nameInput = row.querySelector('.model-name-input');
-    nameInput.addEventListener('change', () => {
-      item.name = nameInput.value.trim() || item.fileName;
-      nameInput.value = item.name;
-      el.editingAccName.textContent = item.name;
-      autoSaveSession();
-    });
-    
+    bindItemMetaRowInputs(row, item);
+
     row.querySelector('[data-main-edit]').addEventListener('click', () => {
       selectMainModelItem(item);
     });
@@ -1563,7 +1713,7 @@ function selectMainModelItem(item) {
   renderMainModelList();
 }
 
-async function addMainModelFromBuffer(arrayBuffer, fileName, { modelPath = null, transform = null, primary = false } = {}) {
+async function addMainModelFromBuffer(arrayBuffer, fileName, { modelPath = null, transform = null, primary = false, tag = null, id = null } = {}) {
   const gltf = await new Promise((resolve, reject) => loader.parse(arrayBuffer, '', resolve, reject));
   normalizeSceneMaterials(gltf.scene);
   const root = gltf.scene;
@@ -1576,6 +1726,8 @@ async function addMainModelFromBuffer(arrayBuffer, fileName, { modelPath = null,
     buffer: arrayBuffer,
     transform,
     primary,
+    tag,
+    id,
   });
   enableShadowCasting(root);
   state.mainModels.push(item);
@@ -3519,6 +3671,7 @@ function attachWorldGizmo(item) {
   worldTransformControl.visible = true;
   el.worldGizmoPanel.classList.remove('hidden');
   el.worldGizmoTarget.textContent = `Editing ${item.kind === 'main' ? 'main GLB' : 'accessory'}: ${item.name}`;
+  syncItemMetaInputsFromItem(item);
   applyWorldGizmoSnap();
 }
 
@@ -3529,7 +3682,46 @@ function detachWorldGizmo() {
   controls.enabled = true;
   el.worldGizmoPanel.classList.add('hidden');
   el.worldGizmoTarget.textContent = 'Select a main GLB or accessory to enable world-space controls.';
+  syncItemMetaInputsFromItem(null);
   updateSceneToolsUI();
+}
+
+function refreshItemMetaLists(item) {
+  if (!item) return;
+  if (item.kind === 'main') renderMainModelList();
+  else renderAttachedList();
+}
+
+if (el.itemNameInput) {
+  const onItemNameChange = () => {
+    const item = state.activeSceneItem;
+    if (!item) return;
+    applyItemNameFromInput(item);
+    refreshItemMetaLists(item);
+  };
+  el.itemNameInput.addEventListener('change', onItemNameChange);
+  el.itemNameInput.addEventListener('blur', onItemNameChange);
+}
+
+if (el.itemIdInput) {
+  const onItemIdChange = () => {
+    const item = state.activeSceneItem;
+    if (!item) return;
+    if (applyItemIdFromInput(item)) refreshItemMetaLists(item);
+  };
+  el.itemIdInput.addEventListener('change', onItemIdChange);
+  el.itemIdInput.addEventListener('blur', onItemIdChange);
+}
+
+if (el.itemTagsInput) {
+  const onTagInputChange = () => {
+    const item = state.activeSceneItem;
+    if (!item) return;
+    applyTagFromInput(item);
+    refreshItemMetaLists(item);
+  };
+  el.itemTagsInput.addEventListener('change', onTagInputChange);
+  el.itemTagsInput.addEventListener('blur', onTagInputChange);
 }
 
 function loadTransformFromItem(item) {
@@ -3743,13 +3935,17 @@ el.addCubeBtn.addEventListener('click', () => createPrimitiveGeometry('cube'));
 el.addCylinderBtn.addEventListener('click', () => createPrimitiveGeometry('cylinder'));
 el.addConeBtn.addEventListener('click', () => createPrimitiveGeometry('cone'));
 el.printMainGlbJsonBtn.addEventListener('click', () => {
-  const mainGlbArray = state.mainModels.map(item => ({
-    id: item.id,
-    name: item.name,
-    path: item.modelPath || null,
-    primary: Boolean(item.primary),
-    transform: { ...item.transform },
-  }));
+  const mainGlbArray = state.mainModels.map(item => {
+    const entry = {
+      id: item.id,
+      name: item.name,
+      path: item.modelPath || null,
+      primary: Boolean(item.primary),
+      transform: { ...item.transform },
+    };
+    if (item.tag?.length) entry.tag = [...item.tag];
+    return entry;
+  });
   console.log('Main GLB scene array:', mainGlbArray);
   console.log(JSON.stringify(mainGlbArray, null, 2));
   setStatus(`Logged ${mainGlbArray.length} main GLBs to console.`, 'ok');
@@ -3776,8 +3972,17 @@ if (el.exportSceneJsonBtn) {
   if (cancelBtn) cancelBtn.onclick = () => overlay.remove();
 
   const buildPayload = (promptText) => {
-    const mainGlbs = state.mainModels.map(item => ({ id: item.id, name: item.name, path: item.modelPath || null, primary: Boolean(item.primary), transform: { ...item.transform } }));
-    const accessories = state.attachedItems.map(item => ({ id: item.id, name: item.name, nodeName: item.nodeName || null, kind: item.kind || 'accessory', transform: { ...(item.record || item.transform) }, modelPath: item.modelPath || null }));
+    if (state.activeSceneItem) applyItemMetaFromInputs(state.activeSceneItem);
+    const mainGlbs = state.mainModels.map(item => {
+      const entry = { id: item.id, name: item.name, path: item.modelPath || null, primary: Boolean(item.primary), transform: { ...item.transform } };
+      if (item.tag?.length) entry.tag = [...item.tag];
+      return entry;
+    });
+    const accessories = state.attachedItems.map(item => {
+      const entry = { id: item.id, name: item.name, nodeName: item.nodeName || null, kind: item.kind || 'accessory', transform: { ...(item.record || item.transform) }, modelPath: item.modelPath || null };
+      if (item.tag?.length) entry.tag = [...item.tag];
+      return entry;
+    });
     const cam = { position: camera.position.toArray(), target: controls.target.toArray(), fov: camera.fov, near: camera.near, far: camera.far, zoom: camera.zoom || 1 };
     return { prompt: promptText || '', metadata: { exportedAt: Date.now(), worldTargetSize: state.worldTargetSize, autoNormalizeMainModels: !!state.autoNormalizeMainModels }, camera: cam, mainGlbs, accessories };
   };
@@ -3820,6 +4025,7 @@ async function saveSessionAccessories(sessionName = null, mode = 'new', overwrit
     setStatus('Load a main GLB first before saving.', 'error');
     return;
   }
+  if (state.activeSceneItem) applyItemMetaFromInputs(state.activeSceneItem);
 
   const name = sessionName || (state.mainModels[0]?.name?.replace(/\.glb$/i, '') || 'session') + '_' + Date.now();
   
@@ -3836,14 +4042,18 @@ async function saveSessionAccessories(sessionName = null, mode = 'new', overwrit
     far: camera.far
   };
   
-  const mainGlbs = state.mainModels.map(item => ({
-    id: item.id,
-    name: item.name,
-    path: item.modelPath || null,
-    primary: Boolean(item.primary),
-    transform: { ...item.transform },
-    buffer: (!item.modelPath && item.arrayBuffer) ? Array.from(new Uint8Array(item.arrayBuffer)) : null,
-  }));
+  const mainGlbs = state.mainModels.map(item => {
+    const entry = {
+      id: item.id,
+      name: item.name,
+      path: item.modelPath || null,
+      primary: Boolean(item.primary),
+      transform: { ...item.transform },
+      buffer: (!item.modelPath && item.arrayBuffer) ? Array.from(new Uint8Array(item.arrayBuffer)) : null,
+    };
+    if (item.tag?.length) entry.tag = [...item.tag];
+    return entry;
+  });
   const mainGlb = mainGlbs[0] || null;
   
   const accessories = await Promise.all(state.attachedItems.map(async item => {
@@ -3857,6 +4067,7 @@ async function saveSessionAccessories(sessionName = null, mode = 'new', overwrit
       buffer: (!item.modelPath && item.arrayBuffer) ? Array.from(new Uint8Array(item.arrayBuffer)) : null,
       textures: [] // 新增：保存纹理数据
     };
+    if (item.tag?.length) accData.tag = [...item.tag];
     
     // 保存纹理数据
     if (item.textureSlots && item.textureSlots.length > 0) {
@@ -4164,6 +4375,10 @@ async function doLoadSession(sessionId) {
     if (state.mainModels[0]) {
       state.mainModels[0].modelPath = resolvedPath || state.mainModels[0].modelPath || null;
       state.mainModels[0].arrayBuffer = mainBuf;
+      if (primaryMainEntry?.id) state.mainModels[0].id = primaryMainEntry.id;
+      const primaryTag = normalizeTagArray(primaryMainEntry?.tag);
+      if (primaryTag) state.mainModels[0].tag = primaryTag;
+      else delete state.mainModels[0].tag;
     }
     // 恢复camera设置
     try {
@@ -4240,6 +4455,8 @@ async function doLoadSession(sessionId) {
         modelPath: extraPath,
         transform: extraMainEntry.transform || null,
         primary: false,
+        tag: extraMainEntry.tag || null,
+        id: extraMainEntry.id || null,
       });
       if (extraMainEntry.transform) {
         loadTransformFromItem(extraItem);
@@ -4299,7 +4516,13 @@ async function doLoadSession(sessionId) {
       await attachAccessory(file, nodeEntry.obj, accData.transform, accPath);
       const item = state.attachedItems[state.attachedItems.length - 1];
       if (item && accData.record) item.record = { ...accData.record };
-      
+      if (item) {
+        if (accData.id) item.id = accData.id;
+        const accTag = normalizeTagArray(accData.tag);
+        if (accTag) item.tag = accTag;
+        else delete item.tag;
+      }
+
       // ✨ 恢复纹理数据
       if (item && accData.textures && accData.textures.length > 0) {
         await restoreAccessoryTextures(item, accData.textures);
