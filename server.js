@@ -311,7 +311,7 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
       try {
         const payload = JSON.parse(body);
-        const { name, mainGlb, mainGlbs, accessories, mode } = payload;
+        const { name, mainGlb, mainGlbs, accessories, mode, cameraData } = payload;
         // mode: 'new' or 'overwrite'
         // if overwrite, payload.overwriteId should be set
 
@@ -330,6 +330,7 @@ const server = http.createServer((req, res) => {
           mainGlb: normalizedMainGlbs[0] || mainGlb || null,
           mainGlbs: normalizedMainGlbs,
           accessories: normalizedAccessories,
+          cameraData: cameraData || null,
         };
 
         if (mode === 'overwrite' && payload.overwriteId !== undefined) {

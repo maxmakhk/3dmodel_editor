@@ -525,10 +525,7 @@
   <main class="viewer-wrap">
     <div id="viewer" aria-label="3D viewer"></div>
     <div class="viewer-overlay">
-      <div class="viewer-card">
-        <p><strong>Left-drag</strong> to orbit · <strong>Right-drag</strong> to pan · <strong>Scroll</strong> to zoom</p>
-        <p class="muted">Preview updates live when you replace textures or attach accessories.</p>
-      </div>
+
       <div id="worldGizmoPanel" class="viewer-card world-gizmo-card hidden">
         <p class="section-label" style="color:var(--color-primary);">World Gizmo</p>
         <div class="world-gizmo-row">
@@ -1439,6 +1436,8 @@ function clearSceneRoot() {
   state.externalAnimationClipCount = 0;
 }
 function fitCamera(root) {
+  // Skip auto-fit while restoring a session to avoid overwriting saved camera
+  if (state.restoringSession) return;
   const box = new THREE.Box3().setFromObject(root);
   if (box.isEmpty()) return;
   const size = box.getSize(new THREE.Vector3());
@@ -3414,6 +3413,8 @@ if (camApplyBtn) {
     } catch (err) {}
   };
   setInputsFromCamera();
+  // Update camera inputs live when the user moves the camera with OrbitControls
+  try { controls.addEventListener('change', () => { if (!state.restoringSession) setInputsFromCamera(); }); } catch (e) {}
   camApplyBtn.addEventListener('click', () => {
     try {
       const px = parseFloat(document.getElementById('camPosX').value) || 0;

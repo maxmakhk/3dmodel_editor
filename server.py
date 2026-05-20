@@ -292,6 +292,7 @@ def save_session():
         accessories = payload.get('accessories', [])
         mode = payload.get('mode', 'new')
         overwriteId = payload.get('overwriteId')
+        cameraData = payload.get('cameraData')
 
         if not name:
             return jsonify({'success': False, 'error': 'Session name required'}), 400
@@ -304,6 +305,7 @@ def save_session():
             'savedAt': int(datetime.now().timestamp() * 1000),
             'mainGlb': mainGlb,
             'accessories': normalized_accessories,
+            'cameraData': cameraData or None,
         }
 
         if mode == 'overwrite' and overwriteId is not None:
