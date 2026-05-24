@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CYBERPUNK REALM — MAP EDITOR</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap');
+
+:root {
+  --bg: #070b14;
+  --bg2: #0c1220;
+  --bg3: #111827;
+  --border: #1e3a5f;
+  --accent: #00d4ff;
+  --accent2: #ff4da6;
+  --accent3: #7fff00;
+  --accent4: #ffa500;
+  --text: #c8daf5;
+  --text-dim: #4a6a8a;
+  --npc-color: #ff4da6;
+  --obj-color: #ffa500;
+  --lm-color: #00d4ff;
+  --selected: #7fff00;
+  --panel-w: 280px;
+  --right-w: 320px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Exo 2', sans-serif;
+  font-size: 13px;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ─────────────────────────────── */
+header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--accent);
+  padding: 0 16px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(0,212,255,0.15);
+}
+header h1 {
+  font-family: 'Orbitron', monospace;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px var(--accent);
+  white-space: nowrap;
+}
+.header-sep { flex: 1; }
+.btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  padding: 5px 14px;
+  border: 1px solid currentColor;
+  background: transparent;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all .15s;
+  text-transform: uppercase;
+}
+.btn:hover { background: rgba(255,255,255,0.08); }
+.btn-accent { color: var(--accent); }
+.btn-accent:hover { background: rgba(0,212,255,0.12); box-shadow: 0 0 8px rgba(0,212,255,0.3); }
+.btn-pink { color: var(--accent2); }
+.btn-pink:hover { background: rgba(255,77,166,0.12); }
+.btn-green { color: var(--accent3); }
+.btn-green:hover { background: rgba(127,255,0,0.1); }
+.btn-orange { color: var(--accent4); }
+.btn-sm { padding: 3px 8px; font-size: 10px; }
+.btn-danger { color: #ff4444; }
+
+/* ── LAYOUT ──────────────────────────────── */
+.workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── LEFT PANEL ──────────────────────────── */
+.panel-left {
+  width: var(--panel-w);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.panel-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  padding: 10px 14px 6px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.map-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+}
+.map-item {
+  padding: 8px 10px;
+  margin-bottom: 3px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg3);
+}
+.map-item:hover { border-color: var(--accent); background: rgba(0,212,255,0.05); }
+.map-item.active { border-color: var(--accent3); background: rgba(127,255,0,0.06); }
+.map-item .map-icon { font-size: 16px; flex-shrink: 0; }
+.map-item .map-info { flex: 1; min-width: 0; }
+.map-item .map-name { font-weight: 600; font-size: 12px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-item .map-id { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-dim); }
+.map-item .map-counts { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+.map-item .del-btn { opacity: 0; color: #ff4444; font-size: 14px; cursor: pointer; flex-shrink: 0; }
+.map-item:hover .del-btn { opacity: 1; }
+
+/* ── CENTER CANVAS AREA ───────────────────── */
+.center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+.canvas-toolbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.canvas-toolbar .map-title-display {
+  font-family: 'Orbitron', monospace;
+  font-size: 12px;
+  color: var(--accent3);
+  letter-spacing: 1px;
+}
+.mode-btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text-dim);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all .1s;
+}
+.mode-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.1); }
+.canvas-wrap {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  cursor: crosshair;
+}
+#canvas {
+  display: block;
+  background: var(--bg);
+}
+.canvas-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  pointer-events: none;
+  background: rgba(7,11,20,0.8);
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+}
+
+/* ── RIGHT PANEL ─────────────────────────── */
+.panel-right {
+  width: var(--right-w);
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.right-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.rtab {
+  flex: 1;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--text-dim);
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+.rtab:hover { color: var(--text); }
+.rtab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.right-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+/* ── FORM ELEMENTS ───────────────────────── */
+.field-group { margin-bottom: 14px; }
+.field-group label {
+  display: block;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.field-group input, .field-group select, .field-group textarea {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  padding: 5px 8px;
+  border-radius: 2px;
+  transition: border-color .15s;
+}
+.field-group input:focus, .field-group select:focus, .field-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.field-group textarea { resize: vertical; min-height: 50px; }
+.field-row { display: flex; gap: 8px; }
+.field-row .field-group { flex: 1; }
+
+.section-hdr {
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+/* placement list */
+.placement-list { display: flex; flex-direction: column; gap: 4px; }
+.placement-item {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all .1s;
+}
+.placement-item:hover { border-color: var(--accent); }
+.placement-item.selected { border-color: var(--selected); background: rgba(127,255,0,0.05); }
+.placement-item .pi-icon { font-size: 14px; }
+.placement-item .pi-info { flex: 1; min-width: 0; }
+.placement-item .pi-id { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.placement-item .pi-pos { font-size: 10px; color: var(--text-dim); }
+.placement-item .pi-del { color: #ff4444; opacity: 0; cursor: pointer; font-size: 13px; }
+.placement-item:hover .pi-del { opacity: 1; }
+
+/* add placement btn */
+.add-placement-row {
+  display: flex; gap: 6px; margin-top: 8px;
+}
+.add-placement-row input {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+.add-placement-row input:focus { outline: none; border-color: var(--accent); }
+
+/* selected item editor */
+.item-editor {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.item-editor-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  color: var(--accent3);
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* modal */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 40px rgba(0,212,255,0.2);
+  padding: 24px;
+  width: 400px;
+  max-width: 90vw;
+}
+.modal h2 {
+  font-family: 'Orbitron', monospace;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+.modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+.hidden { display: none !important; }
+
+/* toast */
+.toast {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  background: var(--bg2);
+  border: 1px solid var(--accent3);
+  color: var(--accent3);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  padding: 8px 16px;
+  z-index: 2000;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all .2s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* coord display */
+.coord-display {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-left: auto;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <h1>⬡ CYBERPUNK REALM — MAP EDITOR</h1>
+  <div class="header-sep"></div>
+  <button class="btn btn-accent" onclick="loadFromStorage()">LOAD</button>
+  <button class="btn btn-green" onclick="saveToStorage()">SAVE</button>
+  <button class="btn btn-orange" onclick="exportJSON()">EXPORT JSON</button>
+  <button class="btn btn-pink" onclick="importJSON()">IMPORT JSON</button>
+</header>
+
+<div class="workspace">
+  <!-- LEFT: Map List -->
+  <div class="panel-left">
+    <div class="panel-title">
+      MAPS <span id="map-count" style="color:var(--accent)">0</span>
+      <button class="btn btn-accent btn-sm" onclick="addMap()">+ ADD</button>
+    </div>
+    <div class="map-list" id="map-list"></div>
+  </div>
+
+  <!-- CENTER: Canvas -->
+  <div class="center">
+    <div class="canvas-toolbar">
+      <span class="map-title-display" id="canvas-map-title">— SELECT A MAP —</span>
+      <div style="display:flex;gap:4px;margin-left:12px;">
+        <button class="mode-btn active" id="mode-select" onclick="setMode('select')">SELECT</button>
+        <button class="mode-btn" id="mode-npc" onclick="setMode('npc')" style="color:var(--npc-color)">+ NPC</button>
+        <button class="mode-btn" id="mode-obj" onclick="setMode('obj')" style="color:var(--obj-color)">+ OBJ</button>
+        <button class="mode-btn" id="mode-lm" onclick="setMode('lm')" style="color:var(--lm-color)">+ LM</button>
+      </div>
+      <div class="coord-display" id="coord-display">X: 0  Y: 0</div>
+    </div>
+    <div class="canvas-wrap" id="canvas-wrap">
+      <canvas id="canvas"></canvas>
+      <div class="canvas-hint" id="canvas-hint">Select a map to start editing</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Properties -->
+  <div class="panel-right">
+    <div class="right-tabs">
+      <button class="rtab active" id="tab-map" onclick="switchTab('map')">MAP</button>
+      <button class="rtab" id="tab-npc" onclick="switchTab('npc')" style="">NPC</button>
+      <button class="rtab" id="tab-obj" onclick="switchTab('obj')">OBJ</button>
+      <button class="rtab" id="tab-lm" onclick="switchTab('lm')">LANDMARK</button>
+    </div>
+    <div class="right-content" id="right-content">
+      <div style="color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:11px;text-align:center;margin-top:40px;">
+        Select a map to edit
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Map -->
+<div class="modal-overlay hidden" id="modal-addmap">
+  <div class="modal">
+    <h2>ADD NEW MAP</h2>
+    <div class="field-group"><label>Map ID</label><input id="new-map-id" placeholder="e.g. my-new-map"></div>
+    <div class="field-group"><label>Name</label><input id="new-map-name" placeholder="e.g. My New Map"></div>
+    <div class="field-group"><label>Description</label><input id="new-map-desc" placeholder="Short description..."></div>
+    <div class="field-row">
+      <div class="field-group"><label>Width</label><input id="new-map-w" type="number" value="1080"></div>
+      <div class="field-group"><label>Height</label><input id="new-map-h" type="number" value="1920"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal('modal-addmap')">CANCEL</button>
+      <button class="btn btn-accent" onclick="confirmAddMap()">CREATE</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Add Placement -->
+<div class="modal-overlay hidden" id="modal-addplacement">
+  <div class="modal">
+    <h2 id="addp-title">ADD PLACEMENT</h2>
+    <div class="field-group"><label>ID</label><input id="addp-id" placeholder="e.g. alice, atm_01"></div>
+    <div class="field-row">
+      <div class="field-group"><label>X</label><input id="addp-x" type="number" value="0"></div>
+      <div class="field-group"><label>Y / Z</label><input id="addp-y" type="number" value="0"></div>
+    </div>
+    <div class="field-group hidden" id="addp-lm-fields">
+      <label>Label</label><input id="addp-label" placeholder="Landmark label">
+      <label style="margin-top:6px;display:block">Target Map ID</label><input id="addp-target" placeholder="e.g. hub">
+      <label style="margin-top:6px;display:block">Icon</label><input id="addp-icon" placeholder="e.g. 🏛️" value="🏛️">
+    </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal('modal-addplacement')">CANCEL</button>
+      <button class="btn btn-accent" onclick="confirmAddPlacement()">ADD</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Export JSON -->
+<div class="modal-overlay hidden" id="modal-export">
+  <div class="modal" style="width:600px;">
+    <h2>EXPORT JSON</h2>
+    <textarea id="export-text" style="width:100%;height:300px;background:#0a0f1a;border:1px solid var(--border);color:#7fff00;font-family:'Share Tech Mono',monospace;font-size:11px;padding:10px;resize:none;"></textarea>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal('modal-export')">CLOSE</button>
+      <button class="btn btn-green" onclick="copyExport()">COPY ALL</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Import JSON -->
+<div class="modal-overlay hidden" id="modal-import">
+  <div class="modal" style="width:600px;">
+    <h2>IMPORT JSON</h2>
+    <p style="color:var(--text-dim);font-size:11px;margin-bottom:10px;">Paste your maps JSON (the full object with "maps" array, or just the array).</p>
+    <textarea id="import-text" style="width:100%;height:250px;background:#0a0f1a;border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:11px;padding:10px;resize:none;" placeholder='{"maps": [...]}' ></textarea>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal('modal-import')">CANCEL</button>
+      <button class="btn btn-pink" onclick="confirmImport()">IMPORT</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let state = { maps: [] };
+let selectedMapId = null;
+let selectedItemType = null; // 'npc'|'obj'|'lm'
+let selectedItemIdx = null;
+let activeTab = 'map';
+let editMode = 'select'; // 'select'|'npc'|'obj'|'lm'
+
+// Canvas
+let canvas, ctx, canvasWrap;
+let camX = 0, camY = 0, camZoom = 0.3;
+let isDragging = false, dragItemType = null, dragItemIdx = null;
+let lastMouse = { x: 0, y: 0 };
+let pendingPlacement = null; // type being added via click
+
+const CANVAS_SIZE = { w: 1080, h: 1920 };
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+window.onload = () => {
+  canvas = document.getElementById('canvas');
+  ctx = canvas.getContext('2d');
+  canvasWrap = document.getElementById('canvas-wrap');
+
+  setupCanvas();
+  window.addEventListener('resize', setupCanvas);
+
+  // Try loading from storage
+  const saved = localStorage.getItem('cybermap_editor');
+  if (saved) {
+    try { state = JSON.parse(saved); } catch(e) {}
+  } else {
+    // load initial data
+    state = { maps: getInitialData() };
+  }
+
+  renderMapList();
+  if (state.maps.length > 0) selectMap(state.maps[0].id);
+};
+
+function getInitialData() {
+  return [{"id":"hub","view":"panorama","lighting":"brightroom","name":"Central District","panoramaCameraHeight":120,"panoramaBackgroundOffsetY":0,"description":"The center of Cyberpunk Realm where all districts connect.","background":"assets/backgrounds/centre-district-hub-panorama.png","musicPath":"assets/music/cyberpunkrealm/hightech.mp3","width":1080,"height":1920,"npcSize":0.3,"landmarks":[{"id":"lm_north_district","label":"North District","x":0,"y":-700,"rot":360,"targetMapId":"north-district","icon":"⬆️","unlockConditions":{}},{"id":"lm_south_district","label":"South District","x":0,"y":700,"rot":360,"targetMapId":"south-district","icon":"⬇️","unlockConditions":{}},{"id":"lm_west_district","label":"West District","x":-400,"y":0,"targetMapId":"west-district","icon":"⬅️","unlockConditions":{}},{"id":"lm_east_district","label":"East District","x":400,"y":0,"targetMapId":"east-district","icon":"➡️","unlockConditions":{}}],"npcPlacements":[{"npcId":"alice","x":263.79896284747343,"z":-195.17382377410058,"rot":"camera","rX":-0.42,"rY":0.28,"scale":0.3,"animation":"NlaTrack.002"}],"objectPlacements":[{"objectId":"atm_01","x":-324.4803497075702,"y":-252.94309744519535,"rot":360,"scale":0.25}]},{"id":"north-district","view":"panorama","lighting":"brightroom","name":"North District","panoramaCameraHeight":120,"panoramaBackgroundOffsetY":0,"description":"A clean high-ground zone with medical and research facilities.","background":"assets/backgrounds/north-district-clinic-panorama.png","musicPath":"assets/music/cyberpunkrealm/hightech-2.mp3","width":1080,"height":1920,"npcSize":0.3,"landmarks":[{"id":"lm_back_hub_from_north","label":"Back to Center","x":0,"y":-700,"rot":360,"targetMapId":"hub","icon":"🏛️","unlockConditions":{}},{"id":"lm_clinic","label":"Clinic","x":-320,"y":-220,"rot":360,"targetMapId":"clinic","icon":"🏥","unlockConditions":{}},{"id":"lm_laboratory","label":"Laboratory","x":192,"y":310,"targetMapId":"laboratory","icon":"🧪","unlockConditions":{}}],"npcPlacements":[],"objectPlacements":[{"objectId":"decode_terminal_01","x":181.0474612276933,"y":-88.6289796682172,"rot":360,"scale":0.22,"unlockConditions":{"hasDynamicMiniapp":true}},{"objectId":"decode_terminal_02","x":320,"y":430,"rot":360,"scale":0.22,"unlockConditions":{"hasDynamicMiniapp":true}}]},{"id":"south-district","view":"panorama","lighting":"brightroom","name":"South District","panoramaCameraHeight":120,"panoramaBackgroundOffsetY":0,"description":"A residential quarter with resting spaces and quiet living blocks.","background":"assets/backgrounds/south-district-apartment_panorama.png","musicPath":"assets/music/cyberpunkrealm/instrumental-1.mp3","width":1080,"height":1920,"npcSize":0.3,"landmarks":[{"id":"lm_back_hub_from_south","label":"Back to Center","x":0,"y":-700,"rot":360,"targetMapId":"hub","icon":"🏛️","unlockConditions":{}},{"id":"lm_apartment","label":"Apartment","x":-248.2737613931192,"y":-339.74313050706394,"rot":360,"targetMapId":"apartment","icon":"🏢","unlockConditions":{}}],"npcPlacements":[]},{"id":"east-district","view":"panorama","lighting":"brightroom","name":"East District","panoramaCameraHeight":120,"panoramaBackgroundOffsetY":0,"description":"A lively entertainment side with nightlife and tech upgrades.","background":"assets/backgrounds/east-district-bar-panorama.png","musicPath":"assets/music/cyberpunkrealm/instrumental-2.mp3","width":1080,"height":1920,"npcSize":0.3,"landmarks":[{"id":"lm_back_hub_from_east","label":"Back to Center","x":0,"y":-700,"rot":360,"targetMapId":"hub","icon":"🏛️","unlockConditions":{}},{"id":"lm_after_bar","label":"After Bar","x":344.87240756873666,"y":-208.62886085658272,"rot":360,"targetMapId":"after-bar","icon":"🍸","unlockConditions":{}},{"id":"lm_upgrade_shop","label":"Upgrade Shop","x":-277.5296026755045,"y":381.61158967683673,"targetMapId":"upgrade-shop","icon":"⚙️","unlockConditions":{}}],"npcPlacements":[{"npcId":"elaine","x":167,"z":-41,"rot":"camera","scale":0.3,"animation":"NlaTrack.009"}]},{"id":"west-district","view":"panorama","lighting":"brightroom","name":"West District","panoramaCameraHeight":120,"panoramaBackgroundOffsetY":0,"description":"A controlled corporate area with hidden shelters.","background":"assets/backgrounds/west-district-gov-corp-panorama.png","musicPath":"assets/music/cyberpunkrealm/instrumental-3.mp3","width":1080,"height":1920,"npcSize":0.3,"landmarks":[{"id":"lm_back_hub_from_west","label":"Back to Center","x":0,"y":-700,"rot":360,"targetMapId":"hub","icon":"🏛️","unlockConditions":{}},{"id":"lm_safehouse","label":"Safehouse","x":-277,"y":-197,"rot":360,"targetMapId":"safehouse","icon":"🛡️","unlockConditions":{}}],"npcPlacements":[]},{"id":"clinic","view":"panorama","lighting":"brightroom","name":"Clinic","panoramaCameraHeight":300,"panoramaBackgroundOffsetY":300,"description":"A sterile med-bay for treatments and emergency recovery.","background":"assets/backgrounds/clinic-panorama.png","musicPath":"assets/music/cyberpunkrealm/instrumental-4.mp3","width":1080,"height":1920,"npcSize":0.8,"landmarks":[{"id":"lm_clinic_exit","label":"Return to North District","x":0,"y":-700,"rot":360,"targetMapId":"north-district","icon":"🏛️","unlockConditions":{}}],"npcPlacements":[{"npcId":"clara","x":-447,"z":-178,"scale":0.8,"rot":"camera","animation":"NlaTrack.001"}]},{"id":"laboratory","view":"panorama","lighting":"brightroom","name":"Laboratory","panoramaCameraHeight":300,"panoramaBackgroundOffsetY":300,"description":"A high-security research lab.","background":"assets/backgrounds/laboratory-panorama.png","musicPath":"assets/music/cyberpunkrealm/instrumental-5.mp3","width":1080,"height":1920,"npcSize":0.5,"landmarks":[{"id":"lm_laboratory_exit","label":"Return to North District","x":0,"y":-700,"rot":360,"targetMapId":"north-district","icon":"🏛️","unlockConditions":{}}],"npcPlacements":[]},{"id":"apartment","view":"panorama","lighting":"brightroom","name":"Apartment","panoramaCameraHeight":300,"panoramaBackgroundOffsetY":300,"description":"A compact residential complex.","background":"assets/backgrounds/apartment_panorama.png","musicPath":"assets/music/cyberpunkrealm/minimalist-6.mp3","width":1080,"height":1920,"npcSize":0.5,"landmarks":[{"id":"lm_apartment_exit","label":"Return to South District","x":0,"y":-700,"rot":360,"targetMapId":"south-district","icon":"🏛️","unlockConditions":{}}],"npcPlacements":[],"objectPlacements":[{"objectId":"quest_machine_01","x":-3535,"y":-4926,"rot":360,"scale":0.8},{"objectId":"shop_01","x":5718,"y":10907,"rot":360,"scale":0.8}]},{"id":"after-bar","view":"panorama","lighting":"darkroom","name":"After Bar","panoramaCameraHeight":300,"panoramaBackgroundOffsetY":300,"description":"A neon nightlife venue.","background":"assets/backgrounds/after-bar-panorama.png","musicPath":"assets/music/cyberpunkrealm/instrumental-2.mp3","width":1080,"height":1920,"npcSize":0.5,"landmarks":[{"id":"lm_after_bar_exit","label":"Return to East District","x":0,"y":-700,"rot":360,"targetMapId":"east-district","icon":"🏛️","unlockConditions":{}}],"npcPlacements":[]},{"id":"upgrade-shop","view":"panorama","lighting":"brightroom","name":"Upgrade Shop","panoramaCameraHeight":300,"panoramaBackgroundOffsetY":300,"description":"A hardware and enhancement workshop.","background":"assets/backgrounds/upgrade-shop-panorama.png","musicPath":"assets/music/cyberpunkrealm/instrumental-3.mp3","width":1080,"height":1920,"npcSize":0.5,"landmarks":[{"id":"lm_upgrade_shop_exit","label":"Return to East District","x":0,"y":-700,"rot":360,"targetMapId":"east-district","icon":"🏛️","unlockConditions":{}}],"npcPlacements":[]},{"id":"safehouse","view":"panorama","lighting":"brightroom","name":"Safehouse","panoramaCameraHeight":300,"panoramaBackgroundOffsetY":300,"description":"A discreet hideout.","background":"assets/backgrounds/safehouse-panorama.png","musicPath":"assets/music/cyberpunkrealm/hightech.mp3","width":1080,"height":1920,"npcSize":0.8,"landmarks":[{"id":"lm_safehouse_exit","label":"Return to West District","x":0,"y":-700,"rot":360,"targetMapId":"west-district","icon":"🏛️","unlockConditions":{}}],"npcPlacements":[]}];
+}
+
+// ═══════════════════════════════════════════════════
+// CANVAS SETUP
+// ═══════════════════════════════════════════════════
+function setupCanvas() {
+  const rect = canvasWrap.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  drawCanvas();
+}
+
+function worldToScreen(wx, wy) {
+  const map = getSelectedMap();
+  const mw = map ? map.width : CANVAS_SIZE.w;
+  const mh = map ? map.height : CANVAS_SIZE.h;
+  return {
+    x: canvas.width/2 + (wx - mw/2 + camX) * camZoom, // not really, simpler:
+    // we treat world coords directly
+  };
+}
+
+// NPC uses x,z (z = screen Y in panorama). Objects/landmarks use x,y.
+// We display: screenX = centerX + wx*zoom + camX, screenY = centerY + wy*zoom + camY
+function w2s(wx, wy) {
+  return {
+    x: canvas.width/2 + camX + wx * camZoom,
+    y: canvas.height/2 + camY + wy * camZoom
+  };
+}
+function s2w(sx, sy) {
+  return {
+    x: (sx - canvas.width/2 - camX) / camZoom,
+    y: (sy - canvas.height/2 - camY) / camZoom
+  };
+}
+
+// ═══════════════════════════════════════════════════
+// DRAW
+// ═══════════════════════════════════════════════════
+function drawCanvas() {
+  if (!canvas) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const map = getSelectedMap();
+  if (!map) {
+    ctx.fillStyle = '#1a2535';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = '#2a3f5f';
+    ctx.font = '14px Share Tech Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('SELECT A MAP', canvas.width/2, canvas.height/2);
+    return;
+  }
+
+  // Background grid
+  ctx.fillStyle = '#080d16';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  drawGrid();
+
+  // Map boundary
+  const mw = map.width, mh = map.height;
+  const tl = w2s(-mw/2, -mh/2);
+  const br = w2s(mw/2, mh/2);
+  ctx.strokeStyle = 'rgba(30,58,95,0.8)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5,5]);
+  ctx.strokeRect(tl.x, tl.y, br.x-tl.x, br.y-tl.y);
+  ctx.setLineDash([]);
+
+  // Map label
+  ctx.fillStyle = 'rgba(30,58,95,0.4)';
+  ctx.font = `bold ${Math.max(10, 24*camZoom)}px Orbitron, monospace`;
+  ctx.textAlign = 'center';
+  const ctr = w2s(0,0);
+  ctx.fillText(map.name.toUpperCase(), ctr.x, ctr.y);
+
+  // Center cross
+  ctx.strokeStyle = 'rgba(0,212,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(ctr.x - 20, ctr.y); ctx.lineTo(ctr.x + 20, ctr.y);
+  ctx.moveTo(ctr.x, ctr.y - 20); ctx.lineTo(ctr.x, ctr.y + 20);
+  ctx.stroke();
+
+  // Draw placements
+  const landmarks = map.landmarks || [];
+  const npcs = map.npcPlacements || [];
+  const objects = map.objectPlacements || [];
+
+  landmarks.forEach((lm, i) => {
+    const p = w2s(lm.x || 0, lm.y || 0);
+    const sel = selectedItemType === 'lm' && selectedItemIdx === i;
+    const rot = (lm.rot !== undefined && lm.rot !== 360) ? lm.rot : null;
+    drawPlacementDot(p.x, p.y, '#00d4ff', sel, lm.icon || '📍', lm.label || lm.id, 'LM', rot, null, null);
+  });
+
+  objects.forEach((obj, i) => {
+    const p = w2s(obj.x || 0, obj.y || 0);
+    const sel = selectedItemType === 'obj' && selectedItemIdx === i;
+    const rot = (obj.rot !== undefined && obj.rot !== 360) ? obj.rot : null;
+    drawPlacementDot(p.x, p.y, '#ffa500', sel, '📦', obj.objectId || '?', 'OBJ', rot, null, null);
+  });
+
+  npcs.forEach((npc, i) => {
+    const p = w2s(npc.x || 0, npc.z || 0);
+    const sel = selectedItemType === 'npc' && selectedItemIdx === i;
+    const rotVal = npc.rot === 'camera' ? 'camera' : (npc.rot !== undefined && npc.rot !== 360 ? npc.rot : null);
+    drawPlacementDot(p.x, p.y, '#ff4da6', sel, '🧑', npc.npcId || '?', 'NPC', rotVal, npc.rY, npc.rX);
+  });
+
+  // Mode cursor hint
+  if (editMode !== 'select') {
+    const colors = { npc:'#ff4da6', obj:'#ffa500', lm:'#00d4ff' };
+    ctx.fillStyle = colors[editMode] || '#fff';
+    ctx.font = '11px Share Tech Mono, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`CLICK TO PLACE ${editMode.toUpperCase()}`, 10, canvas.height - 10);
+  }
+}
+
+function drawGrid() {
+  const step = Math.max(20, 100) * camZoom;
+  ctx.strokeStyle = 'rgba(20,40,70,0.5)';
+  ctx.lineWidth = 0.5;
+  const offX = (camX % step + step) % step + canvas.width/2 % step;
+  const offY = (camY % step + step) % step + canvas.height/2 % step;
+  for (let x = offX - step; x < canvas.width + step; x += step) {
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke();
+  }
+  for (let y = offY - step; y < canvas.height + step; y += step) {
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke();
+  }
+}
+
+// rot: null=no arrow | 'camera'=NPC facing cam driven by rY | number=degrees(0=up,90=right)
+// rY = NPC yaw in radians (horizontal look offset when rot='camera')
+// rX = NPC pitch in radians (vertical look, shown as tilt indicator)
+function drawPlacementDot(sx, sy, color, selected, icon, label, type, rot, rY, rX) {
+  const r = selected ? 10 : 7;
+
+  // ── Rotation arrow ──
+  if (rot !== null && rot !== undefined) {
+    ctx.save();
+    ctx.translate(sx, sy);
+    if (rot === 'camera') {
+      // rY: 0=facing camera(up on 2D), positive=right, negative=left
+      const yawRad = rY || 0;
+      drawRotArrow(ctx, r, yawRad, color, selected, true, rX || 0);
+    } else {
+      // degrees: 0=up, 90=right, 180=down, 270=left → canvas: subtract 90°
+      const rad = (parseFloat(rot) - 90) * Math.PI / 180;
+      drawRotArrow(ctx, r, rad, color, selected, false, 0);
+      // degree label
+      ctx.save();
+      ctx.rotate(rad);
+      ctx.fillStyle = color + 'bb';
+      ctx.font = '7px Share Tech Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(Math.round(parseFloat(rot))+'°', 0, -(r + 26));
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // ── Dot ──
+  ctx.shadowColor = color;
+  ctx.shadowBlur = selected ? 18 : 8;
+  ctx.beginPath();
+  ctx.arc(sx, sy, r, 0, Math.PI*2);
+  ctx.fillStyle = selected ? color : color + '70';
+  ctx.fill();
+  ctx.strokeStyle = selected ? '#fff' : color;
+  ctx.lineWidth = selected ? 2 : 1;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Selected: dashed halo + move cursor hint
+  if (selected) {
+    ctx.beginPath();
+    ctx.arc(sx, sy, r + 5, 0, Math.PI*2);
+    ctx.strokeStyle = color + '50';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // ── Type badge ──
+  const badgeY = sy - r - (rot !== null ? 34 : 11);
+  ctx.fillStyle = color;
+  ctx.font = '7px Share Tech Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(type, sx, badgeY);
+
+  // ── Label ──
+  ctx.fillStyle = selected ? '#fff' : color + 'cc';
+  ctx.font = `${Math.min(11, Math.max(8, 9*camZoom+8))}px Exo 2, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText(label, sx, sy + r + 14);
+}
+
+function drawRotArrow(ctx, dotRadius, angleRad, color, selected, isCam, pitchRad) {
+  const arrowLen = 20;
+  const headSize = 5;
+
+  ctx.save();
+  ctx.rotate(angleRad);
+
+  // Shaft
+  ctx.beginPath();
+  ctx.moveTo(0, -(dotRadius + 2));
+  ctx.lineTo(0, -(dotRadius + arrowLen));
+  ctx.strokeStyle = color + (selected ? 'ee' : '99');
+  ctx.lineWidth = selected ? 2 : 1.5;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = selected ? 10 : 4;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Arrowhead triangle
+  ctx.beginPath();
+  ctx.moveTo(0, -(dotRadius + arrowLen + headSize));
+  ctx.lineTo(-headSize, -(dotRadius + arrowLen));
+  ctx.lineTo(headSize, -(dotRadius + arrowLen));
+  ctx.closePath();
+  ctx.fillStyle = color + (selected ? 'ee' : '99');
+  ctx.shadowColor = color;
+  ctx.shadowBlur = selected ? 8 : 3;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  if (isCam) {
+    // Eye symbol at tip
+    const eyeY = -(dotRadius + arrowLen + headSize + 5);
+    ctx.beginPath();
+    ctx.arc(0, eyeY, 3.5, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 8;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Pitch tilt bar (small horizontal line showing rX)
+    if (pitchRad !== 0 && pitchRad !== undefined) {
+      const tiltX = Math.sin(pitchRad || 0) * 10;
+      ctx.beginPath();
+      ctx.moveTo(-8, eyeY);
+      ctx.lineTo(8, eyeY);
+      ctx.strokeStyle = color + '60';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Dot showing tilt position
+      ctx.beginPath();
+      ctx.arc(tiltX, eyeY, 2, 0, Math.PI*2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    // "CAM" label
+    ctx.fillStyle = color + 'bb';
+    ctx.font = '7px Share Tech Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('CAM', 0, eyeY - 7);
+  }
+
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════
+// CANVAS EVENTS
+// ═══════════════════════════════════════════════════
+let panStart = null;
+// drag state stores the item's world coords AT the moment mousedown fires
+let dragOrigWorld = null; // { wx, wy } world pos when drag started
+let dragMouseStart = null; // { mx, my } screen pos when drag started
+
+canvas.addEventListener('mousedown', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  if (editMode !== 'select') {
+    const world = s2w(mx, my);
+    openAddPlacementModal(editMode, world.x, world.y);
+    return;
+  }
+
+  const hit = hitTest(mx, my);
+  if (hit) {
+    selectItem(hit.type, hit.idx);
+    isDragging = true;
+    dragItemType = hit.type;
+    dragItemIdx = hit.idx;
+    dragMouseStart = { mx, my };
+    // Capture exact world position NOW
+    const map = getSelectedMap();
+    if (map) {
+      if (hit.type === 'npc') {
+        const n = map.npcPlacements[hit.idx];
+        dragOrigWorld = { wx: n.x || 0, wy: n.z || 0 };
+      } else if (hit.type === 'obj') {
+        const o = (map.objectPlacements||[])[hit.idx];
+        dragOrigWorld = { wx: o.x || 0, wy: o.y || 0 };
+      } else if (hit.type === 'lm') {
+        const l = (map.landmarks||[])[hit.idx];
+        dragOrigWorld = { wx: l.x || 0, wy: l.y || 0 };
+      }
+    }
+    canvas.style.cursor = 'grabbing';
+    return;
+  }
+
+  // Pan
+  panStart = { mx, my, cx: camX, cy: camY };
+  canvas.style.cursor = 'grabbing';
+});
+
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const world = s2w(mx, my);
+  document.getElementById('coord-display').textContent =
+    `X: ${Math.round(world.x)}  Y: ${Math.round(world.y)}`;
+
+  if (isDragging && dragItemType !== null && dragItemIdx !== null && dragOrigWorld) {
+    // Delta in world units from drag start
+    const dx = (mx - dragMouseStart.mx) / camZoom;
+    const dy = (my - dragMouseStart.my) / camZoom;
+    const newWx = dragOrigWorld.wx + dx;
+    const newWy = dragOrigWorld.wy + dy;
+    const map = getSelectedMap();
+    if (map) {
+      if (dragItemType === 'npc') {
+        const n = map.npcPlacements[dragItemIdx];
+        n.x = newWx; n.z = newWy;
+      } else if (dragItemType === 'obj') {
+        const o = (map.objectPlacements||[])[dragItemIdx];
+        o.x = newWx; o.y = newWy;
+      } else if (dragItemType === 'lm') {
+        const l = (map.landmarks||[])[dragItemIdx];
+        l.x = newWx; l.y = newWy;
+      }
+      drawCanvas();
+      // update right panel coords lightly without full re-render (perf)
+      updateCoordDisplay(dragItemType, dragItemIdx);
+    }
+    return;
+  }
+
+  if (panStart) {
+    camX = panStart.cx + (mx - panStart.mx);
+    camY = panStart.cy + (my - panStart.my);
+    drawCanvas();
+  }
+});
+
+canvas.addEventListener('mouseup', () => {
+  if (isDragging) {
+    isDragging = false;
+    dragItemType = null;
+    dragItemIdx = null;
+    dragOrigWorld = null;
+    dragMouseStart = null;
+    renderRightPanel(); // full refresh after drop
+    renderMapList();
+  }
+  panStart = null;
+  canvas.style.cursor = 'default';
+});
+
+canvas.addEventListener('mouseleave', () => {
+  if (isDragging) {
+    isDragging = false;
+    dragOrigWorld = null;
+    dragMouseStart = null;
+    renderRightPanel();
+    renderMapList();
+  }
+  panStart = null;
+});
+
+// Lightweight coord update during drag (avoids full re-render flicker)
+function updateCoordDisplay(type, idx) {
+  const map = getSelectedMap();
+  if (!map) return;
+  let item, xKey, yKey;
+  if (type === 'npc')      { item = map.npcPlacements[idx]; xKey='x'; yKey='z'; }
+  else if (type === 'obj') { item = (map.objectPlacements||[])[idx]; xKey='x'; yKey='y'; }
+  else if (type === 'lm')  { item = (map.landmarks||[])[idx]; xKey='x'; yKey='y'; }
+  if (!item) return;
+  // Update numeric inputs in right panel if visible
+  const inputs = document.querySelectorAll('.item-editor input[type=number]');
+  inputs.forEach(inp => {
+    if (inp.previousElementSibling?.textContent === xKey.toUpperCase() ||
+        inp.parentElement?.querySelector('label')?.textContent === xKey.toUpperCase())
+      inp.value = Math.round(item[xKey]*100)/100;
+    if (inp.parentElement?.querySelector('label')?.textContent === (type==='npc'?'Z (depth/Y)':'Y'))
+      inp.value = Math.round(item[yKey]*100)/100;
+  });
+}
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY > 0 ? 0.85 : 1.15;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  // Zoom toward mouse
+  camX = mx - (mx - camX) * factor;
+  camY = my - (my - camY) * factor;
+  camZoom *= factor;
+  camZoom = Math.max(0.05, Math.min(5, camZoom));
+  drawCanvas();
+}, { passive: false });
+
+function hitTest(mx, my) {
+  const map = getSelectedMap();
+  if (!map) return null;
+  const r = 14; // slightly larger hit area for ease of use
+  const lists = [
+    { type:'lm',  arr: map.landmarks||[],       gx: l=>l.x, gy: l=>l.y },
+    { type:'obj', arr: map.objectPlacements||[], gx: o=>o.x, gy: o=>o.y },
+    { type:'npc', arr: map.npcPlacements||[],   gx: n=>n.x, gy: n=>n.z },
+  ];
+  for (const { type, arr, gx, gy } of lists) {
+    for (let i = arr.length - 1; i >= 0; i--) {
+      const p = w2s(gx(arr[i]) || 0, gy(arr[i]) || 0);
+      const dx = mx - p.x, dy = my - p.y;
+      if (dx*dx + dy*dy < r*r) return { type, idx: i };
+    }
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════
+// MAP MANAGEMENT
+// ═══════════════════════════════════════════════════
+function getSelectedMap() {
+  return state.maps.find(m => m.id === selectedMapId) || null;
+}
+
+function selectMap(id) {
+  selectedMapId = id;
+  selectedItemType = null;
+  selectedItemIdx = null;
+  camX = 0; camY = 0; camZoom = 0.2;
+  drawCanvas();
+  renderMapList();
+  renderRightPanel();
+  document.getElementById('canvas-map-title').textContent = getSelectedMap()?.name || '—';
+  document.getElementById('canvas-hint').textContent = 'Scroll to zoom • Drag to pan • Drag dots to move • Click dot to select';
+}
+
+function renderMapList() {
+  const el = document.getElementById('map-list');
+  el.innerHTML = '';
+  document.getElementById('map-count').textContent = state.maps.length;
+  state.maps.forEach(map => {
+    const npcC = (map.npcPlacements||[]).length;
+    const objC = (map.objectPlacements||[]).length;
+    const lmC = (map.landmarks||[]).length;
+    const div = document.createElement('div');
+    div.className = 'map-item' + (map.id === selectedMapId ? ' active' : '');
+    div.innerHTML = `
+      <span class="map-icon">${getLightingIcon(map.lighting)}</span>
+      <div class="map-info">
+        <div class="map-name">${map.name}</div>
+        <div class="map-id">${map.id}</div>
+        <div class="map-counts"><span style="color:var(--npc-color)">NPC:${npcC}</span> <span style="color:var(--obj-color)">OBJ:${objC}</span> <span style="color:var(--lm-color)">LM:${lmC}</span></div>
+      </div>
+      <span class="del-btn" onclick="deleteMap('${map.id}',event)">✕</span>
+    `;
+    div.addEventListener('click', () => selectMap(map.id));
+    el.appendChild(div);
+  });
+}
+
+function getLightingIcon(l) {
+  if (l === 'darkroom') return '🌙';
+  return '☀️';
+}
+
+function addMap() {
+  document.getElementById('new-map-id').value = '';
+  document.getElementById('new-map-name').value = '';
+  document.getElementById('new-map-desc').value = '';
+  document.getElementById('new-map-w').value = '1080';
+  document.getElementById('new-map-h').value = '1920';
+  openModal('modal-addmap');
+}
+
+function confirmAddMap() {
+  const id = document.getElementById('new-map-id').value.trim();
+  const name = document.getElementById('new-map-name').value.trim();
+  if (!id || !name) { toast('ID and Name required'); return; }
+  if (state.maps.find(m => m.id === id)) { toast('ID already exists'); return; }
+  const newMap = {
+    id, name,
+    view: 'panorama',
+    lighting: 'brightroom',
+    description: document.getElementById('new-map-desc').value.trim(),
+    background: '',
+    musicPath: '',
+    width: parseInt(document.getElementById('new-map-w').value)||1080,
+    height: parseInt(document.getElementById('new-map-h').value)||1920,
+    npcSize: 0.5,
+    panoramaCameraHeight: 120,
+    panoramaBackgroundOffsetY: 0,
+    landmarks: [],
+    npcPlacements: [],
+    objectPlacements: []
+  };
+  state.maps.push(newMap);
+  closeModal('modal-addmap');
+  renderMapList();
+  selectMap(id);
+  toast('Map created');
+}
+
+function deleteMap(id, e) {
+  e.stopPropagation();
+  if (!confirm(`Delete map "${id}"?`)) return;
+  state.maps = state.maps.filter(m => m.id !== id);
+  if (selectedMapId === id) {
+    selectedMapId = state.maps[0]?.id || null;
+  }
+  renderMapList();
+  if (selectedMapId) selectMap(selectedMapId);
+  else drawCanvas();
+  toast('Map deleted');
+}
+
+// ═══════════════════════════════════════════════════
+// RIGHT PANEL
+// ═══════════════════════════════════════════════════
+function switchTab(tab) {
+  activeTab = tab;
+  ['map','npc','obj','lm'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+  });
+  renderRightPanel();
+}
+
+function renderRightPanel() {
+  const map = getSelectedMap();
+  const el = document.getElementById('right-content');
+  if (!map) {
+    el.innerHTML = `<div style="color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:11px;text-align:center;margin-top:40px;">Select a map to edit</div>`;
+    return;
+  }
+
+  if (activeTab === 'map') renderMapProps(map, el);
+  else if (activeTab === 'npc') renderPlacements('npc', map.npcPlacements||[], el);
+  else if (activeTab === 'obj') renderPlacements('obj', map.objectPlacements||[], el);
+  else if (activeTab === 'lm') renderPlacements('lm', map.landmarks||[], el);
+}
+
+function renderMapProps(map, el) {
+  el.innerHTML = `
+    <div class="section-hdr">BASIC INFO</div>
+    <div class="field-group"><label>MAP ID</label><input value="${map.id}" onchange="updateMap('id',this.value)"></div>
+    <div class="field-group"><label>NAME</label><input value="${esc(map.name)}" onchange="updateMap('name',this.value)"></div>
+    <div class="field-group"><label>DESCRIPTION</label><textarea onchange="updateMap('description',this.value)">${esc(map.description||'')}</textarea></div>
+    <div class="field-row">
+      <div class="field-group"><label>VIEW</label>
+        <select onchange="updateMap('view',this.value)">
+          <option value="panorama" ${map.view==='panorama'?'selected':''}>panorama</option>
+          <option value="topdown" ${map.view==='topdown'?'selected':''}>topdown</option>
+        </select>
+      </div>
+      <div class="field-group"><label>LIGHTING</label>
+        <select onchange="updateMap('lighting',this.value)">
+          <option value="brightroom" ${map.lighting==='brightroom'?'selected':''}>brightroom</option>
+          <option value="darkroom" ${map.lighting==='darkroom'?'selected':''}>darkroom</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label>WIDTH</label><input type="number" value="${map.width||1080}" onchange="updateMap('width',+this.value)"></div>
+      <div class="field-group"><label>HEIGHT</label><input type="number" value="${map.height||1920}" onchange="updateMap('height',+this.value)"></div>
+    </div>
+    <div class="section-hdr" style="margin-top:14px">CAMERA</div>
+    <div class="field-row">
+      <div class="field-group"><label>CAM HEIGHT</label><input type="number" value="${map.panoramaCameraHeight||0}" onchange="updateMap('panoramaCameraHeight',+this.value)"></div>
+      <div class="field-group"><label>BG OFFSET Y</label><input type="number" value="${map.panoramaBackgroundOffsetY||0}" onchange="updateMap('panoramaBackgroundOffsetY',+this.value)"></div>
+    </div>
+    <div class="field-group"><label>NPC SIZE</label><input type="number" step="0.1" value="${map.npcSize||0.5}" onchange="updateMap('npcSize',+this.value)"></div>
+    <div class="section-hdr" style="margin-top:14px">ASSETS</div>
+    <div class="field-group"><label>BACKGROUND PATH</label><input value="${esc(map.background||'')}" onchange="updateMap('background',this.value)"></div>
+    <div class="field-group"><label>MUSIC PATH</label><input value="${esc(map.musicPath||'')}" onchange="updateMap('musicPath',this.value)"></div>
+  `;
+}
+
+function updateMap(key, value) {
+  const map = getSelectedMap();
+  if (!map) return;
+  if (key === 'id') {
+    const oldId = map.id;
+    map.id = value;
+    selectedMapId = value;
+    renderMapList();
+  } else {
+    map[key] = value;
+  }
+  drawCanvas();
+  document.getElementById('canvas-map-title').textContent = map.name || map.id;
+  renderMapList();
+}
+
+// ─── PLACEMENT PANEL ─────────────────────────────
+function renderPlacements(type, arr, el) {
+  const colors = { npc:'var(--npc-color)', obj:'var(--obj-color)', lm:'var(--lm-color)' };
+  const icons = { npc:'🧑', obj:'📦', lm:'📍' };
+  const labels = { npc: n=>n.npcId||'?', obj: o=>o.objectId||'?', lm: l=>l.label||l.id||'?' };
+
+  let html = `<div class="section-hdr" style="color:${colors[type]}">${type.toUpperCase()} PLACEMENTS (${arr.length})</div>`;
+  html += `<div class="placement-list" id="plist-${type}"></div>`;
+  html += `<div style="margin-top:8px;"><button class="btn btn-sm" style="color:${colors[type]};width:100%" onclick="openAddPlacementModal('${type}')">+ ADD ${type.toUpperCase()}</button></div>`;
+
+  // Selected item editor
+  if (selectedItemType === type && selectedItemIdx !== null && arr[selectedItemIdx]) {
+    html += renderItemEditor(type, arr[selectedItemIdx]);
+  }
+
+  el.innerHTML = html;
+
+  // Populate list
+  const listEl = document.getElementById(`plist-${type}`);
+  arr.forEach((item, i) => {
+    const sel = selectedItemType === type && selectedItemIdx === i;
+    const px = type==='npc' ? (item.x||0) : (item.x||0);
+    const py = type==='npc' ? (item.z||0) : (item.y||0);
+    const div = document.createElement('div');
+    div.className = 'placement-item' + (sel ? ' selected' : '');
+    div.innerHTML = `
+      <span class="pi-icon">${icons[type]}</span>
+      <div class="pi-info">
+        <div class="pi-id" style="color:${colors[type]}">${labels[type](item)}</div>
+        <div class="pi-pos">x:${Math.round(px)} ${type==='npc'?'z':'y'}:${Math.round(py)}</div>
+      </div>
+      <span class="pi-del" onclick="deletePlacement('${type}',${i},event)">✕</span>
+    `;
+    div.addEventListener('click', () => selectItem(type, i));
+    listEl.appendChild(div);
+  });
+}
+
+function renderItemEditor(type, item) {
+  if (type === 'npc') return renderNpcEditor(item);
+  if (type === 'obj') return renderObjEditor(item);
+  if (type === 'lm') return renderLmEditor(item);
+  return '';
+}
+
+function renderNpcEditor(npc) {
+  return `
+    <div class="item-editor" style="margin-top:12px">
+      <div class="item-editor-title">✏ EDIT NPC <span style="color:var(--text-dim);font-size:9px">${esc(npc.npcId||'')}</span></div>
+      <div class="field-group"><label>NPC ID</label><input value="${esc(npc.npcId||'')}" onchange="updateSelected('npcId',this.value)"></div>
+      <div class="field-row">
+        <div class="field-group"><label>X (world)</label><input type="number" value="${round(npc.x)}" onchange="updateSelected('x',+this.value)"></div>
+        <div class="field-group"><label>Z (depth/Y)</label><input type="number" value="${round(npc.z)}" onchange="updateSelected('z',+this.value)"></div>
+      </div>
+      <div class="field-row">
+        <div class="field-group"><label>rX (look↑↓)</label><input type="number" step="0.01" value="${npc.rX||0}" onchange="updateSelected('rX',+this.value)"></div>
+        <div class="field-group"><label>rY (look←→)</label><input type="number" step="0.01" value="${npc.rY||0}" onchange="updateSelected('rY',+this.value)"></div>
+      </div>
+      <div class="field-row">
+        <div class="field-group"><label>SCALE</label><input type="number" step="0.05" value="${npc.scale||0.5}" onchange="updateSelected('scale',+this.value)"></div>
+        <div class="field-group"><label>ROT</label><input value="${esc(String(npc.rot||'camera'))}" onchange="updateSelected('rot',this.value==='camera'?'camera':+this.value)"></div>
+      </div>
+      <div class="field-group"><label>ANIMATION</label><input value="${esc(npc.animation||'')}" onchange="updateSelected('animation',this.value)"></div>
+    </div>`;
+}
+
+function renderObjEditor(obj) {
+  return `
+    <div class="item-editor" style="margin-top:12px">
+      <div class="item-editor-title">✏ EDIT OBJECT <span style="color:var(--text-dim);font-size:9px">${esc(obj.objectId||'')}</span></div>
+      <div class="field-group"><label>OBJECT ID</label><input value="${esc(obj.objectId||'')}" onchange="updateSelected('objectId',this.value)"></div>
+      <div class="field-row">
+        <div class="field-group"><label>X</label><input type="number" value="${round(obj.x)}" onchange="updateSelected('x',+this.value)"></div>
+        <div class="field-group"><label>Y</label><input type="number" value="${round(obj.y)}" onchange="updateSelected('y',+this.value)"></div>
+      </div>
+      <div class="field-row">
+        <div class="field-group"><label>SCALE</label><input type="number" step="0.05" value="${obj.scale||1}" onchange="updateSelected('scale',+this.value)"></div>
+        <div class="field-group"><label>ROT</label><input type="number" value="${obj.rot||360}" onchange="updateSelected('rot',+this.value)"></div>
+      </div>
+      ${renderUnlockEditor(obj)}
+    </div>`;
+}
+
+function renderLmEditor(lm) {
+  return `
+    <div class="item-editor" style="margin-top:12px">
+      <div class="item-editor-title">✏ EDIT LANDMARK <span style="color:var(--text-dim);font-size:9px">${esc(lm.id||'')}</span></div>
+      <div class="field-group"><label>ID</label><input value="${esc(lm.id||'')}" onchange="updateSelected('id',this.value)"></div>
+      <div class="field-group"><label>LABEL</label><input value="${esc(lm.label||'')}" onchange="updateSelected('label',this.value)"></div>
+      <div class="field-row">
+        <div class="field-group"><label>X</label><input type="number" value="${round(lm.x)}" onchange="updateSelected('x',+this.value)"></div>
+        <div class="field-group"><label>Y</label><input type="number" value="${round(lm.y)}" onchange="updateSelected('y',+this.value)"></div>
+      </div>
+      <div class="field-row">
+        <div class="field-group"><label>TARGET MAP ID</label><input value="${esc(lm.targetMapId||'')}" onchange="updateSelected('targetMapId',this.value)"></div>
+        <div class="field-group"><label>ICON</label><input value="${esc(lm.icon||'📍')}" onchange="updateSelected('icon',this.value)"></div>
+      </div>
+      <div class="field-group"><label>ROT</label><input type="number" value="${lm.rot||360}" onchange="updateSelected('rot',+this.value)"></div>
+    </div>`;
+}
+
+function renderUnlockEditor(item) {
+  const uc = item.unlockConditions || {};
+  const keys = Object.keys(uc);
+  let rows = keys.map(k => `
+    <div class="field-row" style="align-items:center">
+      <div class="field-group"><label>KEY</label><input value="${esc(k)}" style="font-size:10px" onchange="updateUnlockKey('${k}',this.value)"></div>
+      <div class="field-group"><label>VALUE</label><input value="${esc(String(uc[k]))}" style="font-size:10px" onchange="updateUnlockVal('${k}',this.value)"></div>
+      <button class="btn btn-sm btn-danger" style="margin-top:14px;flex-shrink:0" onclick="removeUnlockKey('${k}')">✕</button>
+    </div>`).join('');
+  return `<div class="section-hdr" style="margin-top:10px">UNLOCK CONDITIONS</div>${rows}
+    <button class="btn btn-sm btn-accent" onclick="addUnlockKey()">+ ADD CONDITION</button>`;
+}
+
+// ─── ITEM SELECTION ───────────────────────────────
+function selectItem(type, idx) {
+  selectedItemType = type;
+  selectedItemIdx = idx;
+  // Switch to appropriate tab
+  switchTab(type === 'npc' ? 'npc' : type === 'obj' ? 'obj' : 'lm');
+  drawCanvas();
+}
+
+function updateSelected(key, value) {
+  const map = getSelectedMap();
+  if (!map || selectedItemIdx === null) return;
+  let item;
+  if (selectedItemType === 'npc') item = map.npcPlacements[selectedItemIdx];
+  else if (selectedItemType === 'obj') item = map.objectPlacements[selectedItemIdx];
+  else if (selectedItemType === 'lm') item = map.landmarks[selectedItemIdx];
+  if (!item) return;
+  item[key] = value;
+  drawCanvas();
+  renderMapList();
+  renderRightPanel();
+}
+
+function updateUnlockKey(oldKey, newKey) {
+  const item = getSelectedItem();
+  if (!item) return;
+  const uc = item.unlockConditions || {};
+  const val = uc[oldKey];
+  delete uc[oldKey];
+  uc[newKey] = val;
+  item.unlockConditions = uc;
+  renderRightPanel();
+}
+function updateUnlockVal(key, val) {
+  const item = getSelectedItem();
+  if (!item) return;
+  const uc = item.unlockConditions || {};
+  // Try to parse bool/number
+  if (val === 'true') uc[key] = true;
+  else if (val === 'false') uc[key] = false;
+  else if (!isNaN(+val) && val !== '') uc[key] = +val;
+  else uc[key] = val;
+  item.unlockConditions = uc;
+}
+function addUnlockKey() {
+  const item = getSelectedItem();
+  if (!item) return;
+  if (!item.unlockConditions) item.unlockConditions = {};
+  item.unlockConditions['newKey'] = true;
+  renderRightPanel();
+}
+function removeUnlockKey(key) {
+  const item = getSelectedItem();
+  if (!item || !item.unlockConditions) return;
+  delete item.unlockConditions[key];
+  renderRightPanel();
+}
+function getSelectedItem() {
+  const map = getSelectedMap();
+  if (!map || selectedItemIdx === null) return null;
+  if (selectedItemType === 'npc') return map.npcPlacements[selectedItemIdx];
+  if (selectedItemType === 'obj') return (map.objectPlacements||[])[selectedItemIdx];
+  if (selectedItemType === 'lm') return (map.landmarks||[])[selectedItemIdx];
+  return null;
+}
+
+function deletePlacement(type, idx, e) {
+  e.stopPropagation();
+  const map = getSelectedMap();
+  if (!map) return;
+  if (type === 'npc') map.npcPlacements.splice(idx,1);
+  else if (type === 'obj') (map.objectPlacements||[]).splice(idx,1);
+  else if (type === 'lm') (map.landmarks||[]).splice(idx,1);
+  if (selectedItemType === type && selectedItemIdx === idx) {
+    selectedItemType = null; selectedItemIdx = null;
+  }
+  drawCanvas();
+  renderMapList();
+  renderRightPanel();
+}
+
+// ─── ADD PLACEMENT MODAL ──────────────────────────
+let pendingAddType = 'npc';
+let pendingAddCoords = null;
+
+function openAddPlacementModal(type, wx, wy) {
+  pendingAddType = type;
+  pendingAddCoords = wx !== undefined ? { x: Math.round(wx), y: Math.round(wy) } : { x: 0, y: 0 };
+  document.getElementById('addp-title').textContent = `ADD ${type.toUpperCase()}`;
+  document.getElementById('addp-id').value = '';
+  document.getElementById('addp-x').value = pendingAddCoords.x;
+  document.getElementById('addp-y').value = pendingAddCoords.y;
+  document.getElementById('addp-lm-fields').classList.toggle('hidden', type !== 'lm');
+  if (type === 'lm') {
+    document.getElementById('addp-label').value = '';
+    document.getElementById('addp-target').value = '';
+    document.getElementById('addp-icon').value = '🏛️';
+  }
+  openModal('modal-addplacement');
+  setMode('select');
+}
+
+function confirmAddPlacement() {
+  const map = getSelectedMap();
+  if (!map) return;
+  const id = document.getElementById('addp-id').value.trim();
+  if (!id) { toast('ID required'); return; }
+  const x = parseFloat(document.getElementById('addp-x').value)||0;
+  const y = parseFloat(document.getElementById('addp-y').value)||0;
+
+  if (pendingAddType === 'npc') {
+    if (!map.npcPlacements) map.npcPlacements = [];
+    map.npcPlacements.push({ npcId: id, x, z: y, rot:'camera', scale: 0.5, animation: '' });
+    selectItem('npc', map.npcPlacements.length-1);
+  } else if (pendingAddType === 'obj') {
+    if (!map.objectPlacements) map.objectPlacements = [];
+    map.objectPlacements.push({ objectId: id, x, y, rot:360, scale: 0.5 });
+    selectItem('obj', map.objectPlacements.length-1);
+  } else if (pendingAddType === 'lm') {
+    if (!map.landmarks) map.landmarks = [];
+    map.landmarks.push({
+      id, label: document.getElementById('addp-label').value||id,
+      x, y, rot:360,
+      targetMapId: document.getElementById('addp-target').value,
+      icon: document.getElementById('addp-icon').value||'🏛️',
+      unlockConditions: {}
+    });
+    selectItem('lm', map.landmarks.length-1);
+  }
+
+  closeModal('modal-addplacement');
+  drawCanvas();
+  renderMapList();
+  toast(`${pendingAddType.toUpperCase()} added`);
+}
+
+// ═══════════════════════════════════════════════════
+// MODE
+// ═══════════════════════════════════════════════════
+function setMode(mode) {
+  editMode = mode;
+  ['select','npc','obj','lm'].forEach(m => {
+    document.getElementById(`mode-${m}`)?.classList.toggle('active', m === mode);
+  });
+  canvas.style.cursor = mode === 'select' ? 'default' : 'crosshair';
+  const hints = {
+    select: 'Drag dots to move • Click to select • Scroll to zoom',
+    npc: 'Click anywhere to place NPC',
+    obj: 'Click anywhere to place Object',
+    lm: 'Click anywhere to place Landmark'
+  };
+  document.getElementById('canvas-hint').textContent = hints[mode] || '';
+}
+
+// ═══════════════════════════════════════════════════
+// SAVE / LOAD / EXPORT
+// ═══════════════════════════════════════════════════
+function saveToStorage() {
+  localStorage.setItem('cybermap_editor', JSON.stringify(state));
+  toast('Saved to localStorage');
+}
+
+function loadFromStorage() {
+  const saved = localStorage.getItem('cybermap_editor');
+  if (!saved) { toast('Nothing saved yet'); return; }
+  try {
+    state = JSON.parse(saved);
+    selectedMapId = null;
+    renderMapList();
+    if (state.maps.length) selectMap(state.maps[0].id);
+    toast('Loaded from localStorage');
+  } catch(e) { toast('Load failed: invalid data'); }
+}
+
+function exportJSON() {
+  const clean = JSON.parse(JSON.stringify(state));
+  // Remove _orig fields
+  clean.maps.forEach(map => {
+    (map.npcPlacements||[]).forEach(n => { delete n._origX; delete n._origZ; });
+    (map.objectPlacements||[]).forEach(o => { delete o._origX; delete o._origY; });
+    (map.landmarks||[]).forEach(l => { delete l._origX; delete l._origY; });
+  });
+  document.getElementById('export-text').value = JSON.stringify(clean, null, 2);
+  openModal('modal-export');
+}
+
+function copyExport() {
+  const txt = document.getElementById('export-text');
+  txt.select();
+  document.execCommand('copy');
+  toast('Copied to clipboard!');
+}
+
+function importJSON() {
+  document.getElementById('import-text').value = '';
+  openModal('modal-import');
+}
+
+function confirmImport() {
+  let raw = document.getElementById('import-text').value.trim();
+  try {
+    let parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) parsed = { maps: parsed };
+    if (!parsed.maps || !Array.isArray(parsed.maps)) throw new Error('Expected {maps:[...]}');
+    state = parsed;
+    selectedMapId = null;
+    closeModal('modal-import');
+    renderMapList();
+    if (state.maps.length) selectMap(state.maps[0].id);
+    toast('Imported successfully');
+  } catch(e) { toast('Import failed: ' + e.message); }
+}
+
+// ═══════════════════════════════════════════════════
+// MODAL UTILS
+// ═══════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.add('hidden'); });
+});
+
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = '⬡ ' + msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function round(v) { return Math.round((v||0) * 100) / 100; }
+</script>
+</body>
+</html>

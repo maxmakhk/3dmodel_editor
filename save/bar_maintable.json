@@ -1,0 +1,495 @@
+{
+  "name": "bar_maintable",
+  "savedAt": 1779629492185,
+  "mainGlb": {
+    "id": "g6i2hxkg098",
+    "name": "bar_maintable.glb",
+    "path": "/assets/items/bar_maintable.glb",
+    "primary": true,
+    "transform": {
+      "px": 0.4,
+      "py": 0,
+      "pz": 0,
+      "rx": 0,
+      "ry": 90,
+      "rz": 0,
+      "sx": 100,
+      "sy": 100,
+      "sz": 100
+    },
+    "buffer": null
+  },
+  "mainGlbs": [
+    {
+      "id": "g6i2hxkg098",
+      "name": "bar_maintable.glb",
+      "path": "/assets/items/bar_maintable.glb",
+      "primary": true,
+      "transform": {
+        "px": 0.4,
+        "py": 0,
+        "pz": 0,
+        "rx": 0,
+        "ry": 90,
+        "rz": 0,
+        "sx": 100,
+        "sy": 100,
+        "sz": 100
+      },
+      "buffer": null
+    },
+    {
+      "id": "bar_carbinet",
+      "name": "bar_carbinet.glb",
+      "path": "/assets/items/bar_carbinet.glb",
+      "primary": false,
+      "transform": {
+        "px": -70.3,
+        "py": -0.001,
+        "pz": 27.8,
+        "rx": 0,
+        "ry": 90,
+        "rz": 0,
+        "sx": 27.788889,
+        "sy": 27.788889,
+        "sz": 27.788889
+      },
+      "buffer": null
+    },
+    {
+      "id": "bl6ofk0li0b",
+      "name": "cyberWIne1.glb",
+      "path": "/assets/items/cyberWIne1.glb",
+      "primary": false,
+      "transform": {
+        "px": -63.81183,
+        "py": 34.552932,
+        "pz": -24.848913,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 4.628395,
+        "sy": 4.628395,
+        "sz": 4.628395
+      },
+      "buffer": null
+    },
+    {
+      "id": "bar_smalltable",
+      "name": "bar_smalltable.glb",
+      "path": "/assets/items/bar_smalltable.glb",
+      "primary": false,
+      "transform": {
+        "px": 106.631615,
+        "py": 19.167316,
+        "pz": 17.762544,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 0.6,
+        "sy": 0.6,
+        "sz": 0.6
+      },
+      "buffer": null
+    },
+    {
+      "id": "ys0pzlj8j88",
+      "name": "glass-beer1",
+      "path": "/assets/items/glass-beer1.glb",
+      "primary": false,
+      "transform": {
+        "px": -63.738836,
+        "py": 42.724425,
+        "pz": -34.9,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 37,
+        "sy": 37,
+        "sz": 37
+      },
+      "buffer": null,
+      "tag": [
+        "glass"
+      ]
+    },
+    {
+      "id": "bar_beertap",
+      "name": "bar_beertap.glb",
+      "path": "/assets/items/bar_beertap.glb",
+      "primary": false,
+      "transform": {
+        "px": 0.2,
+        "py": 0.763835,
+        "pz": 0,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 1,
+        "sy": 1,
+        "sz": 1
+      },
+      "buffer": null
+    },
+    {
+      "id": "glass-whisky",
+      "name": "glass-whisky",
+      "path": "/assets/items/glass-whisky.glb",
+      "primary": false,
+      "transform": {
+        "px": -90.179281,
+        "py": 80.061898,
+        "pz": -6.03685,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 9.811111,
+        "sy": 9.811111,
+        "sz": 9.811111
+      },
+      "buffer": null,
+      "tag": [
+        "glass"
+      ]
+    },
+    {
+      "id": "glass-beer1",
+      "name": "glass-beer1",
+      "path": "/assets/items/glass-beer1.glb",
+      "primary": false,
+      "transform": {
+        "px": -64.500424,
+        "py": 42.724424,
+        "pz": -20.729102,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 37,
+        "sy": 37,
+        "sz": 37
+      },
+      "buffer": null,
+      "tag": [
+        "glass"
+      ]
+    },
+    {
+      "id": "glass-beer2",
+      "name": "glass-beer2",
+      "path": "/assets/items/glass-beer2.glb",
+      "primary": false,
+      "transform": {
+        "px": -47.398853,
+        "py": 42.724415,
+        "pz": -13.740072,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 2.822222,
+        "sy": 2.822222,
+        "sz": 2.822222
+      },
+      "buffer": null,
+      "tag": [
+        "glass"
+      ]
+    },
+    {
+      "id": "c2qh5d5bjlq",
+      "name": "bar_smalltable.glb",
+      "path": "/assets/items/bar_smalltable.glb",
+      "primary": false,
+      "transform": {
+        "px": 94.159099,
+        "py": 19.167316,
+        "pz": -95.968672,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 0.6,
+        "sy": 0.6,
+        "sz": 0.6
+      },
+      "buffer": null
+    },
+    {
+      "id": "npcPosition1",
+      "name": "npcPosition1.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
+      "path": "Cylinder",
+      "primary": false,
+      "transform": {
+        "px": 13.371513,
+        "py": 3.591593,
+        "pz": 0.145062,
+        "rx": 0,
+        "ry": 180,
+        "rz": 0,
+        "sx": 7.185185,
+        "sy": 7.185185,
+        "sz": 7.185185
+      },
+      "buffer": null,
+      "tag": [
+        "npcPosition"
+      ]
+    },
+    {
+      "id": "npcPosition2",
+      "name": "npcPosition2.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
+      "path": "Cylinder",
+      "primary": false,
+      "transform": {
+        "px": 12.974721,
+        "py": 3.591593,
+        "pz": -23.703058,
+        "rx": 0,
+        "ry": 180,
+        "rz": 0,
+        "sx": 7.185185,
+        "sy": 7.185185,
+        "sz": 7.185185
+      },
+      "buffer": null,
+      "tag": [
+        "npcPosition"
+      ]
+    },
+    {
+      "id": "servePosition1",
+      "name": "servePosition1.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
+      "path": "Cylinder",
+      "primary": false,
+      "transform": {
+        "px": -7.446262,
+        "py": 32.391636,
+        "pz": -0.790253,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 6.082304,
+        "sy": 6.082304,
+        "sz": 6.082304
+      },
+      "buffer": null,
+      "tag": [
+        "servePosition"
+      ]
+    },
+    {
+      "id": "servePosition2",
+      "name": "servePosition2.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
+      "path": "Cylinder",
+      "primary": false,
+      "transform": {
+        "px": -6.713034,
+        "py": 32.391636,
+        "pz": -24.437447,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 6.082304,
+        "sy": 6.082304,
+        "sz": 6.082304
+      },
+      "buffer": null,
+      "tag": [
+        "servePosition"
+      ]
+    },
+    {
+      "id": "wine1",
+      "name": "wine1",
+      "path": "/assets/items/wine1.glb",
+      "primary": false,
+      "transform": {
+        "px": -65.036112,
+        "py": 35.86443,
+        "pz": -30.290582,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 6,
+        "sy": 6,
+        "sz": 6
+      },
+      "buffer": null
+    },
+    {
+      "id": "or2ibz5z47i",
+      "name": "wine2",
+      "path": "/assets/items/wine2.glb",
+      "primary": false,
+      "transform": {
+        "px": -63.008929,
+        "py": 35.84994,
+        "pz": -12.157302,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 6,
+        "sy": 6,
+        "sz": 6
+      },
+      "buffer": null
+    },
+    {
+      "id": "wine6",
+      "name": "wine6",
+      "path": "/assets/items/wine6.glb",
+      "primary": false,
+      "transform": {
+        "px": -62.642376,
+        "py": 34.678274,
+        "pz": -0.833096,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 4.766667,
+        "sy": 4.766667,
+        "sz": 4.766667
+      },
+      "buffer": null
+    },
+    {
+      "id": "wine4",
+      "name": "wine4",
+      "path": "/assets/items/wine4.glb",
+      "primary": false,
+      "transform": {
+        "px": -64.377625,
+        "py": 35.84994,
+        "pz": -17.794431,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 6,
+        "sy": 6,
+        "sz": 6
+      },
+      "buffer": null
+    },
+    {
+      "id": "wine5",
+      "name": "wine5",
+      "path": "/assets/items/wine5.glb",
+      "primary": false,
+      "transform": {
+        "px": -65.136703,
+        "py": 35.84994,
+        "pz": -6.297187,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 6,
+        "sy": 6,
+        "sz": 6
+      },
+      "buffer": null
+    },
+    {
+      "id": "bl6ofk0li0b",
+      "name": "cyberWIne1.glb",
+      "path": "/assets/items/cyberWIne1.glb",
+      "primary": false,
+      "transform": {
+        "px": -63.81183,
+        "py": 34.552932,
+        "pz": -24.848913,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 4.628395,
+        "sy": 4.628395,
+        "sz": 4.628395
+      },
+      "buffer": null
+    },
+    {
+      "id": "ys0pzlj8j88",
+      "name": "glass-beer1",
+      "path": "/assets/items/glass-beer1.glb",
+      "primary": false,
+      "transform": {
+        "px": -63.738836,
+        "py": 42.724425,
+        "pz": -28.873529,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 37,
+        "sy": 37,
+        "sz": 37
+      },
+      "buffer": null,
+      "tag": [
+        "glass"
+      ]
+    }
+  ],
+  "accessories": [],
+  "cameraData": {
+    "posX": -48.19471725985318,
+    "posY": 46.132825076907025,
+    "posZ": -2.0737543511432643,
+    "targetX": 48.28254554245623,
+    "targetY": 31.264340199630144,
+    "targetZ": -2.401216770855182,
+    "fov": 45,
+    "near": 0.01,
+    "far": 1000
+  },
+  "cameraPreset": [
+    {
+      "far": 1000,
+      "fov": 45,
+      "id": "preset_1779622822534",
+      "name": "front",
+      "near": 0.01,
+      "posX": -48.19471725985318,
+      "posY": 46.132825076907025,
+      "posZ": -2.0737543511432643,
+      "targetX": 48.28254554245623,
+      "targetY": 31.264340199630148,
+      "targetZ": -2.401216770855182
+    },
+    {
+      "far": 1000,
+      "fov": 45,
+      "id": "preset_1779622837242",
+      "name": "back",
+      "near": 0.01,
+      "posX": -31.51621145760798,
+      "posY": 40.718997121848574,
+      "posZ": 9.560082348418213,
+      "targetX": -109.21665347336891,
+      "targetY": 30.887941936093974,
+      "targetZ": -48.706829158009306
+    },
+    {
+      "far": 1000,
+      "fov": 45,
+      "id": "preset_1779622854222",
+      "name": "back2",
+      "near": 0.01,
+      "posX": -31.51621145760791,
+      "posY": 40.718997121848574,
+      "posZ": 9.56008234841812,
+      "targetX": -126.55901465320525,
+      "targetY": 30.887941936093966,
+      "targetZ": 29.54150438653738
+    },
+    {
+      "far": 1000,
+      "fov": 45,
+      "id": "preset_1779627603927",
+      "name": "topdown",
+      "near": 0.01,
+      "posX": -202.97158370977877,
+      "posY": 374.61170393256555,
+      "posZ": -461.709834776914,
+      "targetX": -49.84139023731994,
+      "targetY": 98.58516667120558,
+      "targetZ": 13.352743966378064
+    }
+  ]
+}

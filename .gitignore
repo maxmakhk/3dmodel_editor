@@ -1,2 +1,4 @@
 model/*
 .vscode/*
+assets/*
+.venv/

@@ -13,54 +13,107 @@ from datetime import datetime
 from flask import Flask, jsonify, request, send_file, send_from_directory
 from flask_cors import CORS
 
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+if hasattr(sys.stderr, 'reconfigure'):
+    try:
+        sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+
 app = Flask(__name__)
 CORS(app)
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 3000
 SCRIPT_DIR = Path(__file__).parent
 SAVE_FILE = SCRIPT_DIR / 'glb-save.json'
+SAVE_DIR = SCRIPT_DIR / 'save'
+TEXTURES_FILE = SAVE_DIR / 'textures.json'
 EDITOR_FILE = SCRIPT_DIR / 'editor.html'
+MODEL_DIR = SCRIPT_DIR / 'assets' / 'items'
 
 # ─────────────────────────────────────────────────────────────────────
 # Utilities
 # ─────────────────────────────────────────────────────────────────────
 
+import re
+
+def get_safe_session_filename(name):
+    safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', name).lower()
+    return f"{safe_name}.json"
+
 def load_sessions():
-    """Load sessions from glb-save.json"""
+    """Load sessions from save/ directory"""
     try:
-        if SAVE_FILE.exists():
+        if not SAVE_DIR.exists():
+            SAVE_DIR.mkdir(parents=True, exist_ok=True)
+
+        # Auto-rename bartender_save..json to bartender_save.json
+        double_dot = SAVE_DIR / 'bartender_save..json'
+        single_dot = SAVE_DIR / 'bartender_save.json'
+        if double_dot.exists():
+            try:
+                double_dot.rename(single_dot)
+                print("✓ Automatically corrected and renamed bartender_save..json to bartender_save.json", file=sys.stderr)
+            except Exception as re_err:
+                print(f"Warning: Failed to rename bartender_save..json: {re_err}", file=sys.stderr)
+
+        # One-time migration of textures
+        if not TEXTURES_FILE.exists() and SAVE_FILE.exists():
             try:
                 with open(SAVE_FILE, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-            except json.JSONDecodeError as je:
-                print(f"Warning: glb-save.json is corrupted (JSON parse error): {je}", file=sys.stderr)
-                # Return a clean structure but note the error
-                return {"sessions": [], "textures": [], "_loadError": "JSON parse error"}
-            except UnicodeDecodeError as ue:
-                print(f"Warning: glb-save.json has encoding issues: {ue}", file=sys.stderr)
-                return {"sessions": [], "textures": [], "_loadError": "Encoding error"}
-            
-            # Validate and normalize data structure
-            if not isinstance(data.get('sessions'), list):
-                print(f"Warning: sessions field is not a list, initializing empty", file=sys.stderr)
-                data['sessions'] = []
-            
-            if not isinstance(data.get('textures'), list):
-                # Try legacy 'texture' field
-                if isinstance(data.get('texture'), list):
-                    data['textures'] = data.get('texture')
-                else:
-                    print(f"Warning: textures field is not a list, initializing empty", file=sys.stderr)
-                    data['textures'] = []
-            
-            print(f"✓ Loaded {len(data['sessions'])} sessions and {len(data['textures'])} textures from glb-save.json", file=sys.stderr)
-            return data
-        else:
-            print(f"Info: glb-save.json does not exist yet", file=sys.stderr)
-            return {"sessions": [], "textures": []}
+                    old_data = json.load(f)
+                migrated_textures = old_data.get('textures', old_data.get('texture', []))
+                with open(TEXTURES_FILE, 'w', encoding='utf-8') as f:
+                    json.dump({'textures': migrated_textures}, f, indent=2, ensure_ascii=False)
+                print(f"✓ Successfully migrated {len(migrated_textures)} textures from glb-save.json to {TEXTURES_FILE}", file=sys.stderr)
+            except Exception as mig_err:
+                print(f"Warning: Failed to migrate textures: {mig_err}", file=sys.stderr)
+
+        # Load global textures
+        textures = []
+        if TEXTURES_FILE.exists():
+            try:
+                with open(TEXTURES_FILE, 'r', encoding='utf-8') as f:
+                    tex_data = json.load(f)
+                textures = tex_data.get('textures', tex_data.get('texture', []))
+                if not isinstance(textures, list):
+                    textures = []
+            except Exception as tex_err:
+                print(f"Warning: Failed to load textures.json: {tex_err}", file=sys.stderr)
+
+        # Scan save/ folder for all session files (excluding textures.json)
+        sessions = []
+        for file_path in SAVE_DIR.glob('*.json'):
+            if file_path.name.lower() == 'textures.json':
+                continue
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    session = json.load(f)
+                
+                # Ensure name exists, fallback to filename
+                if not session.get('name'):
+                    session['name'] = file_path.stem
+                
+                # Ensure savedAt exists, fallback to file mtime
+                if not session.get('savedAt'):
+                    session['savedAt'] = int(file_path.stat().st_mtime * 1000)
+                
+                session['_filename'] = file_path.name # Record filename
+                sessions.append(session)
+            except Exception as file_err:
+                print(f"Warning: Failed to parse session file {file_path.name}: {file_err}", file=sys.stderr)
+
+        # Sort sessions by savedAt ascending
+        sessions.sort(key=lambda s: s.get('savedAt', 0))
+
+        return {'sessions': sessions, 'textures': textures}
     except Exception as e:
-        print(f"Error: Failed to load glb-save.json: {e}", file=sys.stderr)
-        return {"sessions": [], "textures": [], "_loadError": str(e)}
+        print(f"Error: Failed to load sessions: {e}", file=sys.stderr)
+        return {'sessions': [], 'textures': [], '_loadError': str(e)}
 
 
 def make_texture_id():
@@ -122,35 +175,16 @@ def normalize_and_pool_textures(store, accessories):
 
     return normalized_accessories
 
-def save_sessions(data):
-    """Save sessions to glb-save.json"""
+def save_textures(textures):
+    """Save global textures to save/textures.json"""
     try:
-        # Ensure sessions and textures are lists
-        if not isinstance(data.get('sessions'), list):
-            data['sessions'] = []
-        if not isinstance(data.get('textures'), list):
-            data['textures'] = []
-        
-        # Keep legacy 'texture' field in sync for backward compatibility
-        data['texture'] = data.get('textures', [])
-        
-        # Create backup before overwriting (optional safety measure)
-        backup_file = SAVE_FILE.with_suffix('.json.bak')
-        if SAVE_FILE.exists():
-            try:
-                import shutil
-                shutil.copy2(SAVE_FILE, backup_file)
-                print(f"✓ Created backup: {backup_file}", file=sys.stderr)
-            except Exception as be:
-                print(f"Warning: Could not create backup: {be}", file=sys.stderr)
-        
-        # Write sessions to file
-        with open(SAVE_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        
-        print(f"✓ Sessions saved to {SAVE_FILE} ({len(data['sessions'])} sessions, {len(data['textures'])} textures)", file=sys.stderr)
+        if not SAVE_DIR.exists():
+            SAVE_DIR.mkdir(parents=True, exist_ok=True)
+        with open(TEXTURES_FILE, 'w', encoding='utf-8') as f:
+            json.dump({'textures': textures}, f, indent=2, ensure_ascii=False)
+        print(f"✓ Textures saved to {TEXTURES_FILE}", file=sys.stderr)
     except Exception as e:
-        print(f"Error: Failed to save glb-save.json: {e}", file=sys.stderr)
+        print(f"Error: Failed to save textures: {e}", file=sys.stderr)
         raise
 
 # ─────────────────────────────────────────────────────────────────────
@@ -289,13 +323,18 @@ def save_session():
         payload = request.get_json()
         name = payload.get('name', '').strip()
         mainGlb = payload.get('mainGlb')
+        mainGlbs = payload.get('mainGlbs', [])
         accessories = payload.get('accessories', [])
         mode = payload.get('mode', 'new')
         overwriteId = payload.get('overwriteId')
         cameraData = payload.get('cameraData')
+        cameraPreset = payload.get('cameraPreset')
 
         if not name:
             return jsonify({'success': False, 'error': 'Session name required'}), 400
+
+        safe_filename = get_safe_session_filename(name)
+        file_path = SAVE_DIR / safe_filename
 
         data = load_sessions()
         normalized_accessories = normalize_and_pool_textures(data, accessories)
@@ -304,35 +343,89 @@ def save_session():
             'name': name,
             'savedAt': int(datetime.now().timestamp() * 1000),
             'mainGlb': mainGlb,
+            'mainGlbs': mainGlbs,
             'accessories': normalized_accessories,
             'cameraData': cameraData or None,
+            'cameraPreset': cameraPreset or None,
         }
 
+        existing_data = {}
+
+        # Handle overwrite
         if mode == 'overwrite' and overwriteId is not None:
             idx = int(overwriteId)
             if 0 <= idx < len(data['sessions']):
-                data['sessions'][idx] = new_session
-                save_sessions(data)
-                return jsonify({
-                    'success': True,
-                    'message': f'Session "{name}" overwritten',
-                    'sessionId': idx,
-                    'textures': data.get('textures', []),
-                })
+                old_session = data['sessions'][idx]
+                old_filename = old_session.get('_filename')
+                
+                # Delete old file if name changed
+                if old_filename and old_filename != safe_filename:
+                    old_file_path = SAVE_DIR / old_filename
+                    if old_file_path.exists():
+                        try:
+                            old_file_path.unlink()
+                            print(f"✓ Deleted old session file during rename: {old_filename}", file=sys.stderr)
+                        except Exception as unlink_err:
+                            print(f"Warning: Failed to delete old session file {old_filename}: {unlink_err}", file=sys.stderr)
 
-        # Default: new session
-        data['sessions'].append(new_session)
-        save_sessions(data)
+                target_old_path = SAVE_DIR / old_filename if old_filename else file_path
+                if target_old_path.exists():
+                    try:
+                        with open(target_old_path, 'r', encoding='utf-8') as f:
+                            existing_data = json.load(f)
+                    except Exception:
+                        pass
+        else:
+            # New session - read existing file with same slug if it exists to merge
+            if file_path.exists():
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        existing_data = json.load(f)
+                except Exception:
+                    pass
+
+        # Merge custom fields with new editor state
+        merged_session = {**existing_data}
+        merged_session.update({
+            'name': new_session['name'],
+            'savedAt': new_session['savedAt'],
+            'mainGlb': new_session['mainGlb'],
+            'mainGlbs': new_session['mainGlbs'],
+            'accessories': new_session['accessories'],
+            'cameraData': new_session['cameraData'],
+            'cameraPreset': new_session['cameraPreset']
+        })
+
+        # Save individual session file
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(merged_session, f, indent=2, ensure_ascii=False)
+        print(f"✓ Session \"{name}\" saved to {file_path}", file=sys.stderr)
+
+        # Save global textures
+        save_textures(data.get('textures', []))
+
+        # Reload sessions to get stable order and final index
+        updated_data = load_sessions()
+        final_idx = -1
+        for i, s in enumerate(updated_data['sessions']):
+            if s.get('_filename') == safe_filename:
+                final_idx = i
+                break
+        
+        if final_idx == -1:
+            final_idx = len(updated_data['sessions']) - 1
+
         return jsonify({
             'success': True,
-            'message': f'Session "{name}" saved',
-            'sessionId': len(data['sessions']) - 1,
-            'textures': data.get('textures', []),
+            'message': f'Session "{name}" overwritten' if mode == 'overwrite' else f'Session "{name}" saved',
+            'sessionId': final_idx,
+            'textures': updated_data.get('textures', []),
         })
 
     except Exception as e:
         print(f"Error: Save session failed: {e}", file=sys.stderr)
         return jsonify({'success': False, 'error': str(e)}), 400
+
 
 @app.route('/api/session/load', methods=['GET'])
 def load_session():
@@ -346,7 +439,9 @@ def load_session():
             print(f"Warning: {error_msg}", file=sys.stderr)
             return jsonify({'success': False, 'error': error_msg}), 404
         
-        session = data['sessions'][sessionId]
+        session = dict(data['sessions'][sessionId])
+        # Strip _filename
+        session.pop('_filename', None)
         print(f"✓ Loaded session {sessionId}: {session.get('name', 'Untitled')}", file=sys.stderr)
         
         return jsonify({
@@ -360,26 +455,87 @@ def load_session():
         print(f"Error: Load session failed: {e}", file=sys.stderr)
         return jsonify({'success': False, 'error': str(e)}), 400
 
+
 @app.route('/api/session/delete', methods=['DELETE'])
 def delete_session():
     """Delete session by ID"""
     try:
         sessionId = int(request.args.get('id', -1))
         data = load_sessions()
-        if sessionId < 0 or sessionId >= len(data['sessions']):
+        if sessionId < 0 or sessionId >= len(data.get('sessions', [])):
             return jsonify({'success': False, 'error': 'Session not found'}), 404
-        name = data['sessions'][sessionId].get('name', 'Untitled')
-        data['sessions'].pop(sessionId)
-        save_sessions(data)
+        
+        target_session = data['sessions'][sessionId]
+        filename = target_session.get('_filename')
+        name = target_session.get('name', 'Untitled')
+        
+        if filename:
+            file_path = SAVE_DIR / filename
+            if file_path.exists():
+                file_path.unlink()
+                print(f"✓ Deleted session file: {filename}", file=sys.stderr)
+        
         return jsonify({'success': True, 'message': f'Session "{name}" deleted'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
+
 
 @app.route('/api/raw-save', methods=['GET'])
 def get_raw_save():
     """Get raw glb-save.json for manual editing"""
     data = load_sessions()
     return jsonify(data)
+
+
+@app.route('/api/glb-list', methods=['GET'])
+def list_glb_files():
+    """List GLB files in assets/items/"""
+    try:
+        if not MODEL_DIR.exists():
+            return jsonify({'success': True, 'files': []})
+        files = []
+        for f in MODEL_DIR.glob('*.glb'):
+            files.append({'name': f.name, 'path': f'assets/items/{f.name}'})
+        return jsonify({'success': True, 'files': files})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/upload-glb', methods=['POST'])
+def upload_glb():
+    """Upload GLB to assets/items/"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'No file part'}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No selected file'}), 400
+        if not file.filename.lower().endswith('.glb'):
+            return jsonify({'success': False, 'error': 'Only .glb files are allowed'}), 400
+        
+        if not MODEL_DIR.exists():
+            MODEL_DIR.mkdir(parents=True, exist_ok=True)
+            
+        filename = os.path.basename(file.filename)
+        dest_path = MODEL_DIR / filename
+        file.save(str(dest_path))
+        print(f"✓ Uploaded {filename} → {dest_path}", file=sys.stderr)
+        return jsonify({'success': True, 'name': filename, 'path': f'/assets/items/{filename}'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/assets/items/<path:filename>', methods=['GET'])
+def serve_assets_items(filename):
+    """Serve GLB files from assets/items/"""
+    return send_from_directory(MODEL_DIR, filename)
+
+
+@app.route('/model/<path:filename>', methods=['GET'])
+def serve_legacy_model(filename):
+    """Fallback serve files requested under legacy /model/ from assets/items/"""
+    return send_from_directory(MODEL_DIR, filename)
+
 
 @app.route('/<path:filename>', methods=['GET'])
 def serve_static(filename):
@@ -389,17 +545,23 @@ def serve_static(filename):
     except Exception:
         return 'Not Found', 404
 
+
 # ─────────────────────────────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
+    try:
+        load_sessions()
+    except Exception as e:
+        print(f"Initial session loading failed: {e}", file=sys.stderr)
     print(f"""
 ╔════════════════════════════════════════════════════════════╗
 ║  GLB Texture Editor Server (Python Flask)                  ║
 ╠════════════════════════════════════════════════════════════╣
 ║  🌐 Server running at http://localhost:{PORT}
-║  📁 Save file: {SAVE_FILE}
+║  📁 Save folder: {SAVE_DIR}
+║  🗂️  Model folder: {MODEL_DIR}
 ║  ℹ️  Open browser to: http://localhost:{PORT}
 ║                                                            ║
 ║  API Endpoints:                                            ║
@@ -407,11 +569,12 @@ if __name__ == '__main__':
 ║  • POST /api/session/save      - Save/overwrite session   ║
 ║  • GET  /api/session/load?id=0 - Load session by ID       ║
 ║  • DEL  /api/session/delete?id=0 - Delete session         ║
-║  • GET  /api/raw-save          - Get raw JSON             ║
+║  • GET  /api/glb-list          - List model/ GLB files    ║
+║  • POST /api/upload-glb        - Upload GLB to model/     ║
+║  • GET  /assets/items/:file.glb - Serve GLB by path        ║
 ║                                                            ║
-║  You can manually edit glb-save.json:                      ║
-║  • JSON format: {{ "sessions": [...] }}                   ║
-║  • Reload page to see changes                             ║
+║  Put your GLB files in the assets/items/ folder.           ║
+║  Sessions save individually to save/ folder as JSON files! ║
 ╚════════════════════════════════════════════════════════════╝
     """)
     app.run(host='0.0.0.0', port=PORT, debug=False)

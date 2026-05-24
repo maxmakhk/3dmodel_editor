@@ -12,7 +12,7 @@
       --text-xs: clamp(0.75rem,0.7rem + 0.25vw,0.875rem); --text-sm: clamp(0.875rem,0.8rem + 0.35vw,1rem);
       --text-base: clamp(1rem,0.95rem + 0.25vw,1.125rem); --text-lg: clamp(1.125rem,1rem + 0.75vw,1.5rem);
       --text-xl: clamp(1.5rem,1.2rem + 1.25vw,2.25rem);
-      --space-1:.25rem;--space-2:.5rem;--space-3:.75rem;--space-4:1rem;--space-5:1.25rem;
+      --space-1:.1rem;--space-2:.1rem;--space-3:.1rem;--space-4:0.1rem;--space-5:0.1rem;
       --space-6:1.5rem;--space-8:2rem;
       --color-bg:#f7f6f2;--color-surface:#f9f8f5;--color-surface-2:#fbfbf9;--color-surface-offset:#edeae5;
       --color-border:#d4d1ca;--color-text:#28251d;--color-text-muted:#7a7974;--color-text-faint:#bab9b4;
@@ -179,14 +179,73 @@
 
     .viewer-wrap{position:relative;height:100vh;}
     #viewer{position:absolute;inset:0;}
-    .viewer-overlay{position:absolute;left:var(--space-5);right:var(--space-5);bottom:var(--space-5);
-      display:flex;justify-content:space-between;gap:var(--space-4);pointer-events:none;}
+    .viewer-overlay{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
     .viewer-card{pointer-events:auto;max-width:min(38rem,100%);background:color-mix(in oklab,var(--color-surface) 88%,transparent);
       border:1px solid color-mix(in oklab,var(--color-text) 10%,transparent);border-radius:var(--radius-lg);
       padding:var(--space-4);backdrop-filter:blur(10px);box-shadow:var(--shadow-md);}
     .world-gizmo-card{
-      max-width:16rem;align-self:flex-end;display:flex;flex-direction:column;gap:var(--space-2);
-      overflow: auto;
+      position:absolute;
+      max-width:20rem;display:flex;flex-direction:column;gap:var(--space-2);
+      overflow:visible;
+      pointer-events:auto;
+      z-index: 10;
+    }
+    #sceneToolsPanel {
+      bottom: var(--space-5);
+      left: var(--space-5);
+    }
+    #worldGizmoPanel {
+      bottom: var(--space-5);
+      left: 23rem;
+    }
+    #cameraPanel {
+      bottom: var(--space-5);
+      right: var(--space-5);
+    }
+    #worldGizmoPanel select{
+      color:#fff;
+    }
+    #worldGizmoPanel input{
+      color:#fff;
+    }
+    #wg_cameraControls input{
+      color:#fff;
+      font-size: .75rem;
+    }
+    .panel-header{
+      cursor:move;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom:1px solid color-mix(in oklab,var(--color-text) 8%,transparent);
+      padding-bottom:0.4rem;
+      margin-bottom:0.2rem;
+      user-select:none;
+    }
+    .panel-toggle-btn {
+      padding: 2px 6px !important;
+      font-size: 0.75rem !important;
+      min-width: 1.2rem !important;
+      height: 1.2rem !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: transparent !important;
+      border: none !important;
+      opacity: 0.7 !important;
+    }
+    .panel-toggle-btn:hover {
+      opacity: 1 !important;
+      background: color-mix(in oklab, var(--color-text) 8%, transparent) !important;
+    }
+    .world-gizmo-card.minimized{
+      max-height: 2.6rem !important;
+      overflow: hidden !important;
+      padding-bottom: 0.2rem !important;
+      gap: 0 !important;
+    }
+    .world-gizmo-card.minimized > *:not(.panel-header){
+      display:none !important;
     }
     .world-gizmo-row{display:flex;gap:.5rem;}
     .world-gizmo-row button{flex:1;padding:.45rem .7rem;font-size:.82rem;}
@@ -204,7 +263,8 @@
       .app{height:auto;overflow:visible;grid-template-columns:1fr;}
       .panel{height:auto;border-right:0;border-bottom:1px solid color-mix(in oklab,var(--color-text) 10%,transparent);}
       .viewer-wrap{min-height:58vh;} .slot-list{max-height:none;}
-      .viewer-overlay{left:var(--space-4);right:var(--space-4);bottom:var(--space-4);flex-direction:column;}
+      .viewer-overlay{position:relative;inset:auto;display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-4);pointer-events:none;}
+      .world-gizmo-card{position:static !important;max-width:100% !important;}
     }
   </style>
 </head>
@@ -253,14 +313,14 @@
         <label for="glbInput" class="file-trigger">Choose GLB</label>
         <input type="file" id="glbInput" accept=".glb,model/gltf-binary" />
         <label for="mainGlbInput" class="file-trigger">Add Main GLB<input type="file" id="mainGlbInput" accept=".glb,model/gltf-binary" style="display:none;"></label>
-        <button type="button" id="browseModelBtn" title="Browse GLB files in server model/ folder">📂 model/</button>
+        <button type="button" id="browseModelBtn" title="Browse GLB files in server assets/items/ folder">📂 assets/items/</button>
       </div>
     </section>
 
     <!-- Model folder browser -->
     <div id="modelBrowser" class="session-banner hidden" style="padding:var(--space-3);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
-        <h3 style="font-size:.9rem;">📂 model/ folder</h3>
+        <h3 style="font-size:.9rem;">📂 assets/items/ folder</h3>
         <button type="button" id="closeBrowserBtn" style="font-size:.75rem;padding:.2rem .5rem;">✕</button>
       </div>
       <div id="modelFileList" style="display:flex;flex-direction:column;gap:.3rem;max-height:180px;overflow-y:auto;font-size:.82rem;"></div>
@@ -515,7 +575,7 @@
     <section class="tips">
       <p style="margin-bottom:.55rem;"><strong>How to Use</strong></p>
       <ul>
-        <li>Load a <code>.glb</code> from <strong>model/</strong> folder or drag-and-drop — GLBs are auto-uploaded to <code>model/</code>.</li>
+        <li>Load a <code>.glb</code> from <strong>assets/items/</strong> folder or drag-and-drop — GLBs are auto-uploaded to <code>assets/items/</code>.</li>
         <li>Add more <strong>Main GLBs</strong> to build a scene, then move / rotate / scale / remove them from the main list.</li>
         <li>Hover a node in the list to highlight it in the 3D view. Click to select.</li>
         <li>Each node can hold <strong>multiple accessories</strong> — click one to edit its transform.</li>
@@ -529,8 +589,13 @@
     <div id="viewer" aria-label="3D viewer"></div>
     <div class="viewer-overlay">
 
-      <div id="sceneToolsPanel" class="viewer-card world-gizmo-card" style="max-width:20rem;align-self:flex-end;">
-        <p class="section-label" style="color:var(--color-primary);margin-bottom:.4rem;">Scene Tools</p>
+      <div id="sceneToolsPanel" class="viewer-card world-gizmo-card">
+        <div class="panel-header">
+          <p class="section-label" style="color:var(--color-primary);margin:0;font-weight:700;display:flex;align-items:center;gap:.3rem;">
+            🔍 Scene Tools
+          </p>
+          <button type="button" class="panel-toggle-btn" title="Minimize/Maximize">−</button>
+        </div>
         <div class="world-gizmo-row">
           <button type="button" id="raycastSelectBtn" style="background:var(--color-surface-2);border:1px solid var(--color-primary);color:var(--color-primary);font-weight:600;transition:all .2s ease;padding:.45rem .4rem;">
             🔍 Select
@@ -548,7 +613,12 @@
       </div>
 
       <div id="worldGizmoPanel" class="viewer-card world-gizmo-card hidden">
-        <p class="section-label" style="color:var(--color-primary);">World Gizmo</p>
+        <div class="panel-header">
+          <p class="section-label" style="color:var(--color-primary);margin:0;font-weight:700;display:flex;align-items:center;gap:.3rem;">
+            🎮 World Gizmo
+          </p>
+          <button type="button" class="panel-toggle-btn" title="Minimize/Maximize">−</button>
+        </div>
         <div class="world-gizmo-row">
           <button type="button" id="gizmoMoveBtn" class="btn-primary">Move</button>
           <button type="button" id="gizmoRotateBtn">Rotate</button>
@@ -607,7 +677,57 @@
           <input type="number" id="wg_y" step="0.01" style="width:84px;padding:.25rem .4rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);font-size:.85rem;" placeholder="Y">
           <input type="number" id="wg_z" step="0.01" style="width:84px;padding:.25rem .4rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);font-size:.85rem;" placeholder="Z">
         </div>
-        <div id="wg_cameraControls" style="margin-top:.6rem;border-top:1px solid color-mix(in oklab,var(--color-text) 6%,transparent);padding-top:.5rem;display:flex;flex-direction:column;gap:.4rem;">
+      </div>
+
+      <div id="cameraPanel" class="viewer-card world-gizmo-card">
+        <div class="panel-header">
+          <p class="section-label" style="color:var(--color-primary);margin:0;font-weight:700;display:flex;align-items:center;gap:.3rem;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary); vertical-align: middle;">
+              <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+              <circle cx="12" cy="13" r="3"/>
+            </svg>
+            Camera Panel
+          </p>
+          <button type="button" class="panel-toggle-btn" title="Minimize/Maximize">−</button>
+        </div>
+        
+        <!-- Presets Section -->
+        <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.5rem;border-bottom:1px solid color-mix(in oklab,var(--color-text) 6%,transparent);padding-bottom:.6rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <p class="section-label" style="margin:0;font-size:0.78rem;color:var(--color-text-muted);font-weight:600;">📁 View Presets</p>
+            <span id="presetCountBadge" class="tiny" style="background:var(--color-surface-3);padding:.1rem .35rem;border-radius:10px;font-size:.7rem;border:1px solid var(--color-border);">0 presets</span>
+          </div>
+          <div style="display:flex;gap:.4rem;align-items:center;">
+            <select id="camPresetSelect" class="step-select" style="flex:1;font-size:.82rem;padding:.35rem .5rem;min-width:0;background:var(--color-surface-2);border-radius:var(--radius-md);">
+              <option value="">-- Select Preset --</option>
+            </select>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.4rem;">
+            <div style="display:flex;gap:.4rem;">
+              <button type="button" id="camSaveNewPresetBtn" class="btn-primary" style="flex:1;font-size:.78rem;padding:.35rem .5rem;display:flex;align-items:center;justify-content:center;gap:.3rem;" title="Save current camera view as a new preset">
+                <span>➕ Save New</span>
+              </button>
+              <button type="button" id="camUpdatePresetBtn" style="flex:1;font-size:.78rem;padding:.35rem .5rem;display:flex;align-items:center;justify-content:center;gap:.3rem;" title="Overwrite currently selected preset with current camera view" disabled>
+                <span>💾 Update Current</span>
+              </button>
+            </div>
+            <div style="display:flex;gap:.4rem;">
+              <button type="button" id="camDeletePresetBtn" class="btn-danger" style="flex:1;font-size:.78rem;padding:.35rem .5rem;display:flex;align-items:center;justify-content:center;gap:.3rem;" title="Delete selected preset" disabled>
+                <span>🗑️ Delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Camera Controls (Moved here) -->
+        <div id="wg_cameraControls" style="display:flex;flex-direction:column;gap:.4rem;">
+          <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.2rem;">
+            <label class="tiny" style="min-width:3rem;color:var(--color-text-muted);">Mode</label>
+            <div style="display:flex;border:1px solid var(--color-border);border-radius:6px;background:var(--color-surface-2);overflow:hidden;flex:1;padding:2px;gap:2px;">
+              <button type="button" id="camModeOrbit" style="flex:1;border:none;background:var(--color-primary);color:#fff;padding:.35rem .45rem;font-size:.78rem;cursor:pointer;font-weight:600;border-radius:4px;transition:all 0.2s ease;">Orbit Target</button>
+              <button type="button" id="camModeFP" style="flex:1;border:none;background:transparent;color:var(--color-text-muted);padding:.35rem .45rem;font-size:.78rem;cursor:pointer;font-weight:500;border-radius:4px;transition:all 0.2s ease;">Yaw In-place</button>
+            </div>
+          </div>
           <div style="display:flex;gap:.4rem;align-items:center;">
             <label class="tiny" style="min-width:3rem;color:var(--color-text-muted);">Cam Pos</label>
             <input type="number" id="camPosX" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
@@ -739,6 +859,9 @@ const state = {
   lastSavedSessionId: null,
   textureLibrary: [],
   textureLibraryById: new Map(),
+  cameraPresets: [],
+  activePresetId: '',
+  cameraTransition: null,
 };
 
 const el = {
@@ -839,6 +962,11 @@ const el = {
   moveToBtn: document.getElementById('moveToBtn'),
   cloneItemBtn: document.getElementById('cloneItemBtn'),
   sceneToolsHint: document.getElementById('sceneToolsHint'),
+  cameraPanel: document.getElementById('cameraPanel'),
+  camPresetSelect: document.getElementById('camPresetSelect'),
+  camSaveNewPresetBtn: document.getElementById('camSaveNewPresetBtn'),
+  camUpdatePresetBtn: document.getElementById('camUpdatePresetBtn'),
+  camDeletePresetBtn: document.getElementById('camDeletePresetBtn'),
 };
 
 // ─── Renderer / Scene ────────────────────────────────────────────────────────
@@ -855,6 +983,14 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.target.copy(state.defaultCamera.target);
 camera.position.copy(state.defaultCamera.position);
+try {
+  controls.addEventListener('start', () => {
+    if (state.cameraTransition) {
+      state.cameraTransition = null;
+      setStatus('Camera transition cancelled.', 'ok');
+    }
+  });
+} catch (e) {}
 const worldTransformControl = new ThreeTransformControls(camera, renderer.domElement);
 worldTransformControl.setSpace('world');
 worldTransformControl.setMode('translate');
@@ -1474,10 +1610,30 @@ function getActiveSceneItem() {
   return state.activeSceneItem || state.activeAttachedItem || null;
 }
 
+function focusCameraOnActiveItem() {
+  const item = state.activeSceneItem || state.activeAttachedItem;
+  if (item && item.object3d) {
+    const box = new THREE.Box3().setFromObject(item.object3d);
+    if (!box.isEmpty()) {
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+      
+      controls.target.copy(center);
+      controls.update();
+      if (typeof state.setInputsFromCamera === 'function') {
+        state.setInputsFromCamera();
+      }
+    }
+  }
+}
+
 function setActiveSceneItem(item) {
   state.activeSceneItem = item || null;
   state.activeAttachedItem = item?.kind === 'accessory' ? item : (item?.kind === 'main' ? null : state.activeAttachedItem);
   updateSceneToolsUI();
+  if (state.cameraMode === 'orbit') {
+    focusCameraOnActiveItem();
+  }
 }
 
 function syncMainModelSection() {
@@ -1753,25 +1909,85 @@ function removeAllMainModels() {
 }
 
 // ─── Create Primitive Geometries ──────────────────────────────────────────────
+async function restorePrimitiveGeometry(geometryType, id, name, transform, tag, primary = false) {
+  const geomTypeLower = geometryType.toLowerCase();
+  let geometry = null;
+  let finalName = name || (geometryType.charAt(0).toUpperCase() + geometryType.slice(1));
+  
+  switch(geomTypeLower) {
+    case 'sphere':
+      geometry = new THREE.SphereGeometry(0.5, 24, 16);
+      break;
+    case 'cube':
+    case 'box':
+      geometry = new THREE.BoxGeometry(1, 1, 1);
+      finalName = name || 'Cube';
+      break;
+    case 'cylinder':
+      geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 24);
+      break;
+    case 'cone':
+      geometry = new THREE.ConeGeometry(0.5, 1, 24);
+      break;
+    default:
+      return null;
+  }
+  
+  const material = new THREE.MeshStandardMaterial({
+    color: 0x888888,
+    roughness: 0.8,
+    metalness: 0,
+    envMapIntensity: 0
+  });
+  
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = finalName;
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+  
+  const t = transform || { px: 0, py: 0, pz: 0, rx: 0, ry: 0, rz: 0, sx: 1, sy: 1, sz: 1 };
+  mesh.position.set(t.px, t.py, t.pz);
+  mesh.rotation.set((t.rx || 0) * Math.PI / 180, (t.ry || 0) * Math.PI / 180, (t.rz || 0) * Math.PI / 180);
+  mesh.scale.set(t.sx || 1, t.sy || 1, t.sz || 1);
+  
+  const item = createMainModelItem({
+    object3d: mesh,
+    fileName: finalName + '.geometry',
+    modelPath: geometryType, // Set to primitive name e.g. "Cylinder", "Cube", etc.
+    buffer: null,
+    transform: t,
+    primary: Boolean(primary),
+  });
+  
+  if (id) item.id = id;
+  const parsedTag = normalizeTagArray(tag);
+  if (parsedTag) item.tag = parsedTag;
+  
+  state.mainModels.push(item);
+  syncItemTransformFromObject(item, { updateInputs: false });
+  return item;
+}
+
 async function createPrimitiveGeometry(geometryType) {
   let geometry = null;
   let name = 'Primitive';
   
   switch(geometryType) {
     case 'sphere':
-      geometry = new THREE.SphereGeometry(1, 32, 32);
+      geometry = new THREE.SphereGeometry(0.5, 24, 16);
       name = 'Sphere';
       break;
     case 'cube':
-      geometry = new THREE.BoxGeometry(2, 2, 2);
+      geometry = new THREE.BoxGeometry(1, 1, 1);
       name = 'Cube';
       break;
     case 'cylinder':
-      geometry = new THREE.CylinderGeometry(1, 1, 2, 32);
+      geometry = new THREE.CylinderGeometry(0.5, 0.5, 1, 24);
       name = 'Cylinder';
       break;
     case 'cone':
-      geometry = new THREE.ConeGeometry(1, 2, 32);
+      geometry = new THREE.ConeGeometry(0.5, 1, 24);
       name = 'Cone';
       break;
     default:
@@ -1796,7 +2012,7 @@ async function createPrimitiveGeometry(geometryType) {
   const item = createMainModelItem({
     object3d: mesh,
     fileName: name + '.geometry',
-    modelPath: null,
+    modelPath: name, // Set modelPath to "Sphere", "Cube", "Cylinder", or "Cone"
     buffer: null,
     primary: false,
   });
@@ -2052,12 +2268,300 @@ function resize() {
 }
 window.addEventListener('resize', resize);
 
+// Keyboard camera controls (WASDRF)
+state.keysPressed = {};
+const isTyping = () => {
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = el.tagName.toLowerCase();
+  return tag === 'input' || tag === 'textarea' || el.isContentEditable;
+};
+
+window.addEventListener('keydown', (e) => {
+  if (isTyping()) return;
+  const key = e.key.toLowerCase();
+  if (['w', 'a', 's', 'd', 'r', 'f', 'q', 'e'].includes(key)) {
+    state.keysPressed[key] = true;
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  const key = e.key.toLowerCase();
+  if (state.keysPressed) {
+    state.keysPressed[key] = false;
+  }
+});
+
+window.addEventListener('blur', () => {
+  state.keysPressed = {};
+});
+
+function handleCameraKeyboardMovement(delta) {
+  const keys = state.keysPressed || {};
+  let moveX = 0; // local right/left
+  let moveY = 0; // absolute up/down
+  let moveZ = 0; // absolute forward/backward
+  let rotY = 0;  // rotation around Y-axis (yaw)
+
+  if (keys['w']) moveZ += 1;
+  if (keys['s']) moveZ -= 1;
+  if (keys['d']) moveX += 1;
+  if (keys['a']) moveX -= 1;
+  if (keys['r']) moveY += 1;
+  if (keys['f']) moveY -= 1;
+  if (keys['q']) rotY += 1; // Orbit left
+  if (keys['e']) rotY -= 1; // Orbit right
+
+  let hasChanges = false;
+
+  if (moveX !== 0 || moveY !== 0 || moveZ !== 0) {
+    const dist = camera.position.distanceTo(controls.target);
+    const baseSpeed = Math.max(15, dist * 0.5);
+    const speed = baseSpeed * delta;
+
+    const offset = new THREE.Vector3();
+
+    // 1. Forward / Backward
+    if (moveZ !== 0) {
+      const forward = new THREE.Vector3();
+      camera.getWorldDirection(forward);
+      forward.normalize();
+      offset.addScaledVector(forward, moveZ * speed);
+    }
+
+    // 2. Right / Left
+    if (moveX !== 0) {
+      const right = new THREE.Vector3();
+      right.setFromMatrixColumn(camera.matrixWorld, 0); // local right axis
+      right.normalize();
+      offset.addScaledVector(right, moveX * speed);
+    }
+
+    // 3. Raise / Lower (Vertical Y-axis)
+    if (moveY !== 0) {
+      const up = new THREE.Vector3(0, 1, 0);
+      offset.addScaledVector(up, moveY * speed);
+    }
+
+    camera.position.add(offset);
+    controls.target.add(offset);
+    hasChanges = true;
+  }
+
+  if (rotY !== 0) {
+    const rotateSpeed = 1.5; // radians per second
+    const angle = rotY * rotateSpeed * delta;
+    
+    // First-person rotation (rotate look vector / controls.target around camera's own position)
+    const lookVec = controls.target.clone().sub(camera.position);
+    lookVec.applyAxisAngle(new THREE.Vector3(0, 1, 0), angle);
+    
+    controls.target.copy(camera.position).add(lookVec);
+    hasChanges = true;
+  }
+
+  if (hasChanges && typeof state.setInputsFromCamera === 'function') {
+    state.setInputsFromCamera();
+  }
+}
+
+// Camera Mode state and UI updater
+state.cameraMode = 'orbit'; // 'orbit' or 'firstperson'
+
+function updateCameraModeUI() {
+  const isOrbit = state.cameraMode === 'orbit';
+  const orbitBtn = document.getElementById('camModeOrbit');
+  const fpBtn = document.getElementById('camModeFP');
+  if (orbitBtn && fpBtn) {
+    if (isOrbit) {
+      orbitBtn.style.background = 'var(--color-primary)';
+      orbitBtn.style.color = '#fff';
+      orbitBtn.style.fontWeight = '600';
+      
+      fpBtn.style.background = 'transparent';
+      fpBtn.style.color = 'var(--color-text-muted)';
+      fpBtn.style.fontWeight = '500';
+      
+      controls.enabled = true;
+    } else {
+      orbitBtn.style.background = 'transparent';
+      orbitBtn.style.color = 'var(--color-text-muted)';
+      orbitBtn.style.fontWeight = '500';
+      
+      fpBtn.style.background = 'var(--color-primary)';
+      fpBtn.style.color = '#fff';
+      fpBtn.style.fontWeight = '600';
+      
+      controls.enabled = false;
+    }
+  }
+}
+
+function updateCamPresetDropdown() {
+  const select = el.camPresetSelect;
+  if (!select) return;
+  
+  select.innerHTML = '<option value="">-- Select Preset --</option>';
+  
+  state.cameraPresets.forEach(preset => {
+    const opt = document.createElement('option');
+    opt.value = preset.id;
+    opt.textContent = preset.name;
+    if (preset.id === state.activePresetId) {
+      opt.selected = true;
+    }
+    select.appendChild(opt);
+  });
+  
+  if (el.camDeletePresetBtn) {
+    el.camDeletePresetBtn.disabled = !state.activePresetId;
+  }
+  if (el.camUpdatePresetBtn) {
+    el.camUpdatePresetBtn.disabled = !state.activePresetId;
+  }
+  
+  const badge = document.getElementById('presetCountBadge');
+  if (badge) {
+    badge.textContent = `${state.cameraPresets.length} preset${state.cameraPresets.length === 1 ? '' : 's'}`;
+  }
+}
+
+document.getElementById('camModeOrbit')?.addEventListener('click', () => {
+  state.cameraMode = 'orbit';
+  updateCameraModeUI();
+  focusCameraOnActiveItem();
+});
+
+document.getElementById('camModeFP')?.addEventListener('click', () => {
+  state.cameraMode = 'firstperson';
+  updateCameraModeUI();
+});
+
+// First Person Pointer Look Event Handling
+let isPointerDragging = false;
+let prevPointerX = 0;
+let prevPointerY = 0;
+
+el.viewer.addEventListener('pointerdown', (e) => {
+  if (state.cameraMode === 'firstperson') {
+    isPointerDragging = true;
+    prevPointerX = e.clientX;
+    prevPointerY = e.clientY;
+    el.viewer.setPointerCapture(e.pointerId);
+  }
+});
+
+el.viewer.addEventListener('pointermove', (e) => {
+  if (state.cameraMode === 'firstperson' && isPointerDragging) {
+    const deltaX = e.clientX - prevPointerX;
+    const deltaY = e.clientY - prevPointerY;
+    
+    prevPointerX = e.clientX;
+    prevPointerY = e.clientY;
+    
+    const rotateSpeed = 0.003; 
+    const yaw = -deltaX * rotateSpeed;
+    const pitch = -deltaY * rotateSpeed;
+    
+    const lookVec = controls.target.clone().sub(camera.position);
+    
+    // Yaw: Rotate horizontal around absolute vertical axis (0, 1, 0)
+    lookVec.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+    
+    // Pitch: Rotate vertical around camera's local X-axis (right vector)
+    const right = new THREE.Vector3();
+    right.setFromMatrixColumn(camera.matrixWorld, 0); // camera local right axis
+    right.normalize();
+    
+    lookVec.applyAxisAngle(right, pitch);
+    
+    // Vertical rotation gymbal lock prevention (limit looking too far straight up or down)
+    const lookDir = lookVec.clone().normalize();
+    const upDot = lookDir.dot(new THREE.Vector3(0, 1, 0));
+    if (Math.abs(upDot) < 0.98) {
+      controls.target.copy(camera.position).add(lookVec);
+    } else {
+      // Revert pitch if beyond threshold to avoid vertical camera flipping
+      lookVec.applyAxisAngle(right, -pitch);
+      controls.target.copy(camera.position).add(lookVec);
+    }
+    
+    controls.update();
+    if (typeof state.setInputsFromCamera === 'function') {
+      state.setInputsFromCamera();
+    }
+  }
+});
+
+el.viewer.addEventListener('pointerup', (e) => {
+  if (isPointerDragging) {
+    isPointerDragging = false;
+    el.viewer.releasePointerCapture(e.pointerId);
+  }
+});
+
+// Scroll to move forward/backward translation when in firstperson mode
+el.viewer.addEventListener('wheel', (e) => {
+  if (state.cameraMode === 'firstperson') {
+    e.preventDefault();
+    const forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    forward.normalize();
+    
+    // Scroll translation speed proportional to distance to target, or default fallback
+    const dist = camera.position.distanceTo(controls.target);
+    const scrollFactor = Math.max(1, dist * 0.1);
+    const speed = -e.deltaY * 0.002 * scrollFactor;
+    
+    camera.position.addScaledVector(forward, speed);
+    controls.target.addScaledVector(forward, speed);
+    
+    controls.update();
+    if (typeof state.setInputsFromCamera === 'function') {
+      state.setInputsFromCamera();
+    }
+  }
+}, { passive: false });
+
+// Initialize Mode UI
+updateCameraModeUI();
+
 function animLoop() {
   requestAnimationFrame(animLoop);
+  
+  const delta = state.clock ? state.clock.getDelta() : 0.016;
+  handleCameraKeyboardMovement(delta);
+  
+  if (state.cameraTransition) {
+    const t = state.cameraTransition;
+    t.progress += delta / t.duration;
+    if (t.progress >= 1) {
+      t.progress = 1;
+      camera.position.copy(t.endPos);
+      controls.target.copy(t.endTgt);
+      camera.fov = t.endFov;
+      camera.near = t.endNear;
+      camera.far = t.endFar;
+      camera.updateProjectionMatrix();
+      state.cameraTransition = null;
+    } else {
+      const p = t.progress;
+      const ease = p * p * (3 - 2 * p); // smoothstep
+      camera.position.lerpVectors(t.startPos, t.endPos, ease);
+      controls.target.lerpVectors(t.startTgt, t.endTgt, ease);
+      camera.fov = t.startFov + (t.endFov - t.startFov) * ease;
+      camera.near = t.startNear + (t.endNear - t.startNear) * ease;
+      camera.far = t.startFar + (t.endFar - t.startFar) * ease;
+      camera.updateProjectionMatrix();
+    }
+    if (typeof state.setInputsFromCamera === 'function') {
+      state.setInputsFromCamera();
+    }
+  }
   controls.update();
   if (state.mixer && state.animPlaying && !state.animScrubbing) {
-    state.mixer.update(state.clock.getDelta()); updateAnimProgress();
-  } else { state.clock.getDelta(); }
+    state.mixer.update(delta); updateAnimProgress();
+  }
   renderer.render(scene, camera);
 }
 animLoop(); resize();
@@ -2136,6 +2640,11 @@ function highlightNode(obj) {
 function clearSceneRoot() {
   clearHighlight();
   removeAllMainModels();
+  state.cameraPresets = [];
+  state.activePresetId = '';
+  if (typeof updateCamPresetDropdown === 'function') {
+    updateCamPresetDropdown();
+  }
   if (!state.sceneRoot) return;
   scene.remove(state.sceneRoot);
   state.sceneRoot = null; state.mixer = null; state.slots = [];
@@ -4119,8 +4628,8 @@ async function saveSessionAccessories(sessionName = null, mode = 'new', overwrit
     return accData;
   }));
 
-  // 在调用API之前，将camera数据添加到payload
-  const payload = { name, mainGlb, mainGlbs, accessories, mode, cameraData };
+  // 在调用API之前，将camera数据和presets添加到payload
+  const payload = { name, mainGlb, mainGlbs, accessories, mode, cameraData, cameraPreset: state.cameraPresets };
   if (mode === 'overwrite' && overwriteId !== null) payload.overwriteId = overwriteId;
   
   const result = await apiCall('/api/session/save', { method: 'POST', body: payload });
@@ -4183,6 +4692,7 @@ if (camApplyBtn) {
       document.getElementById('camFar').value = camera.far;
     } catch (err) {}
   };
+  state.setInputsFromCamera = setInputsFromCamera;
   setInputsFromCamera();
   // Update camera inputs live when the user moves the camera with OrbitControls
   try { controls.addEventListener('change', () => { if (!state.restoringSession) setInputsFromCamera(); }); } catch (e) {}
@@ -4203,6 +4713,109 @@ if (camApplyBtn) {
       controls.update();
       setStatus('Camera updated.', 'ok');
     } catch (err) { setStatus('Camera update failed: '+(err.message||err), 'error'); }
+  });
+}
+
+// Camera Preset panel events
+if (el.camPresetSelect) {
+  el.camPresetSelect.addEventListener('change', () => {
+    const selectedId = el.camPresetSelect.value;
+    state.activePresetId = selectedId;
+    if (el.camDeletePresetBtn) {
+      el.camDeletePresetBtn.disabled = !selectedId;
+    }
+    if (el.camUpdatePresetBtn) {
+      el.camUpdatePresetBtn.disabled = !selectedId;
+    }
+    
+    if (!selectedId) return;
+    
+    const preset = state.cameraPresets.find(p => p.id === selectedId);
+    if (preset) {
+      // Trigger smooth transition
+      state.cameraTransition = {
+        startPos: camera.position.clone(),
+        endPos: new THREE.Vector3(Number(preset.posX) || 0, Number(preset.posY) || 0, Number(preset.posZ) || 0),
+        startTgt: controls.target.clone(),
+        endTgt: new THREE.Vector3(Number(preset.targetX) || 0, Number(preset.targetY) || 0, Number(preset.targetZ) || 0),
+        startFov: camera.fov,
+        endFov: Number(preset.fov) || 45,
+        startNear: camera.near,
+        endNear: Number(preset.near) || 0.01,
+        startFar: camera.far,
+        endFar: Number(preset.far) || 1000,
+        progress: 0,
+        duration: 0.8
+      };
+      setStatus(`Switching to preset "${preset.name}"...`, 'ok');
+    }
+  });
+}
+
+if (el.camSaveNewPresetBtn) {
+  el.camSaveNewPresetBtn.addEventListener('click', () => {
+    const defaultName = 'Preset ' + (state.cameraPresets.length + 1);
+    const presetName = prompt('Enter preset name:', defaultName);
+    if (presetName === null) return;
+    const trimmed = presetName.trim();
+    if (!trimmed) {
+      setStatus('Preset name cannot be empty.', 'error');
+      return;
+    }
+    
+    const preset = {
+      id: 'preset_' + Date.now(),
+      name: trimmed,
+      posX: camera.position.x,
+      posY: camera.position.y,
+      posZ: camera.position.z,
+      targetX: controls.target.x,
+      targetY: controls.target.y,
+      targetZ: controls.target.z,
+      fov: camera.fov,
+      near: camera.near,
+      far: camera.far
+    };
+    
+    state.cameraPresets.push(preset);
+    state.activePresetId = preset.id;
+    updateCamPresetDropdown();
+    setStatus(`New preset "${preset.name}" saved.`, 'ok');
+    autoSaveSession();
+  });
+}
+
+if (el.camUpdatePresetBtn) {
+  el.camUpdatePresetBtn.addEventListener('click', () => {
+    const preset = state.cameraPresets.find(p => p.id === state.activePresetId);
+    if (preset) {
+      preset.posX = camera.position.x;
+      preset.posY = camera.position.y;
+      preset.posZ = camera.position.z;
+      preset.targetX = controls.target.x;
+      preset.targetY = controls.target.y;
+      preset.targetZ = controls.target.z;
+      preset.fov = camera.fov;
+      preset.near = camera.near;
+      preset.far = camera.far;
+      
+      setStatus(`Preset "${preset.name}" updated with current view.`, 'ok');
+      autoSaveSession();
+    }
+  });
+}
+
+if (el.camDeletePresetBtn) {
+  el.camDeletePresetBtn.addEventListener('click', () => {
+    const idx = state.cameraPresets.findIndex(p => p.id === state.activePresetId);
+    if (idx !== -1) {
+      const name = state.cameraPresets[idx].name;
+      state.cameraPresets.splice(idx, 1);
+      state.activePresetId = '';
+      updateCamPresetDropdown();
+      setStatus(`Preset "${name}" deleted.`, 'ok');
+      autoSaveSession();
+    }
   });
 }
 
@@ -4312,94 +4925,192 @@ async function doLoadSession(sessionId) {
       return;
     }
 
+    const isPrimitivePath = (path) => {
+      if (!path) return false;
+      const p = path.toLowerCase().trim();
+      return p === 'sphere' || p === 'cube' || p === 'box' || p === 'cylinder' || p === 'cone';
+    };
+
     const primaryMainEntry = mainGlbEntries[0];
+    let primaryRestoredAsPrimitive = false;
 
-    // Try in order: 1) saved path  2) model/{name}  3) legacy buffer  4) ask user
-    let mainBuf = null;
-    let resolvedPath = primaryMainEntry?.path || null;
-    const glbName = primaryMainEntry?.name || '';
+    if (isPrimitivePath(primaryMainEntry?.path)) {
+      console.log(`✓ Restoring primary main GLB as primitive geometry: ${primaryMainEntry.path}`);
+      
+      // Cleanup scene and structures
+      removeAllAttachedItems();
+      clearSceneRoot();
+      el.animSection.classList.add('hidden');
+      el.meshVisSection.classList.add('hidden');
+      
+      const fileName = primaryMainEntry.name || (primaryMainEntry.path + '.geometry');
+      state.fileName = fileName;
+      el.modelName.textContent = fileName;
+      
+      // Restore primitive
+      await restorePrimitiveGeometry(
+        primaryMainEntry.path,
+        primaryMainEntry.id || null,
+        fileName,
+        primaryMainEntry.transform || null,
+        primaryMainEntry.tag || null,
+        true // primary = true
+      );
+      
+      state.lastLoadedGlbFile = { name: fileName, buffer: null, path: primaryMainEntry.path };
+      primaryRestoredAsPrimitive = true;
+    } else {
+      // Try in order: 1) saved path  2) model/{name}  3) legacy buffer  4) ask user
+      let mainBuf = null;
+      let resolvedPath = primaryMainEntry?.path || null;
+      const glbName = primaryMainEntry?.name || '';
 
-    const pathsToTry = [];
-    if (resolvedPath) pathsToTry.push(resolvedPath);
-    if (glbName && resolvedPath !== `model/${glbName}`) pathsToTry.push(`model/${glbName}`);
+      const pathsToTry = [];
+      if (resolvedPath) pathsToTry.push(resolvedPath);
+      if (glbName && resolvedPath !== `model/${glbName}`) pathsToTry.push(`model/${glbName}`);
 
-    for (const tryPath of pathsToTry) {
-      try {
-        setStatus(`Fetching ${tryPath}…`);
-        const r = await fetch(`/${tryPath}`, { cache: 'no-cache' });
-        if (r.ok) {
-          mainBuf = await r.arrayBuffer();
-          resolvedPath = tryPath;
-          console.log(`✓ Loaded main GLB from: ${tryPath}`);
-          break;
+      for (const tryPath of pathsToTry) {
+        try {
+          setStatus(`Fetching ${tryPath}…`);
+          const cleanPath = tryPath.replace(/^\/+/, '');
+          const r = await fetch(`/${cleanPath}`, { cache: 'no-cache' });
+          if (r.ok) {
+            mainBuf = await r.arrayBuffer();
+            resolvedPath = tryPath;
+            console.log(`✓ Loaded main GLB from: ${tryPath}`);
+            break;
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch ${tryPath}:`, err);
         }
-      } catch (err) {
-        console.warn(`Failed to fetch ${tryPath}:`, err);
+      }
+
+      if (!mainBuf && primaryMainEntry?.buffer) {
+        try {
+          console.log('Attempting to restore main GLB from legacy buffer...');
+          const buf = primaryMainEntry.buffer;
+          if (Array.isArray(buf)) {
+            mainBuf = new Uint8Array(buf).buffer;
+          } else if (buf instanceof ArrayBuffer) {
+            mainBuf = buf;
+          } else {
+            console.warn('Buffer format not recognized, skipping legacy restore');
+          }
+          if (mainBuf) console.log('✓ Successfully restored main GLB from buffer');
+        } catch (err) {
+          console.error('Failed to restore from legacy buffer:', err);
+          mainBuf = null;
+        }
+      }
+
+      if (!mainBuf) {
+        setStatus(`Could not find "${glbName}" in model/ — please select it manually.`, 'error');
+        mainBuf = await new Promise(resolve => {
+          const input = document.createElement('input');
+          input.type = 'file'; input.accept = '.glb,model/gltf-binary';
+          input.onchange = async () => {
+            if (input.files[0]) resolve(await input.files[0].arrayBuffer());
+            else resolve(null);
+          };
+          input.click();
+        });
+        if (!mainBuf) { setStatus('Session load cancelled.', 'error'); return; }
+      }
+
+      await loadGlbFromBuffer(mainBuf, glbName);
+      state.lastLoadedGlbFile = { name: glbName, buffer: mainBuf, path: resolvedPath };
+      if (state.mainModels[0]) {
+        state.mainModels[0].modelPath = resolvedPath || state.mainModels[0].modelPath || null;
+        state.mainModels[0].arrayBuffer = mainBuf;
+        if (primaryMainEntry?.id) state.mainModels[0].id = primaryMainEntry.id;
+        const primaryTag = normalizeTagArray(primaryMainEntry?.tag);
+        if (primaryTag) state.mainModels[0].tag = primaryTag;
+        else delete state.mainModels[0].tag;
       }
     }
 
-    if (!mainBuf && primaryMainEntry?.buffer) {
-      try {
-        console.log('Attempting to restore main GLB from legacy buffer...');
-        const buf = primaryMainEntry.buffer;
-        if (Array.isArray(buf)) {
-          mainBuf = new Uint8Array(buf).buffer;
-        } else if (buf instanceof ArrayBuffer) {
-          mainBuf = buf;
-        } else {
-          console.warn('Buffer format not recognized, skipping legacy restore');
-        }
-        if (mainBuf) console.log('✓ Successfully restored main GLB from buffer');
-      } catch (err) {
-        console.error('Failed to restore from legacy buffer:', err);
-        mainBuf = null;
-      }
-    }
-
-    if (!mainBuf) {
-      setStatus(`Could not find "${glbName}" in model/ — please select it manually.`, 'error');
-      mainBuf = await new Promise(resolve => {
-        const input = document.createElement('input');
-        input.type = 'file'; input.accept = '.glb,model/gltf-binary';
-        input.onchange = async () => {
-          if (input.files[0]) resolve(await input.files[0].arrayBuffer());
-          else resolve(null);
-        };
-        input.click();
-      });
-      if (!mainBuf) { setStatus('Session load cancelled.', 'error'); return; }
-    }
-
-    await loadGlbFromBuffer(mainBuf, glbName);
-    state.lastLoadedGlbFile = { name: glbName, buffer: mainBuf, path: resolvedPath };
-    if (state.mainModels[0]) {
-      state.mainModels[0].modelPath = resolvedPath || state.mainModels[0].modelPath || null;
-      state.mainModels[0].arrayBuffer = mainBuf;
-      if (primaryMainEntry?.id) state.mainModels[0].id = primaryMainEntry.id;
-      const primaryTag = normalizeTagArray(primaryMainEntry?.tag);
-      if (primaryTag) state.mainModels[0].tag = primaryTag;
-      else delete state.mainModels[0].tag;
-    }
     // 恢复camera设置
     try {
-      if (session.cameraData) {
-        const cam = session.cameraData;
-        camera.position.set(cam.posX, cam.posY, cam.posZ);
-        controls.target.set(cam.targetX, cam.targetY, cam.targetZ);
-        camera.fov = cam.fov || 45;
-        camera.near = cam.near || 0.01;
-        camera.far = cam.far || 1000;
+      const cam = session.camera || session.cameraData;
+      if (cam) {
+        let px = 0, py = 10, pz = 10;
+        let tx = 0, ty = 0, tz = 0;
+        let fov = cam.fov || 45;
+        let near = cam.near || 0.01;
+        let far = cam.far || 1000;
+
+        // 1. Position parsing
+        if (Array.isArray(cam.position)) {
+          px = Number(cam.position[0]) || 0;
+          py = Number(cam.position[1]) || 0;
+          pz = Number(cam.position[2]) || 0;
+        } else if (cam.posX !== undefined) {
+          px = Number(cam.posX) || 0;
+          py = Number(cam.posY) || 0;
+          pz = Number(cam.posZ) || 0;
+        } else if (cam.position && typeof cam.position === 'object') {
+          px = Number(cam.position.x) || Number(cam.position.px) || 0;
+          py = Number(cam.position.y) || Number(cam.position.py) || 0;
+          pz = Number(cam.position.z) || Number(cam.position.pz) || 0;
+        }
+
+        // 2. Target parsing
+        let hasTarget = false;
+        if (Array.isArray(cam.target)) {
+          tx = Number(cam.target[0]) || 0;
+          ty = Number(cam.target[1]) || 0;
+          tz = Number(cam.target[2]) || 0;
+          hasTarget = true;
+        } else if (cam.targetX !== undefined) {
+          tx = Number(cam.targetX) || 0;
+          ty = Number(cam.targetY) || 0;
+          tz = Number(cam.targetZ) || 0;
+          hasTarget = true;
+        } else if (cam.target && typeof cam.target === 'object') {
+          tx = Number(cam.target.x) || Number(cam.target.tx) || 0;
+          ty = Number(cam.target.y) || Number(cam.target.ty) || 0;
+          tz = Number(cam.target.z) || Number(cam.target.tz) || 0;
+          hasTarget = true;
+        }
+
+        camera.position.set(px, py, pz);
+
+        // 3. Rotation / Target logic
+        if (hasTarget) {
+          controls.target.set(tx, ty, tz);
+        } else if (Array.isArray(cam.rotation)) {
+          // Calculate target vector using Euler angles to respect the rotation
+          const rx = (Number(cam.rotation[0]) || 0) * Math.PI / 180;
+          const ry = (Number(cam.rotation[1]) || 0) * Math.PI / 180;
+          const rz = (Number(cam.rotation[2]) || 0) * Math.PI / 180;
+          
+          const euler = new THREE.Euler(rx, ry, rz, 'YXZ');
+          const lookDir = new THREE.Vector3(0, 0, -1).applyEuler(euler).normalize();
+          
+          const distance = 100;
+          controls.target.copy(camera.position).addScaledVector(lookDir, distance);
+        } else {
+          controls.target.set(0, 0, 0);
+        }
+
+        camera.fov = fov;
+        camera.near = near;
+        camera.far = far;
         camera.updateProjectionMatrix();
         controls.update();
-        console.log('✓ Camera settings restored');
+
+        // Update inputs immediately
+        if (typeof state.setInputsFromCamera === 'function') {
+          state.setInputsFromCamera();
+        }
+        console.log('✓ Camera settings restored:', { position: [px, py, pz], target: [controls.target.x, controls.target.y, controls.target.z] });
       }
     } catch (err) {
       console.warn('Failed to restore camera settings:', err);
     }
     
     // If the saved session includes a transform for the primary main GLB,
-    // apply it now to the loaded main model. Extra main GLBs are handled
-    // earlier via addMainModelFromBuffer which accepts a transform arg.
+    // apply it now to the loaded main model.
     try {
       if (primaryMainEntry?.transform && state.mainModels[0]) {
         const item = state.mainModels[0];
@@ -4408,9 +5119,7 @@ async function doLoadSession(sessionId) {
           item.object3d.position.set(t.px || 0, t.py || 0, t.pz || 0);
           item.object3d.rotation.set((t.rx || 0) * Math.PI / 180, (t.ry || 0) * Math.PI / 180, (t.rz || 0) * Math.PI / 180);
           item.object3d.scale.set(t.sx || 1, t.sy || 1, t.sz || 1);
-          // Update the item's transform metadata from the object and refresh UI
           syncItemTransformFromObject(item, { updateInputs: false });
-          // Also reflect transform in the transform inputs if a main model is active
           if (state.activeSceneItem === item || !state.activeSceneItem) loadTransformFromItem(item);
         }
       }
@@ -4423,9 +5132,23 @@ async function doLoadSession(sessionId) {
       let extraPath = extraMainEntry?.path || null;
       const extraName = extraMainEntry?.name || '';
 
+      if (isPrimitivePath(extraPath)) {
+        console.log(`✓ Restoring extra main GLB as primitive geometry: ${extraPath}`);
+        await restorePrimitiveGeometry(
+          extraPath,
+          extraMainEntry.id || null,
+          extraName || (extraPath + '.geometry'),
+          extraMainEntry.transform || null,
+          extraMainEntry.tag || null,
+          false // primary = false
+        );
+        continue;
+      }
+
       if (extraPath) {
         try {
-          const r = await fetch(`/${extraPath}`, { cache: 'no-cache' });
+          const cleanPath = extraPath.replace(/^\/+/, '');
+          const r = await fetch(`/${cleanPath}`, { cache: 'no-cache' });
           if (r.ok) {
             extraBuf = await r.arrayBuffer();
           } else {
@@ -4463,6 +5186,9 @@ async function doLoadSession(sessionId) {
       }
     }
 
+    // Refresh main model list UI once all main items are restored
+    renderMainModelList();
+
     // Restore accessories
     for (const accData of (session.accessories || [])) {
       const nodeEntry = state.allNodes.find(n => n.name === accData.nodeName || n.obj.name === accData.nodeName);
@@ -4474,7 +5200,8 @@ async function doLoadSession(sessionId) {
       // 1. Prefer path fetch from model/ (with cache busting)
       if (accPath) {
         try {
-          const r = await fetch(`/${accPath}`, { cache: 'no-cache' });
+          const cleanPath = accPath.replace(/^\/+/, '');
+          const r = await fetch(`/${cleanPath}`, { cache: 'no-cache' });
           if (r.ok) {
             accBuf = await r.arrayBuffer();
             console.log(`✓ Loaded accessory from path: ${accPath}`);
@@ -4527,6 +5254,13 @@ async function doLoadSession(sessionId) {
       if (item && accData.textures && accData.textures.length > 0) {
         await restoreAccessoryTextures(item, accData.textures);
       }
+    }
+
+    // Restore camera presets
+    state.cameraPresets = Array.isArray(session.cameraPreset) ? session.cameraPreset : [];
+    state.activePresetId = '';
+    if (typeof updateCamPresetDropdown === 'function') {
+      updateCamPresetDropdown();
     }
 
     renderAttachedList();
@@ -4588,7 +5322,7 @@ el.browseModelBtn.addEventListener('click', async () => {
     const res = await apiCall('/api/glb-list');
     el.modelFileList.innerHTML = '';
     if (!res?.success || !res.files.length) {
-      el.modelFileList.innerHTML = '<span style="color:var(--color-text-muted);">No GLB files found in model/ folder.</span>';
+      el.modelFileList.innerHTML = '<span style="color:var(--color-text-muted);">No GLB files found in assets/items/ folder.</span>';
       return;
     }
     res.files.forEach(f => {
@@ -4600,7 +5334,8 @@ el.browseModelBtn.addEventListener('click', async () => {
         el.modelBrowser.classList.add('hidden');
         setStatus(`Fetching ${f.name}…`);
         try {
-          const r = await fetch(`/${f.path}`);
+          const cleanPath = f.path.replace(/^\/+/, '');
+          const r = await fetch(`/${cleanPath}`);
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           const buf = await r.arrayBuffer();
           const file = new File([buf], f.name, { type: 'model/gltf-binary' });
@@ -4680,6 +5415,103 @@ el.saveSessionOverwriteBtn.addEventListener('click', async () => {
 el.saveSessionCancelBtn.addEventListener('click', () => {
   el.saveSessionDialog.classList.add('hidden');
 });
+
+// ─── Draggable and Minimizable Panel Logic ────────────────────────────────────
+function makeDraggable(panel, handle) {
+  let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+  
+  handle.onmousedown = dragMouseDown;
+  handle.ontouchstart = dragTouchStart;
+
+  function dragMouseDown(e) {
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT' || e.target.closest('button') || e.target.closest('select') || e.target.closest('input')) return;
+    e = e || window.event;
+    e.preventDefault();
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    document.onmouseup = closeDragElement;
+    document.onmousemove = elementDrag;
+  }
+
+  function dragTouchStart(e) {
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT' || e.target.closest('button') || e.target.closest('select') || e.target.closest('input')) return;
+    const touch = e.touches[0];
+    pos3 = touch.clientX;
+    pos4 = touch.clientY;
+    document.ontouchend = closeDragElement;
+    document.ontouchmove = elementTouchDrag;
+  }
+
+  function elementDrag(e) {
+    e = e || window.event;
+    e.preventDefault();
+    pos1 = pos3 - e.clientX;
+    pos2 = pos4 - e.clientY;
+    pos3 = e.clientX;
+    pos4 = e.clientY;
+    updatePosition(panel.offsetTop - pos2, panel.offsetLeft - pos1);
+  }
+
+  function elementTouchDrag(e) {
+    const touch = e.touches[0];
+    pos1 = pos3 - touch.clientX;
+    pos2 = pos4 - touch.clientY;
+    pos3 = touch.clientX;
+    pos4 = touch.clientY;
+    updatePosition(panel.offsetTop - pos2, panel.offsetLeft - pos1);
+  }
+
+  function updatePosition(top, left) {
+    const rect = panel.getBoundingClientRect();
+    const parent = panel.parentElement;
+    const parentRect = parent.getBoundingClientRect();
+    
+    let finalTop = Math.max(10, Math.min(top, parentRect.height - rect.height - 10));
+    let finalLeft = Math.max(10, Math.min(left, parentRect.width - rect.width - 10));
+    
+    panel.style.position = 'absolute';
+    panel.style.bottom = 'auto';
+    panel.style.right = 'auto';
+    panel.style.top = finalTop + 'px';
+    panel.style.left = finalLeft + 'px';
+  }
+
+  function closeDragElement() {
+    document.onmouseup = null;
+    document.onmousemove = null;
+    document.ontouchend = null;
+    document.ontouchmove = null;
+  }
+}
+
+// Bind minimize toggle
+document.querySelectorAll('.panel-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const card = btn.closest('.world-gizmo-card');
+    if (card) {
+      card.classList.toggle('minimized');
+      btn.textContent = card.classList.contains('minimized') ? '＋' : '－';
+    }
+  });
+});
+
+// Make each panel draggable
+const scenePanel = document.getElementById('sceneToolsPanel');
+if (scenePanel) {
+  const header = scenePanel.querySelector('.panel-header');
+  if (header) makeDraggable(scenePanel, header);
+}
+const gizmoPanel = document.getElementById('worldGizmoPanel');
+if (gizmoPanel) {
+  const header = gizmoPanel.querySelector('.panel-header');
+  if (header) makeDraggable(gizmoPanel, header);
+}
+const camPanel = document.getElementById('cameraPanel');
+if (camPanel) {
+  const header = camPanel.querySelector('.panel-header');
+  if (header) makeDraggable(camPanel, header);
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,387 @@
+{
+  "prompt": "",
+  "metadata": {
+    "exportedAt": 1779543588138,
+    "worldTargetSize": 3000,
+    "autoNormalizeMainModels": true
+  },
+  "camera": {
+    "position": [
+      113.0448552121915,
+      153.42674102621058,
+      -148.7608926369823
+    ],
+    "target": [
+      -19.72744616180191,
+      45.988233672073925,
+      -76.08099686035223
+    ],
+    "fov": 45,
+    "near": 0.01,
+    "far": 1000,
+    "zoom": 1
+  },
+  "mainGlbs": [
+    {
+      "id": "rbc79iyf6m",
+      "name": "cyborg_structure_01.glb",
+      "path": "/assets/items/cyborg_structure_01.glb",
+      "primary": true,
+      "transform": {
+        "px": 0,
+        "py": 0,
+        "pz": 0,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 1,
+        "sy": 1,
+        "sz": 1
+      }
+    }
+  ],
+  "accessories": [
+    {
+      "id": "htu7mbcuqp",
+      "name": "left_upperleg.glb",
+      "nodeName": "L_Thigh",
+      "kind": "accessory",
+      "transform": {
+        "px": 0.066,
+        "py": 0.08,
+        "pz": 0,
+        "rx": 5,
+        "ry": 0,
+        "rz": 172,
+        "sx": 0.5,
+        "sy": 0.5,
+        "sz": 0.5
+      },
+      "modelPath": "/assets/items/left_upperleg.glb"
+    },
+    {
+      "id": "9ml9sgvkwnj",
+      "name": "left_lowerleg.glb",
+      "nodeName": "L_Calf",
+      "kind": "accessory",
+      "transform": {
+        "px": 0.05,
+        "py": -0.184,
+        "pz": 0.036,
+        "rx": 2,
+        "ry": -9,
+        "rz": 170,
+        "sx": 0.5,
+        "sy": 0.5,
+        "sz": 0.5
+      },
+      "modelPath": "/assets/items/left_lowerleg.glb"
+    },
+    {
+      "id": "cjzn2lzen8",
+      "name": "left_foot.glb",
+      "nodeName": "L_Foot",
+      "kind": "accessory",
+      "transform": {
+        "px": 0.133343,
+        "py": -0.092264,
+        "pz": 0.526116,
+        "rx": 99,
+        "ry": 164,
+        "rz": 10,
+        "sx": 0.6,
+        "sy": 0.6,
+        "sz": 0.6
+      },
+      "modelPath": "/assets/items/left_foot.glb"
+    },
+    {
+      "id": "x0ro5eysbb",
+      "name": "right_upperleg.glb",
+      "nodeName": "R_Thigh",
+      "kind": "accessory",
+      "transform": {
+        "px": -0.044,
+        "py": 0.078,
+        "pz": -0.004,
+        "rx": 6,
+        "ry": 0,
+        "rz": 190,
+        "sx": 0.5,
+        "sy": 0.5,
+        "sz": 0.5
+      },
+      "modelPath": "/assets/items/right_upperleg.glb"
+    },
+    {
+      "id": "d0ybupger6",
+      "name": "right_lowerleg.glb",
+      "nodeName": "R_Calf",
+      "kind": "accessory",
+      "transform": {
+        "px": -0.04,
+        "py": -0.184,
+        "pz": 0.002,
+        "rx": 5,
+        "ry": 0,
+        "rz": -170,
+        "sx": 0.5,
+        "sy": 0.5,
+        "sz": 0.5
+      },
+      "modelPath": "/assets/items/right_lowerleg.glb"
+    },
+    {
+      "id": "357s1k3np7y",
+      "name": "right_foot.glb",
+      "nodeName": "R_Foot",
+      "kind": "accessory",
+      "transform": {
+        "px": -0.064969,
+        "py": -0.015975,
+        "pz": 0.55214,
+        "rx": -86.177273,
+        "ry": -8.075349,
+        "rz": 176.369355,
+        "sx": 0.6,
+        "sy": 0.6,
+        "sz": 0.6
+      },
+      "modelPath": "/assets/items/right_foot.glb"
+    },
+    {
+      "id": "upo9tq7udc8",
+      "name": "left_upperarm.glb",
+      "nodeName": "L_Upperarm",
+      "kind": "accessory",
+      "transform": {
+        "px": 0.244,
+        "py": 0.162,
+        "pz": 0.016,
+        "rx": 0,
+        "ry": 0,
+        "rz": 144,
+        "sx": 0.54,
+        "sy": 0.49,
+        "sz": 0.54
+      },
+      "modelPath": "/assets/items/left_upperarm.glb"
+    },
+    {
+      "id": "3wo9r987s9",
+      "name": "left_lowerarm.glb",
+      "nodeName": "L_Forearm",
+      "kind": "accessory",
+      "transform": {
+        "px": 0.294,
+        "py": 0.03,
+        "pz": 0.004,
+        "rx": -7,
+        "ry": 2,
+        "rz": 143,
+        "sx": 0.6,
+        "sy": 0.6,
+        "sz": 0.6
+      },
+      "modelPath": "/assets/items/left_lowerarm.glb"
+    },
+    {
+      "id": "xksgcw0hhjm",
+      "name": "left_hand.glb",
+      "nodeName": "L_Hand",
+      "kind": "accessory",
+      "transform": {
+        "px": 0,
+        "py": -0.04,
+        "pz": 0.27,
+        "rx": 180,
+        "ry": -90,
+        "rz": -21,
+        "sx": 0.5,
+        "sy": 0.5,
+        "sz": 0.5
+      },
+      "modelPath": "/assets/items/left_hand.glb"
+    },
+    {
+      "id": "cpny8yhs6i5",
+      "name": "right_upperarm.glb",
+      "nodeName": "R_Upperarm",
+      "kind": "accessory",
+      "transform": {
+        "px": -0.238,
+        "py": 0.154,
+        "pz": 0.016,
+        "rx": 2,
+        "ry": 0,
+        "rz": -142,
+        "sx": 0.54,
+        "sy": 0.49,
+        "sz": 0.54
+      },
+      "modelPath": "/assets/items/right_upperarm.glb"
+    },
+    {
+      "id": "ql3x0orqsli",
+      "name": "right_lowerarm.glb",
+      "nodeName": "R_Forearm",
+      "kind": "accessory",
+      "transform": {
+        "px": -0.116,
+        "py": 0.02,
+        "pz": 0.26,
+        "rx": -205,
+        "ry": 120,
+        "rz": -300,
+        "sx": 0.6,
+        "sy": 0.6,
+        "sz": 0.6
+      },
+      "modelPath": "/assets/items/right_lowerarm.glb"
+    },
+    {
+      "id": "vjv5exy07p",
+      "name": "right_hand.glb",
+      "nodeName": "R_Hand",
+      "kind": "accessory",
+      "transform": {
+        "px": 0.179236,
+        "py": 0.017207,
+        "pz": 0.187751,
+        "rx": 161.573349,
+        "ry": 43.836896,
+        "rz": 20.188527,
+        "sx": 0.5,
+        "sy": 0.5,
+        "sz": 0.5
+      },
+      "modelPath": "/assets/items/right_hand.glb"
+    },
+    {
+      "id": "sp4s8tb2o3",
+      "name": "face.glb",
+      "nodeName": "Head",
+      "kind": "accessory",
+      "transform": {
+        "px": 0.000762,
+        "py": -0.393639,
+        "pz": -0.040234,
+        "rx": 0,
+        "ry": -180,
+        "rz": 0,
+        "sx": 0.6,
+        "sy": 0.6,
+        "sz": 0.6
+      },
+      "modelPath": "/assets/items/face.glb"
+    },
+    {
+      "id": "2q37kxegns6",
+      "name": "hair.glb",
+      "nodeName": "Head",
+      "kind": "accessory",
+      "transform": {
+        "px": 0,
+        "py": -0.39,
+        "pz": -0.04,
+        "rx": 0,
+        "ry": -180,
+        "rz": 0,
+        "sx": 0.6,
+        "sy": 0.6,
+        "sz": 0.6
+      },
+      "modelPath": "/assets/items/hair.glb"
+    },
+    {
+      "id": "3clwjpts8fs",
+      "name": "lower_body_A.glb",
+      "nodeName": "Pelvis",
+      "kind": "accessory",
+      "transform": {
+        "px": 0.009472,
+        "py": -0.083147,
+        "pz": 0.019655,
+        "rx": 0,
+        "ry": -180,
+        "rz": 0,
+        "sx": 0.6,
+        "sy": 0.6,
+        "sz": 0.6
+      },
+      "modelPath": "/assets/items/lower_body_A.glb"
+    },
+    {
+      "id": "xihhrx8yg4n",
+      "name": "lower_body_E.glb",
+      "nodeName": "NeckTwist01",
+      "kind": "accessory",
+      "transform": {
+        "px": 0.003711,
+        "py": -0.298599,
+        "pz": 0.061474,
+        "rx": -15,
+        "ry": -180,
+        "rz": 0,
+        "sx": 0.6,
+        "sy": 0.6,
+        "sz": 0.6
+      },
+      "modelPath": "/assets/items/lower_body_E.glb"
+    },
+    {
+      "id": "xe786njyz",
+      "name": "lower_body_C.glb",
+      "nodeName": "Spine02",
+      "kind": "accessory",
+      "transform": {
+        "px": 0.003472,
+        "py": -0.210978,
+        "pz": 0.049625,
+        "rx": -12,
+        "ry": -180,
+        "rz": 0,
+        "sx": 0.6,
+        "sy": 0.6,
+        "sz": 0.6
+      },
+      "modelPath": "/assets/items/lower_body_C.glb"
+    },
+    {
+      "id": "aodonav3fol",
+      "name": "lower_body_B.glb",
+      "nodeName": "Spine01",
+      "kind": "accessory",
+      "transform": {
+        "px": 0.01,
+        "py": -0.116,
+        "pz": 0.03,
+        "rx": -7,
+        "ry": -180,
+        "rz": 0,
+        "sx": 0.6,
+        "sy": 0.6,
+        "sz": 0.6
+      },
+      "modelPath": "/assets/items/lower_body_B.glb"
+    },
+    {
+      "id": "xlqylihhfu9",
+      "name": "lower_body_D.glb",
+      "nodeName": "Spine02",
+      "kind": "accessory",
+      "transform": {
+        "px": 0,
+        "py": -0.214,
+        "pz": 0.06,
+        "rx": -15,
+        "ry": -180,
+        "rz": 0,
+        "sx": 0.6,
+        "sy": 0.6,
+        "sz": 0.6
+      },
+      "modelPath": "/assets/items/lower_body_D.glb"
+    }
+  ]
+}
