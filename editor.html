@@ -862,6 +862,7 @@ const state = {
   cameraPresets: [],
   activePresetId: '',
   cameraTransition: null,
+  isDraggingGizmo: false,
 };
 
 const el = {
@@ -1000,6 +1001,15 @@ worldTransformControl.visible = false;
 scene.add(worldTransformControl);
 worldTransformControl.addEventListener('dragging-changed', (event) => {
   controls.enabled = !event.value;
+  state.isDraggingGizmo = event.value;
+  if (!event.value && state.activeSceneItem) {
+    if (state.activeSceneItem.kind === 'main') {
+      renderMainModelList();
+    } else if (state.activeSceneItem.kind === 'accessory') {
+      refreshNodeAccPanel();
+      renderAttachedList();
+    }
+  }
 });
 worldTransformControl.addEventListener('objectChange', () => {
   if (!state.activeSceneItem) return;
@@ -2453,6 +2463,14 @@ el.viewer.addEventListener('pointerdown', (e) => {
 
 el.viewer.addEventListener('pointermove', (e) => {
   if (state.cameraMode === 'firstperson' && isPointerDragging) {
+    if (e.buttons === 0) {
+      // Stuck drag prevention: if no mouse buttons are pressed, dragging has ended
+      isPointerDragging = false;
+      try {
+        el.viewer.releasePointerCapture(e.pointerId);
+      } catch (err) {}
+      return;
+    }
     const deltaX = e.clientX - prevPointerX;
     const deltaY = e.clientY - prevPointerY;
     
@@ -2496,8 +2514,21 @@ el.viewer.addEventListener('pointermove', (e) => {
 el.viewer.addEventListener('pointerup', (e) => {
   if (isPointerDragging) {
     isPointerDragging = false;
-    el.viewer.releasePointerCapture(e.pointerId);
+    try {
+      el.viewer.releasePointerCapture(e.pointerId);
+    } catch (err) {}
   }
+});
+
+el.viewer.addEventListener('pointercancel', (e) => {
+  isPointerDragging = false;
+  try {
+    el.viewer.releasePointerCapture(e.pointerId);
+  } catch (err) {}
+});
+
+el.viewer.addEventListener('lostpointercapture', () => {
+  isPointerDragging = false;
 });
 
 // Scroll to move forward/backward translation when in firstperson mode
@@ -4142,7 +4173,7 @@ function syncItemTransformFromObject(item, { updateInputs = false } = {}) {
     el.scaleX.value=t.sx; el.scaleY.value=t.sy; el.scaleZ.value=t.sz;
   }
 
-  if (state.activeSceneItem === item) {
+  if (!state.isDraggingGizmo && state.activeSceneItem === item) {
     if (item.kind === 'accessory') {
       refreshNodeAccPanel();
       renderAttachedList();
@@ -4538,17 +4569,21 @@ async function saveSessionAccessories(sessionName = null, mode = 'new', overwrit
 
   const name = sessionName || (state.mainModels[0]?.name?.replace(/\.glb$/i, '') || 'session') + '_' + Date.now();
   
+  // Extract pitch, yaw, roll from camera in 'YXZ' order
+  const euler = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+  const pitch = euler.x * 180 / Math.PI;
+  const yaw = euler.y * 180 / Math.PI;
+  const roll = euler.z * 180 / Math.PI;
+
   // 保存camera设置
   const cameraData = {
-    posX: camera.position.x,
-    posY: camera.position.y,
-    posZ: camera.position.z,
-    targetX: controls.target.x,
-    targetY: controls.target.y,
-    targetZ: controls.target.z,
+    position: [camera.position.x, camera.position.y, camera.position.z],
+    rotation: [pitch, yaw, roll],
     fov: camera.fov,
     near: camera.near,
-    far: camera.far
+    far: camera.far,
+    zoom: camera.zoom || 1,
+    remark: "/assets/items/"
   };
   
   const mainGlbs = state.mainModels.map(item => {
@@ -4732,12 +4767,29 @@ if (el.camPresetSelect) {
     
     const preset = state.cameraPresets.find(p => p.id === selectedId);
     if (preset) {
+      const endPos = new THREE.Vector3(Number(preset.posX) || 0, Number(preset.posY) || 0, Number(preset.posZ) || 0);
+      
+      let endTgt;
+      if (preset.targetX !== undefined) {
+        endTgt = new THREE.Vector3(Number(preset.targetX) || 0, Number(preset.targetY) || 0, Number(preset.targetZ) || 0);
+      } else if (Array.isArray(preset.rotation)) {
+        const rx = (Number(preset.rotation[0]) || 0) * Math.PI / 180;
+        const ry = (Number(preset.rotation[1]) || 0) * Math.PI / 180;
+        const rz = (Number(preset.rotation[2]) || 0) * Math.PI / 180;
+        const euler = new THREE.Euler(rx, ry, rz, 'YXZ');
+        const lookDir = new THREE.Vector3(0, 0, -1).applyEuler(euler).normalize();
+        const distance = 100;
+        endTgt = endPos.clone().addScaledVector(lookDir, distance);
+      } else {
+        endTgt = new THREE.Vector3(0, 0, 0);
+      }
+
       // Trigger smooth transition
       state.cameraTransition = {
         startPos: camera.position.clone(),
-        endPos: new THREE.Vector3(Number(preset.posX) || 0, Number(preset.posY) || 0, Number(preset.posZ) || 0),
+        endPos: endPos,
         startTgt: controls.target.clone(),
-        endTgt: new THREE.Vector3(Number(preset.targetX) || 0, Number(preset.targetY) || 0, Number(preset.targetZ) || 0),
+        endTgt: endTgt,
         startFov: camera.fov,
         endFov: Number(preset.fov) || 45,
         startNear: camera.near,
@@ -4763,15 +4815,19 @@ if (el.camSaveNewPresetBtn) {
       return;
     }
     
+    // Extract pitch, yaw, roll from camera in 'YXZ' order
+    const euler = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+    const pitch = euler.x * 180 / Math.PI;
+    const yaw = euler.y * 180 / Math.PI;
+    const roll = euler.z * 180 / Math.PI;
+
     const preset = {
       id: 'preset_' + Date.now(),
       name: trimmed,
       posX: camera.position.x,
       posY: camera.position.y,
       posZ: camera.position.z,
-      targetX: controls.target.x,
-      targetY: controls.target.y,
-      targetZ: controls.target.z,
+      rotation: [pitch, yaw, roll],
       fov: camera.fov,
       near: camera.near,
       far: camera.far
@@ -4789,12 +4845,21 @@ if (el.camUpdatePresetBtn) {
   el.camUpdatePresetBtn.addEventListener('click', () => {
     const preset = state.cameraPresets.find(p => p.id === state.activePresetId);
     if (preset) {
+      // Extract pitch, yaw, roll from camera in 'YXZ' order
+      const euler = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+      const pitch = euler.x * 180 / Math.PI;
+      const yaw = euler.y * 180 / Math.PI;
+      const roll = euler.z * 180 / Math.PI;
+
       preset.posX = camera.position.x;
       preset.posY = camera.position.y;
       preset.posZ = camera.position.z;
-      preset.targetX = controls.target.x;
-      preset.targetY = controls.target.y;
-      preset.targetZ = controls.target.z;
+      
+      delete preset.targetX;
+      delete preset.targetY;
+      delete preset.targetZ;
+      
+      preset.rotation = [pitch, yaw, roll];
       preset.fov = camera.fov;
       preset.near = camera.near;
       preset.far = camera.far;

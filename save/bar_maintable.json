@@ -1,8 +1,8 @@
 {
   "name": "bar_maintable",
-  "savedAt": 1779629492185,
+  "savedAt": 1779663963205,
   "mainGlb": {
-    "id": "g6i2hxkg098",
+    "id": "yncfh1ykae",
     "name": "bar_maintable.glb",
     "path": "/assets/items/bar_maintable.glb",
     "primary": true,
@@ -21,7 +21,7 @@
   },
   "mainGlbs": [
     {
-      "id": "g6i2hxkg098",
+      "id": "yncfh1ykae",
       "name": "bar_maintable.glb",
       "path": "/assets/items/bar_maintable.glb",
       "primary": true,
@@ -93,27 +93,6 @@
       "buffer": null
     },
     {
-      "id": "ys0pzlj8j88",
-      "name": "glass-beer1",
-      "path": "/assets/items/glass-beer1.glb",
-      "primary": false,
-      "transform": {
-        "px": -63.738836,
-        "py": 42.724425,
-        "pz": -34.9,
-        "rx": 0,
-        "ry": 0,
-        "rz": 0,
-        "sx": 37,
-        "sy": 37,
-        "sz": 37
-      },
-      "buffer": null,
-      "tag": [
-        "glass"
-      ]
-    },
-    {
       "id": "bar_beertap",
       "name": "bar_beertap.glb",
       "path": "/assets/items/bar_beertap.glb",
@@ -137,15 +116,15 @@
       "path": "/assets/items/glass-whisky.glb",
       "primary": false,
       "transform": {
-        "px": -90.179281,
-        "py": 80.061898,
-        "pz": -6.03685,
+        "px": -64.316887,
+        "py": 30.149911,
+        "pz": 30.363262,
         "rx": 0,
         "ry": 0,
         "rz": 0,
-        "sx": 9.811111,
-        "sy": 9.811111,
-        "sz": 9.811111
+        "sx": 10.341701,
+        "sy": 10.341701,
+        "sz": 10.341701
       },
       "buffer": null,
       "tag": [
@@ -153,20 +132,20 @@
       ]
     },
     {
-      "id": "glass-beer1",
-      "name": "glass-beer1",
-      "path": "/assets/items/glass-beer1.glb",
+      "id": "glass-redwine",
+      "name": "glass-redwine",
+      "path": "/assets/items/glass-redwine.glb",
       "primary": false,
       "transform": {
-        "px": -64.500424,
-        "py": 42.724424,
-        "pz": -20.729102,
+        "px": -63.899692,
+        "py": 30.149642,
+        "pz": 11.66448,
         "rx": 0,
         "ry": 0,
         "rz": 0,
-        "sx": 37,
-        "sy": 37,
-        "sz": 37
+        "sx": 11.739918,
+        "sy": 11.739918,
+        "sz": 11.739918
       },
       "buffer": null,
       "tag": [
@@ -179,9 +158,9 @@
       "path": "/assets/items/glass-beer2.glb",
       "primary": false,
       "transform": {
-        "px": -47.398853,
-        "py": 42.724415,
-        "pz": -13.740072,
+        "px": -64.588944,
+        "py": 30.172703,
+        "pz": 24.572648,
         "rx": 0,
         "ry": 0,
         "rz": 0,
@@ -214,7 +193,7 @@
     },
     {
       "id": "npcPosition1",
-      "name": "npcPosition1.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
+      "name": "npcPosition1.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
       "path": "Cylinder",
       "primary": false,
       "transform": {
@@ -235,7 +214,7 @@
     },
     {
       "id": "npcPosition2",
-      "name": "npcPosition2.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
+      "name": "npcPosition2.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
       "path": "Cylinder",
       "primary": false,
       "transform": {
@@ -256,7 +235,7 @@
     },
     {
       "id": "servePosition1",
-      "name": "servePosition1.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
+      "name": "servePosition1.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
       "path": "Cylinder",
       "primary": false,
       "transform": {
@@ -277,7 +256,7 @@
     },
     {
       "id": "servePosition2",
-      "name": "servePosition2.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
+      "name": "servePosition2.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
       "path": "Cylinder",
       "primary": false,
       "transform": {
@@ -410,9 +389,9 @@
       "path": "/assets/items/glass-beer1.glb",
       "primary": false,
       "transform": {
-        "px": -63.738836,
-        "py": 42.724425,
-        "pz": -28.873529,
+        "px": -63.999519,
+        "py": 30.149949,
+        "pz": 17.589636,
         "rx": 0,
         "ry": 0,
         "rz": 0,
@@ -424,72 +403,140 @@
       "tag": [
         "glass"
       ]
+    },
+    {
+      "id": "customer1",
+      "name": "customer1",
+      "path": "/assets/items/cyborg_structure_01_full.glb",
+      "primary": false,
+      "transform": {
+        "px": 120.690014,
+        "py": 1.501398,
+        "pz": -100.421238,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 51.826849,
+        "sy": 51.826849,
+        "sz": 51.826849
+      },
+      "buffer": null
+    },
+    {
+      "id": "customer2",
+      "name": "customer2",
+      "path": "/assets/items/cyborg_structure_01_full.glb",
+      "primary": false,
+      "transform": {
+        "px": 130.282667,
+        "py": 1.445564,
+        "pz": 13.243749,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 49.900822,
+        "sy": 49.900822,
+        "sz": 49.900822
+      },
+      "buffer": null
+    },
+    {
+      "id": "6m8s56w5q2i",
+      "name": "icebox.glb",
+      "path": "/assets/items/icebox.glb",
+      "primary": false,
+      "transform": {
+        "px": -61.8995,
+        "py": 46.142702,
+        "pz": -6.127231,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 3.888889,
+        "sy": 3.888889,
+        "sz": 3.888889
+      },
+      "buffer": null
     }
   ],
   "accessories": [],
   "cameraData": {
-    "posX": -48.19471725985318,
-    "posY": 46.132825076907025,
-    "posZ": -2.0737543511432643,
-    "targetX": 48.28254554245623,
-    "targetY": 31.264340199630144,
-    "targetZ": -2.401216770855182,
+    "position": [
+      8.672148750363718,
+      62.32754999484994,
+      -29.92044581143949
+    ],
+    "rotation": [
+      -12.853195753947642,
+      89.87814121255008,
+      -8.155743209394213e-16
+    ],
     "fov": 45,
     "near": 0.01,
-    "far": 1000
+    "far": 1000,
+    "zoom": 1,
+    "remark": "/assets/items/"
   },
   "cameraPreset": [
     {
       "far": 1000,
       "fov": 45,
-      "id": "preset_1779622822534",
-      "name": "front",
-      "near": 0.01,
-      "posX": -48.19471725985318,
-      "posY": 46.132825076907025,
-      "posZ": -2.0737543511432643,
-      "targetX": 48.28254554245623,
-      "targetY": 31.264340199630148,
-      "targetZ": -2.401216770855182
-    },
-    {
-      "far": 1000,
-      "fov": 45,
-      "id": "preset_1779622837242",
+      "id": "back",
       "name": "back",
       "near": 0.01,
-      "posX": -31.51621145760798,
-      "posY": 40.718997121848574,
-      "posZ": 9.560082348418213,
-      "targetX": -109.21665347336891,
-      "targetY": 30.887941936093974,
-      "targetZ": -48.706829158009306
+      "posX": -18.098797387798413,
+      "posY": 44.002993565407834,
+      "posZ": 8.670651257548435,
+      "rotation": [
+        -13.724148696832184,
+        93.79254889298838,
+        -8.185077100439011e-16
+      ]
     },
     {
       "far": 1000,
       "fov": 45,
-      "id": "preset_1779622854222",
+      "id": "back2",
       "name": "back2",
       "near": 0.01,
-      "posX": -31.51621145760791,
-      "posY": 40.718997121848574,
-      "posZ": 9.56008234841812,
-      "targetX": -126.55901465320525,
-      "targetY": 30.887941936093966,
-      "targetZ": 29.54150438653738
+      "posX": -24.466111628749715,
+      "posY": 42.8217048477693,
+      "posZ": 14.67654897393146,
+      "rotation": [
+        -13.570707859410783,
+        54.03049440927272,
+        0
+      ]
     },
     {
       "far": 1000,
       "fov": 45,
-      "id": "preset_1779627603927",
+      "id": "topdown",
       "name": "topdown",
       "near": 0.01,
       "posX": -202.97158370977877,
-      "posY": 374.61170393256555,
-      "posZ": -461.709834776914,
-      "targetX": -49.84139023731994,
-      "targetY": 98.58516667120558,
-      "targetZ": 13.352743966378064
+      "posY": 374.6117039325656,
+      "posZ": -461.7098347769141,
+      "rotation": [
+        -28.943141719866077,
+        -162.13395420627776,
+        -1.8172513343655364e-15
+      ]
+    },
+    {
+      "far": 1000,
+      "fov": 45,
+      "id": "preset_1779648131334",
+      "name": "front",
+      "near": 0.01,
+      "posX": -48.961987991747435,
+      "posY": 51.34219295167924,
+      "posZ": -8.541551901308553,
+      "rotation": [
+        -13.724148696832184,
+        -89.93698543469371,
+        8.185077100439011e-16
+      ]
     }
   ]
 }
