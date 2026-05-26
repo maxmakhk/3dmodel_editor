@@ -153,7 +153,21 @@
     .section-label{font-size:.78rem;color:var(--color-text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
     .attached-list{display:flex;flex-direction:column;gap:var(--space-2);}
     .attached-item{background:var(--color-surface-2);border:1px solid color-mix(in oklab,var(--color-text) 8%,transparent);
-      border-radius:var(--radius-md);padding:var(--space-3);display:flex;align-items:center;gap:var(--space-3);}
+      border-radius:var(--radius-md);padding:var(--space-3);display:flex;align-items:center;gap:var(--space-3);transition:all var(--transition);}
+    .attached-item.selected-item{
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-primary) 25%, transparent) !important;
+      background: color-mix(in oklab, var(--color-primary) 4%, var(--color-surface-2)) !important;
+    }
+    .node-type-badge.visibility-visible {
+      background: color-mix(in oklab, var(--color-primary) 15%, transparent);
+      color: var(--color-primary);
+    }
+    .node-type-badge.visibility-invisible {
+      background: rgba(255, 68, 68, 0.15);
+      color: #ff4444;
+      border-color: rgba(255, 68, 68, 0.3) !important;
+    }
     .attached-item-name{flex:1;font-size:.9rem;}
     .attached-item-node{font-size:.75rem;color:var(--color-text-muted);}
     .step-row{display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;flex-wrap:wrap;}
@@ -189,6 +203,9 @@
       overflow:visible;
       pointer-events:auto;
       z-index: 10;
+      overflow:auto;
+      max-height: 300px;
+      padding: 10px;
     }
     #sceneToolsPanel {
       bottom: var(--space-5);
@@ -651,6 +668,10 @@
           <span class="tiny" style="min-width:2.8rem;color:var(--color-text-muted);">Tags</span>
           <input type="text" id="itemTagsInput" placeholder="npc, wine" disabled style="flex:1;font-size:.82rem;padding:.3rem .45rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);color:var(--color-text);">
         </div>
+        <div class="world-gizmo-row" style="align-items:center;margin-top:.35rem;gap:.5rem;">
+          <span class="tiny" style="min-width:2.8rem;color:var(--color-text-muted);">Visible</span>
+          <input type="checkbox" id="itemVisibleCheckbox" disabled style="cursor:pointer;width:1.2rem;height:1.2rem;">
+        </div>
         <div style="display:flex;gap:.5rem;align-items:center;margin-top:.5rem;">
           <select id="wg_quickProp" style="padding:.2rem .35rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);font-size:.82rem;">
             <option value="pos">Pos</option>
@@ -730,23 +751,23 @@
           </div>
           <div style="display:flex;gap:.4rem;align-items:center;">
             <label class="tiny" style="min-width:3rem;color:var(--color-text-muted);">Cam Pos</label>
-            <input type="number" id="camPosX" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
-            <input type="number" id="camPosY" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
-            <input type="number" id="camPosZ" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+            <input type="number" id="camPosX" step="0.1" style="width:60px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+            <input type="number" id="camPosY" step="0.1" style="width:60px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+            <input type="number" id="camPosZ" step="0.1" style="width:60px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
           </div>
           <div style="display:flex;gap:.4rem;align-items:center;">
-            <label class="tiny" style="min-width:3rem;color:var(--color-text-muted);">Target</label>
-            <input type="number" id="camTgtX" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
-            <input type="number" id="camTgtY" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
-            <input type="number" id="camTgtZ" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+            <label class="tiny" style="min-width:3rem;color:var(--color-text-muted);">Rotation</label>
+            <input type="number" id="camPitch" step="0.1" style="width:60px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);" placeholder="Pitch">
+            <input type="number" id="camYaw" step="0.1" style="width:60px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);" placeholder="Yaw">
+            <input type="number" id="camRoll" step="0.1" style="width:60px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);" placeholder="Roll">
           </div>
           <div style="display:flex;gap:.4rem;align-items:center;flex-wrap: wrap;">
-            <label class="tiny" style="min-width:3rem;color:var(--color-text-muted);">FOV</label>
-            <input type="number" id="camFov" step="0.1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);"> 
-            <label class="tiny" style="min-width:2.5rem;color:var(--color-text-muted);">Near</label>
-            <input type="number" id="camNear" step="0.01" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);"> 
-            <label class="tiny" style="min-width:2.5rem;color:var(--color-text-muted);">Far</label>
-            <input type="number" id="camFar" step="1" style="width:80px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
+            <label class="tiny" style="color:var(--color-text-muted);">FOV</label>
+            <input type="number" id="camFov" step="0.1" style="width:60px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);"> 
+            <label class="tiny" style="color:var(--color-text-muted);">Near</label>
+            <input type="number" id="camNear" step="0.01" style="width:60px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);"> 
+            <label class="tiny" style="color:var(--color-text-muted);">Far</label>
+            <input type="number" id="camFar" step="1" style="width:60px;padding:.25rem;border-radius:6px;border:1px solid var(--color-border);background:var(--color-surface-2);">
             <button type="button" id="camApplyBtn" class="btn-primary" style="margin-left:.4rem;padding:.35rem .6rem;">Apply</button>
           </div>
         </div>
@@ -955,6 +976,7 @@ const el = {
   itemNameInput: document.getElementById('itemNameInput'),
   itemIdInput: document.getElementById('itemIdInput'),
   itemTagsInput: document.getElementById('itemTagsInput'),
+  itemVisibleCheckbox: document.getElementById('itemVisibleCheckbox'),
   addSphereBtn: document.getElementById('addSphereBtn'),
   addCubeBtn: document.getElementById('addCubeBtn'),
   addCylinderBtn: document.getElementById('addCylinderBtn'),
@@ -1479,6 +1501,7 @@ async function cloneSceneItem(item) {
         transform: t,
         primary: false,
         tag: item.tag ? [...item.tag] : null,
+        visible: item.visible !== false
       });
       state.mainModels.push(clonedItem);
       renderMainModelList();
@@ -1498,7 +1521,9 @@ async function cloneSceneItem(item) {
         transform: t,
         record: null,
         textureSlots: [],
+        visible: item.visible !== false
       };
+      applyItemVisibility(clonedItem);
       if (item.tag?.length) clonedItem.tag = [...item.tag];
 
       // Clone texture slots and re-map to new material references
@@ -1704,6 +1729,18 @@ function syncItemNameInputFromItem(item) {
   el.itemNameInput.value = item?.name || '';
 }
 
+function syncVisibleCheckboxFromItem(item) {
+  if (!el.itemVisibleCheckbox) return;
+  el.itemVisibleCheckbox.disabled = !item;
+  el.itemVisibleCheckbox.checked = item ? (item.visible !== false) : true;
+}
+
+function applyVisibleFromCheckbox(item) {
+  if (!item || !el.itemVisibleCheckbox) return;
+  item.visible = el.itemVisibleCheckbox.checked;
+  applyItemVisibility(item);
+}
+
 function syncItemIdInputFromItem(item) {
   if (!el.itemIdInput) return;
   el.itemIdInput.disabled = !item;
@@ -1752,6 +1789,7 @@ function syncItemMetaInputsFromItem(item) {
   syncItemNameInputFromItem(item);
   syncItemIdInputFromItem(item);
   syncTagInputFromItem(item);
+  syncVisibleCheckboxFromItem(item);
 }
 
 function applyItemMetaFromInputs(item) {
@@ -1783,7 +1821,7 @@ function bindItemMetaRowInputs(row, item) {
   }
 }
 
-function createMainModelItem({ object3d, fileName, modelPath = null, buffer = null, transform = null, primary = false, tag = null, id = null }) {
+function createMainModelItem({ object3d, fileName, modelPath = null, buffer = null, transform = null, primary = false, tag = null, id = null, visible = true }) {
   const t = transform || { px: 0, py: 0, pz: 0, rx: 0, ry: 0, rz: 0, sx: 1, sy: 1, sz: 1 };
   if (object3d) {
     object3d.position.set(t.px, t.py, t.pz);
@@ -1803,10 +1841,14 @@ function createMainModelItem({ object3d, fileName, modelPath = null, buffer = nu
     modelPath,
     transform: { ...t },
     record: { ...t },
+    visible: visible !== false
   };
   const normalizedTag = normalizeTagArray(tag);
   if (normalizedTag) item.tag = normalizedTag;
-  if (object3d) syncItemTransformFromObject(item, { updateInputs: false });
+  if (object3d) {
+    applyItemVisibility(item);
+    syncItemTransformFromObject(item, { updateInputs: false });
+  }
   return item;
 }
 
@@ -1816,11 +1858,15 @@ function renderMainModelList() {
   if (!state.mainModels.length) return;
 
   state.mainModels.forEach((item, index) => {
-    const row = document.createElement('div');
-    row.className = 'attached-item';
     const active = state.activeSceneItem?.id === item.id;
+    const row = document.createElement('div');
+    row.className = 'attached-item' + (active ? ' selected-item' : '');
     const r = item.record || item.transform;
     const pathLabel = item.modelPath || 'buffer';
+    
+    const visibilityLabel = item.visible !== false ? 'Visible' : 'Invisible';
+    const visibilityClass = item.visible !== false ? 'visibility-visible' : 'visibility-invisible';
+    
     // compute bounding box size for display
     let sizeLabel = '';
     try {
@@ -1837,6 +1883,7 @@ function renderMainModelList() {
           <span class="tiny" style="min-width:2.4rem;color:var(--color-text-muted);">Name</span>
           <input type="text" class="model-name-input" value="${item.name}" style="font-size:.85rem;padding:.25rem .4rem;border:1px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-2);color:var(--color-text);flex:1;min-width:80px;">
           <span class="node-type-badge">${item.primary ? 'Base' : 'Extra'}</span>
+          <span class="node-type-badge ${visibilityClass}" style="margin-left:.25rem; font-size:.65rem; border:1px solid color-mix(in oklab, var(--color-primary) 30%, transparent); flex-shrink:0;">${visibilityLabel}</span>
         </div>
         <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;">
           <span class="tiny" style="min-width:2.4rem;color:var(--color-text-muted);">ID</span>
@@ -1879,7 +1926,7 @@ function selectMainModelItem(item) {
   renderMainModelList();
 }
 
-async function addMainModelFromBuffer(arrayBuffer, fileName, { modelPath = null, transform = null, primary = false, tag = null, id = null } = {}) {
+async function addMainModelFromBuffer(arrayBuffer, fileName, { modelPath = null, transform = null, primary = false, tag = null, id = null, visible = true } = {}) {
   const gltf = await new Promise((resolve, reject) => loader.parse(arrayBuffer, '', resolve, reject));
   normalizeSceneMaterials(gltf.scene);
   const root = gltf.scene;
@@ -1894,6 +1941,7 @@ async function addMainModelFromBuffer(arrayBuffer, fileName, { modelPath = null,
     primary,
     tag,
     id,
+    visible: visible !== false
   });
   enableShadowCasting(root);
   state.mainModels.push(item);
@@ -1919,7 +1967,7 @@ function removeAllMainModels() {
 }
 
 // ─── Create Primitive Geometries ──────────────────────────────────────────────
-async function restorePrimitiveGeometry(geometryType, id, name, transform, tag, primary = false) {
+async function restorePrimitiveGeometry(geometryType, id, name, transform, tag, primary = false, visible = true) {
   const geomTypeLower = geometryType.toLowerCase();
   let geometry = null;
   let finalName = name || (geometryType.charAt(0).toUpperCase() + geometryType.slice(1));
@@ -1968,6 +2016,7 @@ async function restorePrimitiveGeometry(geometryType, id, name, transform, tag, 
     buffer: null,
     transform: t,
     primary: Boolean(primary),
+    visible: visible !== false
   });
   
   if (id) item.id = id;
@@ -2569,21 +2618,28 @@ function animLoop() {
     if (t.progress >= 1) {
       t.progress = 1;
       camera.position.copy(t.endPos);
-      controls.target.copy(t.endTgt);
+      camera.quaternion.copy(t.endRot);
       camera.fov = t.endFov;
       camera.near = t.endNear;
       camera.far = t.endFar;
       camera.updateProjectionMatrix();
+      
+      const lookDir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).normalize();
+      controls.target.copy(camera.position).addScaledVector(lookDir, t.endDist);
       state.cameraTransition = null;
     } else {
       const p = t.progress;
       const ease = p * p * (3 - 2 * p); // smoothstep
       camera.position.lerpVectors(t.startPos, t.endPos, ease);
-      controls.target.lerpVectors(t.startTgt, t.endTgt, ease);
+      camera.quaternion.slerpQuaternions(t.startRot, t.endRot, ease);
       camera.fov = t.startFov + (t.endFov - t.startFov) * ease;
       camera.near = t.startNear + (t.endNear - t.startNear) * ease;
       camera.far = t.startFar + (t.endFar - t.startFar) * ease;
       camera.updateProjectionMatrix();
+      
+      const lookDir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).normalize();
+      const currentDist = t.startDist + (t.endDist - t.startDist) * ease;
+      controls.target.copy(camera.position).addScaledVector(lookDir, currentDist);
     }
     if (typeof state.setInputsFromCamera === 'function') {
       state.setInputsFromCamera();
@@ -4072,7 +4128,7 @@ el.accessoryInput.addEventListener('change', async e=>{
   await attachAccessory(file, state.selectedNode);
 });
 
-async function attachAccessory(file, targetNode, existingTransform=null, existingPath=null) {
+async function attachAccessory(file, targetNode, existingTransform=null, existingPath=null, visible=true) {
   try {
     setStatus(`Loading ${file.name}…`);
     const buf = await file.arrayBuffer();
@@ -4109,7 +4165,8 @@ async function attachAccessory(file, targetNode, existingTransform=null, existin
       modelPath = await uploadGlbToModel(file);
     }
 
-    const item = { id:uid(), kind:'accessory', file, name:file.name, nodeName:targetNode.name||'(unnamed)', nodeRef:targetNode, object3d:root3d, arrayBuffer:buf, modelPath, transform:{...t}, record:null, textureSlots:[] };
+    const item = { id:uid(), kind:'accessory', file, name:file.name, nodeName:targetNode.name||'(unnamed)', nodeRef:targetNode, object3d:root3d, arrayBuffer:buf, modelPath, transform:{...t}, record:null, textureSlots:[], visible: visible !== false };
+    applyItemVisibility(item);
     state.attachedItems.push(item);
     await startEditItem(item);
     renderNodeList();
@@ -4140,6 +4197,30 @@ function removeAllAttachedItems() {
   state.attachedItems=[]; state.activeAttachedItem=null; state.activeSceneItem = state.activeSceneItem?.kind === 'main' ? state.activeSceneItem : null; state.selectedNode=null;
   detachWorldGizmo();
   el.nodeSection.classList.add('hidden'); el.attachPanel.classList.add('hidden'); el.attachedListSection.classList.add('hidden');
+}
+
+function applyItemVisibility(item) {
+  if (!item?.object3d) return;
+  const isVisible = item.visible !== false;
+  item.object3d.traverse(child => {
+    if (child.isMesh) {
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      materials.forEach(mat => {
+        if (!mat) return;
+        if (mat.userData.origTransparent === undefined) {
+          mat.userData.origTransparent = mat.transparent;
+          mat.userData.origOpacity = mat.opacity;
+        }
+        if (isVisible) {
+          mat.transparent = mat.userData.origTransparent;
+          mat.opacity = mat.userData.origOpacity;
+        } else {
+          mat.transparent = true;
+          mat.opacity = 0.5;
+        }
+      });
+    }
+  });
 }
 
 // ─── Transform Controls ───────────────────────────────────────────────────────
@@ -4262,6 +4343,16 @@ if (el.itemTagsInput) {
   };
   el.itemTagsInput.addEventListener('change', onTagInputChange);
   el.itemTagsInput.addEventListener('blur', onTagInputChange);
+}
+
+if (el.itemVisibleCheckbox) {
+  el.itemVisibleCheckbox.addEventListener('change', () => {
+    const item = state.activeSceneItem;
+    if (!item) return;
+    applyVisibleFromCheckbox(item);
+    refreshItemMetaLists(item);
+    autoSaveSession();
+  });
 }
 
 function loadTransformFromItem(item) {
@@ -4408,10 +4499,18 @@ function renderAttachedList() {
   if (!state.attachedItems.length) { el.attachedListSection.classList.add('hidden'); return; }
   el.attachedListSection.classList.remove('hidden');
   state.attachedItems.forEach((item,i)=>{
-    const d=document.createElement('div'); d.className='attached-item';
+    const active = state.activeSceneItem?.id === item.id;
+    const d=document.createElement('div'); 
+    d.className='attached-item' + (active ? ' selected-item' : '');
     const r=item.record||item.transform;
-    d.innerHTML=`<div style="flex:1">
-      <div class="attached-item-name">📦 ${item.name}</div>
+    const visibilityLabel = item.visible !== false ? 'Visible' : 'Invisible';
+    const visibilityClass = item.visible !== false ? 'visibility-visible' : 'visibility-invisible';
+    
+    d.innerHTML=`<div style="flex:1;min-width:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem;">
+        <span class="attached-item-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:.25rem;">📦 ${item.name}</span>
+        <span class="node-type-badge ${visibilityClass}" style="font-size:.65rem; border:1px solid color-mix(in oklab, var(--color-primary) 30%, transparent); flex-shrink:0;">${visibilityLabel}</span>
+      </div>
       <div class="attached-item-node">→ ${item.nodeName}</div>
       ${item.record?`<div class="tiny" style="margin-top:.3rem;color:var(--color-primary);">📋 Pos(${r.px.toFixed(2)},${r.py.toFixed(2)},${r.pz.toFixed(2)}) Rot(${r.rx.toFixed(1)}°,${r.ry.toFixed(1)}°,${r.rz.toFixed(1)}°) Scale(${r.sx.toFixed(2)},${r.sy.toFixed(2)},${r.sz.toFixed(2)})</div>`:'<div class="tiny" style="margin-top:.3rem;">Not recorded</div>'}
     </div>
@@ -4519,7 +4618,7 @@ if (el.exportSceneJsonBtn) {
       return entry;
     });
     const accessories = state.attachedItems.map(item => {
-      const entry = { id: item.id, name: item.name, nodeName: item.nodeName || null, kind: item.kind || 'accessory', transform: { ...(item.record || item.transform) }, modelPath: item.modelPath || null };
+      const entry = { id: item.id, name: item.name, bone: item.nodeName || null, kind: item.kind || 'accessory', transform: { ...(item.record || item.transform) }, modelPath: item.modelPath || null };
       if (item.tag?.length) entry.tag = [...item.tag];
       return entry;
     });
@@ -4594,6 +4693,7 @@ async function saveSessionAccessories(sessionName = null, mode = 'new', overwrit
       primary: Boolean(item.primary),
       transform: { ...item.transform },
       buffer: (!item.modelPath && item.arrayBuffer) ? Array.from(new Uint8Array(item.arrayBuffer)) : null,
+      visible: item.visible !== false
     };
     if (item.tag?.length) entry.tag = [...item.tag];
     return entry;
@@ -4604,11 +4704,12 @@ async function saveSessionAccessories(sessionName = null, mode = 'new', overwrit
     const accData = {
       id: item.id,
       name: item.name,
-      nodeName: item.nodeName,
+      bone: item.nodeName,
       transform: { ...item.transform },
       record: item.record ? { ...item.record } : null,
       path: item.modelPath || null,
       buffer: (!item.modelPath && item.arrayBuffer) ? Array.from(new Uint8Array(item.arrayBuffer)) : null,
+      visible: item.visible !== false,
       textures: [] // 新增：保存纹理数据
     };
     if (item.tag?.length) accData.tag = [...item.tag];
@@ -4719,9 +4820,12 @@ if (camApplyBtn) {
       document.getElementById('camPosX').value = camera.position.x.toFixed(2);
       document.getElementById('camPosY').value = camera.position.y.toFixed(2);
       document.getElementById('camPosZ').value = camera.position.z.toFixed(2);
-      document.getElementById('camTgtX').value = controls.target.x.toFixed(2);
-      document.getElementById('camTgtY').value = controls.target.y.toFixed(2);
-      document.getElementById('camTgtZ').value = controls.target.z.toFixed(2);
+      
+      const euler = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+      document.getElementById('camPitch').value = (euler.x * 180 / Math.PI).toFixed(2);
+      document.getElementById('camYaw').value = (euler.y * 180 / Math.PI).toFixed(2);
+      document.getElementById('camRoll').value = (euler.z * 180 / Math.PI).toFixed(2);
+      
       document.getElementById('camFov').value = camera.fov;
       document.getElementById('camNear').value = camera.near;
       document.getElementById('camFar').value = camera.far;
@@ -4736,16 +4840,26 @@ if (camApplyBtn) {
       const px = parseFloat(document.getElementById('camPosX').value) || 0;
       const py = parseFloat(document.getElementById('camPosY').value) || 0;
       const pz = parseFloat(document.getElementById('camPosZ').value) || 0;
-      const tx = parseFloat(document.getElementById('camTgtX').value) || 0;
-      const ty = parseFloat(document.getElementById('camTgtY').value) || 0;
-      const tz = parseFloat(document.getElementById('camTgtZ').value) || 0;
+      const pitchRad = (parseFloat(document.getElementById('camPitch').value) || 0) * Math.PI / 180;
+      const yawRad = (parseFloat(document.getElementById('camYaw').value) || 0) * Math.PI / 180;
+      const rollRad = (parseFloat(document.getElementById('camRoll').value) || 0) * Math.PI / 180;
       const fov = parseFloat(document.getElementById('camFov').value) || camera.fov;
       const near = parseFloat(document.getElementById('camNear').value) || camera.near;
       const far = parseFloat(document.getElementById('camFar').value) || camera.far;
-      camera.position.set(px,py,pz);
-      controls.target.set(tx,ty,tz);
+      
+      camera.position.set(px, py, pz);
+      
+      const euler = new THREE.Euler(pitchRad, yawRad, rollRad, 'YXZ');
+      camera.quaternion.setFromEuler(euler);
+      
       camera.fov = fov; camera.near = near; camera.far = far; camera.updateProjectionMatrix();
+      
+      // Update OrbitControls target based on new position and orientation
+      const lookDir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).normalize();
+      const distance = camera.position.distanceTo(controls.target) || 10;
+      controls.target.copy(camera.position).addScaledVector(lookDir, distance);
       controls.update();
+      
       setStatus('Camera updated.', 'ok');
     } catch (err) { setStatus('Camera update failed: '+(err.message||err), 'error'); }
   });
@@ -4769,27 +4883,43 @@ if (el.camPresetSelect) {
     if (preset) {
       const endPos = new THREE.Vector3(Number(preset.posX) || 0, Number(preset.posY) || 0, Number(preset.posZ) || 0);
       
-      let endTgt;
-      if (preset.targetX !== undefined) {
-        endTgt = new THREE.Vector3(Number(preset.targetX) || 0, Number(preset.targetY) || 0, Number(preset.targetZ) || 0);
-      } else if (Array.isArray(preset.rotation)) {
+      let endRot = new THREE.Quaternion();
+      let endDist = 10;
+      
+      if (Array.isArray(preset.rotation)) {
         const rx = (Number(preset.rotation[0]) || 0) * Math.PI / 180;
         const ry = (Number(preset.rotation[1]) || 0) * Math.PI / 180;
         const rz = (Number(preset.rotation[2]) || 0) * Math.PI / 180;
         const euler = new THREE.Euler(rx, ry, rz, 'YXZ');
-        const lookDir = new THREE.Vector3(0, 0, -1).applyEuler(euler).normalize();
-        const distance = 100;
-        endTgt = endPos.clone().addScaledVector(lookDir, distance);
+        endRot.setFromEuler(euler);
+        
+        if (preset.targetX !== undefined) {
+          const endTgt = new THREE.Vector3(Number(preset.targetX) || 0, Number(preset.targetY) || 0, Number(preset.targetZ) || 0);
+          endDist = endPos.distanceTo(endTgt) || 10;
+        } else {
+          endDist = camera.position.distanceTo(controls.target) || 10;
+        }
+      } else if (preset.targetX !== undefined) {
+        const endTgt = new THREE.Vector3(Number(preset.targetX) || 0, Number(preset.targetY) || 0, Number(preset.targetZ) || 0);
+        endDist = endPos.distanceTo(endTgt) || 10;
+        
+        const dummy = camera.clone();
+        dummy.position.copy(endPos);
+        dummy.lookAt(endTgt);
+        endRot.copy(dummy.quaternion);
       } else {
-        endTgt = new THREE.Vector3(0, 0, 0);
+        endRot.copy(camera.quaternion);
+        endDist = camera.position.distanceTo(controls.target) || 10;
       }
 
-      // Trigger smooth transition
+      // Trigger smooth transition using rotation
       state.cameraTransition = {
         startPos: camera.position.clone(),
         endPos: endPos,
-        startTgt: controls.target.clone(),
-        endTgt: endTgt,
+        startRot: camera.quaternion.clone(),
+        endRot: endRot,
+        startDist: camera.position.distanceTo(controls.target) || 10,
+        endDist: endDist,
         startFov: camera.fov,
         endFov: Number(preset.fov) || 45,
         startNear: camera.near,
@@ -5091,6 +5221,9 @@ async function doLoadSession(sessionId) {
         const primaryTag = normalizeTagArray(primaryMainEntry?.tag);
         if (primaryTag) state.mainModels[0].tag = primaryTag;
         else delete state.mainModels[0].tag;
+        
+        state.mainModels[0].visible = primaryMainEntry?.visible !== false;
+        applyItemVisibility(state.mainModels[0]);
       }
     }
 
@@ -5245,6 +5378,7 @@ async function doLoadSession(sessionId) {
         primary: false,
         tag: extraMainEntry.tag || null,
         id: extraMainEntry.id || null,
+        visible: extraMainEntry.visible !== false,
       });
       if (extraMainEntry.transform) {
         loadTransformFromItem(extraItem);
@@ -5256,8 +5390,9 @@ async function doLoadSession(sessionId) {
 
     // Restore accessories
     for (const accData of (session.accessories || [])) {
-      const nodeEntry = state.allNodes.find(n => n.name === accData.nodeName || n.obj.name === accData.nodeName);
-      if (!nodeEntry) { console.warn('Could not find node:', accData.nodeName); continue; }
+      const targetNodeName = accData.bone || accData.nodeName;
+      const nodeEntry = state.allNodes.find(n => n.name === targetNodeName || n.obj.name === targetNodeName);
+      if (!nodeEntry) { console.warn('Could not find node:', targetNodeName); continue; }
 
       let accBuf = null;
       let accPath = accData.path || null;
@@ -5305,7 +5440,7 @@ async function doLoadSession(sessionId) {
       }
 
       const file = new File([accBuf], accData.name, { type: 'model/gltf-binary' });
-      await attachAccessory(file, nodeEntry.obj, accData.transform, accPath);
+      await attachAccessory(file, nodeEntry.obj, accData.transform, accPath, accData.visible !== false);
       const item = state.attachedItems[state.attachedItems.length - 1];
       if (item && accData.record) item.record = { ...accData.record };
       if (item) {

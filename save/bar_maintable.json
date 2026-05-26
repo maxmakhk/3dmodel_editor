@@ -1,6 +1,6 @@
 {
   "name": "bar_maintable",
-  "savedAt": 1779663963205,
+  "savedAt": 1779696563331,
   "mainGlb": {
     "id": "yncfh1ykae",
     "name": "bar_maintable.glb",
@@ -17,7 +17,8 @@
       "sy": 100,
       "sz": 100
     },
-    "buffer": null
+    "buffer": null,
+    "visible": true
   },
   "mainGlbs": [
     {
@@ -36,7 +37,8 @@
         "sy": 100,
         "sz": 100
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "bar_carbinet",
@@ -54,7 +56,8 @@
         "sy": 27.788889,
         "sz": 27.788889
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "bl6ofk0li0b",
@@ -72,7 +75,8 @@
         "sy": 4.628395,
         "sz": 4.628395
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "bar_smalltable",
@@ -90,7 +94,8 @@
         "sy": 0.6,
         "sz": 0.6
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "bar_beertap",
@@ -108,7 +113,8 @@
         "sy": 1,
         "sz": 1
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "glass-whisky",
@@ -127,6 +133,7 @@
         "sz": 10.341701
       },
       "buffer": null,
+      "visible": true,
       "tag": [
         "glass"
       ]
@@ -148,6 +155,7 @@
         "sz": 11.739918
       },
       "buffer": null,
+      "visible": true,
       "tag": [
         "glass"
       ]
@@ -169,6 +177,7 @@
         "sz": 2.822222
       },
       "buffer": null,
+      "visible": true,
       "tag": [
         "glass"
       ]
@@ -189,11 +198,12 @@
         "sy": 0.6,
         "sz": 0.6
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "npcPosition1",
-      "name": "npcPosition1.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
+      "name": "npcPosition1.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
       "path": "Cylinder",
       "primary": false,
       "transform": {
@@ -208,13 +218,14 @@
         "sz": 7.185185
       },
       "buffer": null,
+      "visible": false,
       "tag": [
         "npcPosition"
       ]
     },
     {
       "id": "npcPosition2",
-      "name": "npcPosition2.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
+      "name": "npcPosition2.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
       "path": "Cylinder",
       "primary": false,
       "transform": {
@@ -229,13 +240,14 @@
         "sz": 7.185185
       },
       "buffer": null,
+      "visible": false,
       "tag": [
         "npcPosition"
       ]
     },
     {
       "id": "servePosition1",
-      "name": "servePosition1.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
+      "name": "servePosition1.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
       "path": "Cylinder",
       "primary": false,
       "transform": {
@@ -250,13 +262,14 @@
         "sz": 6.082304
       },
       "buffer": null,
+      "visible": false,
       "tag": [
         "servePosition"
       ]
     },
     {
       "id": "servePosition2",
-      "name": "servePosition2.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
+      "name": "servePosition2.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry.geometry",
       "path": "Cylinder",
       "primary": false,
       "transform": {
@@ -271,6 +284,7 @@
         "sz": 6.082304
       },
       "buffer": null,
+      "visible": false,
       "tag": [
         "servePosition"
       ]
@@ -291,7 +305,8 @@
         "sy": 6,
         "sz": 6
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "or2ibz5z47i",
@@ -309,7 +324,8 @@
         "sy": 6,
         "sz": 6
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "wine6",
@@ -327,7 +343,8 @@
         "sy": 4.766667,
         "sz": 4.766667
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "wine4",
@@ -345,7 +362,8 @@
         "sy": 6,
         "sz": 6
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "wine5",
@@ -363,7 +381,8 @@
         "sy": 6,
         "sz": 6
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "bl6ofk0li0b",
@@ -381,7 +400,8 @@
         "sy": 4.628395,
         "sz": 4.628395
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "ys0pzlj8j88",
@@ -400,6 +420,7 @@
         "sz": 37
       },
       "buffer": null,
+      "visible": true,
       "tag": [
         "glass"
       ]
@@ -420,7 +441,8 @@
         "sy": 51.826849,
         "sz": 51.826849
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "customer2",
@@ -438,7 +460,8 @@
         "sy": 49.900822,
         "sz": 49.900822
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     },
     {
       "id": "6m8s56w5q2i",
@@ -456,20 +479,21 @@
         "sy": 3.888889,
         "sz": 3.888889
       },
-      "buffer": null
+      "buffer": null,
+      "visible": true
     }
   ],
   "accessories": [],
   "cameraData": {
     "position": [
-      8.672148750363718,
-      62.32754999484994,
-      -29.92044581143949
+      254.45065573057434,
+      101.15993240249874,
+      -20.54475317802088
     ],
     "rotation": [
-      -12.853195753947642,
-      89.87814121255008,
-      -8.155743209394213e-16
+      -21.999466534737326,
+      89.2506614810523,
+      -3.430325820971483e-15
     ],
     "fov": 45,
     "near": 0.01,

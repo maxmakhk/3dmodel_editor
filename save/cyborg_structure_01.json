@@ -1,0 +1,545 @@
+{
+  "name": "cyborg_structure_01",
+  "savedAt": 1779743820674,
+  "mainGlb": {
+    "id": "cyborg_structure_01",
+    "name": "cyborg_structure_01",
+    "path": "/assets/items/cyborg_structure_01.glb",
+    "primary": true,
+    "transform": {
+      "px": 0,
+      "py": 0,
+      "pz": 0,
+      "rx": 0,
+      "ry": 0,
+      "rz": 0,
+      "sx": 70,
+      "sy": 70,
+      "sz": 70
+    },
+    "buffer": null,
+    "visible": true
+  },
+  "mainGlbs": [
+    {
+      "id": "cyborg_structure_01",
+      "name": "cyborg_structure_01",
+      "path": "/assets/items/cyborg_structure_01.glb",
+      "primary": true,
+      "transform": {
+        "px": 0,
+        "py": 0,
+        "pz": 0,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 70,
+        "sy": 70,
+        "sz": 70
+      },
+      "buffer": null,
+      "visible": true
+    }
+  ],
+  "accessories": [
+    {
+      "id": "face",
+      "name": "face",
+      "bone": "Head",
+      "transform": {
+        "px": -0.000639,
+        "py": 0.070612,
+        "pz": -0.027275,
+        "rx": -180,
+        "ry": 0,
+        "rz": 176.882919,
+        "sx": 0.194164,
+        "sy": 0.194164,
+        "sz": 0.194164
+      },
+      "record": {
+        "px": -0.000639,
+        "py": 0.070612,
+        "pz": -0.027275,
+        "rx": -180,
+        "ry": 0,
+        "rz": 176.882919,
+        "sx": 0.194164,
+        "sy": 0.194164,
+        "sz": 0.194164
+      },
+      "path": "/assets/items/face.glb",
+      "buffer": null,
+      "visible": true,
+      "textures": [
+        {
+          "key": "map",
+          "label": "Base Color",
+          "materialName": "faceV3 #1",
+          "width": 1024,
+          "height": 1024,
+          "textureId": "tex_mp65i71w_rv77kx",
+          "repeatX": 1,
+          "repeatY": 1,
+          "offsetX": 0,
+          "offsetY": 0,
+          "materialColor": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "viaz6k9u5mh",
+      "name": "hair.glb",
+      "bone": "Head",
+      "transform": {
+        "px": -0.000698,
+        "py": 0.100105,
+        "pz": -0.006911,
+        "rx": -180,
+        "ry": 0,
+        "rz": 180,
+        "sx": 0.439624,
+        "sy": 0.439624,
+        "sz": 0.439624
+      },
+      "record": {
+        "px": -0.000698,
+        "py": 0.100105,
+        "pz": -0.006911,
+        "rx": -180,
+        "ry": 0,
+        "rz": 180,
+        "sx": 0.439624,
+        "sy": 0.439624,
+        "sz": 0.439624
+      },
+      "path": "/assets/items/hair.glb",
+      "buffer": null,
+      "visible": true,
+      "textures": []
+    },
+    {
+      "id": "l8u8oainhoo",
+      "name": "lower_body_D_2.glb",
+      "bone": "Spine02",
+      "transform": {
+        "px": -0.006266,
+        "py": 0.077518,
+        "pz": -0.014558,
+        "rx": 180,
+        "ry": 0,
+        "rz": 180,
+        "sx": 0.454508,
+        "sy": 0.454508,
+        "sz": 0.454508
+      },
+      "record": {
+        "px": -0.006266,
+        "py": 0.077518,
+        "pz": -0.014558,
+        "rx": 180,
+        "ry": 0,
+        "rz": 180,
+        "sx": 0.454508,
+        "sy": 0.454508,
+        "sz": 0.454508
+      },
+      "path": "/assets/items/lower_body_D_2.glb",
+      "buffer": null,
+      "visible": true,
+      "textures": [
+        {
+          "key": "map",
+          "label": "Base Color",
+          "materialName": "texture_pbr_20250901004 #1",
+          "width": 4096,
+          "height": 4096,
+          "textureId": "tex_19e602388a2_5755a2",
+          "repeatX": 1,
+          "repeatY": 1,
+          "offsetX": 0,
+          "offsetY": 0,
+          "materialColor": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "83xp0u0u7f8",
+      "name": "lower_body_E.glb",
+      "bone": "NeckTwist02",
+      "transform": {
+        "px": 0,
+        "py": 0,
+        "pz": 0,
+        "rx": -0.110723,
+        "ry": 2.742252,
+        "rz": 1.214295,
+        "sx": 0.479358,
+        "sy": 0.479358,
+        "sz": 0.479358
+      },
+      "record": {
+        "px": 0,
+        "py": 0,
+        "pz": 0,
+        "rx": -0.110723,
+        "ry": 2.742252,
+        "rz": 1.214295,
+        "sx": 0.479358,
+        "sy": 0.479358,
+        "sz": 0.479358
+      },
+      "path": "/assets/items/lower_body_E.glb",
+      "buffer": null,
+      "visible": true,
+      "textures": [
+        {
+          "key": "map",
+          "label": "Base Color",
+          "materialName": "lower_body_E #1",
+          "width": 740,
+          "height": 493,
+          "textureId": "tex_19e606b85ab_4e7f37",
+          "repeatX": 1,
+          "repeatY": 1,
+          "offsetX": 0,
+          "offsetY": 0,
+          "materialColor": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "272armblxf1",
+      "name": "strV3_bodyA.glb",
+      "bone": "Pelvis",
+      "transform": {
+        "px": 0,
+        "py": 0,
+        "pz": 0,
+        "rx": 19.960065,
+        "ry": -1.281914,
+        "rz": 0.366101,
+        "sx": 0.489006,
+        "sy": 0.489006,
+        "sz": 0.489006
+      },
+      "record": {
+        "px": 0,
+        "py": 0,
+        "pz": 0,
+        "rx": 19.960065,
+        "ry": -1.281914,
+        "rz": 0.366101,
+        "sx": 0.489006,
+        "sy": 0.489006,
+        "sz": 0.489006
+      },
+      "path": "/assets/items/strV3_bodyA.glb",
+      "buffer": null,
+      "visible": true,
+      "textures": [
+        {
+          "key": "map",
+          "label": "Base Color",
+          "materialName": "bodyA #1",
+          "width": 4096,
+          "height": 4096,
+          "textureId": "tex_19e60f48c4f_7cd2e1",
+          "repeatX": 1,
+          "repeatY": 1,
+          "offsetX": 0,
+          "offsetY": 0,
+          "materialColor": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "nvkroa7glv",
+      "name": "strV3_bodyB.glb",
+      "bone": "Waist",
+      "transform": {
+        "px": 0.004947,
+        "py": 0.1006,
+        "pz": 0.02633,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 0.240054,
+        "sy": 0.240054,
+        "sz": 0.240054
+      },
+      "record": {
+        "px": 0.004947,
+        "py": 0.1006,
+        "pz": 0.02633,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 0.240054,
+        "sy": 0.240054,
+        "sz": 0.240054
+      },
+      "path": "/assets/items/strV3_bodyB.glb",
+      "buffer": null,
+      "visible": true,
+      "textures": [
+        {
+          "key": "map",
+          "label": "Base Color",
+          "materialName": "bodyB #1",
+          "width": 4096,
+          "height": 4096,
+          "textureId": "tex_19e60f48c4f_7cd2e1",
+          "repeatX": 1,
+          "repeatY": 1,
+          "offsetX": 0,
+          "offsetY": 0,
+          "materialColor": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "p3k5daxp05",
+      "name": "strV3_bodyC.glb",
+      "bone": "Spine01",
+      "transform": {
+        "px": 0.002389,
+        "py": 0.11114,
+        "pz": -0.006664,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 0.234222,
+        "sy": 0.234222,
+        "sz": 0.234222
+      },
+      "record": {
+        "px": 0.002389,
+        "py": 0.11114,
+        "pz": -0.006664,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 0.234222,
+        "sy": 0.234222,
+        "sz": 0.234222
+      },
+      "path": "/assets/items/strV3_bodyC.glb",
+      "buffer": null,
+      "visible": true,
+      "textures": [
+        {
+          "key": "map",
+          "label": "Base Color",
+          "materialName": "bodyC #1",
+          "width": 4096,
+          "height": 4096,
+          "textureId": "tex_19e60f48c4f_7cd2e1",
+          "repeatX": 1,
+          "repeatY": 1,
+          "offsetX": 0,
+          "offsetY": 0,
+          "materialColor": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "vzlkpe84gh",
+      "name": "strV3_bodyD.glb",
+      "bone": "Spine02",
+      "transform": {
+        "px": -0.000237,
+        "py": 0.104066,
+        "pz": 0.000305,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 0.421537,
+        "sy": 0.421537,
+        "sz": 0.421537
+      },
+      "record": {
+        "px": -0.000237,
+        "py": 0.104066,
+        "pz": 0.000305,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 0.421537,
+        "sy": 0.421537,
+        "sz": 0.421537
+      },
+      "path": "/assets/items/strV3_bodyD.glb",
+      "buffer": null,
+      "visible": true,
+      "textures": [
+        {
+          "key": "map",
+          "label": "Base Color",
+          "materialName": "bodyD #1",
+          "width": 4096,
+          "height": 4096,
+          "textureId": "tex_19e60f48c4f_7cd2e1",
+          "repeatX": 1,
+          "repeatY": 1,
+          "offsetX": 0,
+          "offsetY": 0,
+          "materialColor": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "97i4e56vxv5",
+      "name": "strV3_bodyE.glb",
+      "bone": "NeckTwist01",
+      "transform": {
+        "px": -0.001693,
+        "py": 0.043186,
+        "pz": 0.008974,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 0.95069,
+        "sy": 0.95069,
+        "sz": 0.95069
+      },
+      "record": {
+        "px": -0.001693,
+        "py": 0.043186,
+        "pz": 0.008974,
+        "rx": 0,
+        "ry": 0,
+        "rz": 0,
+        "sx": 0.95069,
+        "sy": 0.95069,
+        "sz": 0.95069
+      },
+      "path": "/assets/items/strV3_bodyE.glb",
+      "buffer": null,
+      "visible": true,
+      "textures": [
+        {
+          "key": "map",
+          "label": "Base Color",
+          "materialName": "neck-bodyE #1",
+          "width": 4096,
+          "height": 4096,
+          "textureId": "tex_19e60f48c4f_7cd2e1",
+          "repeatX": 1,
+          "repeatY": 1,
+          "offsetX": 0,
+          "offsetY": 0,
+          "materialColor": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "d3t0yxet7s",
+      "name": "strV3_armLeftLower.glb",
+      "bone": "L_Forearm",
+      "transform": {
+        "px": 0.007048,
+        "py": 0.022788,
+        "pz": -0.011462,
+        "rx": -22.666495,
+        "ry": -3.074041,
+        "rz": 135.468721,
+        "sx": 0.324076,
+        "sy": 0.324076,
+        "sz": 0.324076
+      },
+      "record": {
+        "px": 0.007048,
+        "py": 0.022788,
+        "pz": -0.011462,
+        "rx": -22.666495,
+        "ry": -3.074041,
+        "rz": 135.468721,
+        "sx": 0.324076,
+        "sy": 0.324076,
+        "sz": 0.324076
+      },
+      "path": "/assets/items/strV3_armLeftLower.glb",
+      "buffer": null,
+      "visible": true,
+      "textures": [
+        {
+          "key": "map",
+          "label": "Base Color",
+          "materialName": "arm_left_down #1",
+          "width": 4096,
+          "height": 4096,
+          "textureId": "tex_19e60f48c4f_7cd2e1",
+          "repeatX": 1,
+          "repeatY": 1,
+          "offsetX": 0,
+          "offsetY": 0,
+          "materialColor": "#ffffff"
+        }
+      ]
+    },
+    {
+      "id": "ub91aa29b5",
+      "name": "strV3_armLeftUpper.glb",
+      "bone": "L_Upperarm",
+      "transform": {
+        "px": -0.008386,
+        "py": 0.017123,
+        "pz": 0.002566,
+        "rx": -3.27197,
+        "ry": 7.061491,
+        "rz": 136.281518,
+        "sx": 0.276671,
+        "sy": 0.276671,
+        "sz": 0.276671
+      },
+      "record": {
+        "px": -0.008386,
+        "py": 0.017123,
+        "pz": 0.002566,
+        "rx": -3.27197,
+        "ry": 7.061491,
+        "rz": 136.281518,
+        "sx": 0.276671,
+        "sy": 0.276671,
+        "sz": 0.276671
+      },
+      "path": "/assets/items/strV3_armLeftUpper.glb",
+      "buffer": null,
+      "visible": true,
+      "textures": [
+        {
+          "key": "map",
+          "label": "Base Color",
+          "materialName": "arm_left_up #1",
+          "width": 4096,
+          "height": 4096,
+          "textureId": "tex_19e60f48c4f_7cd2e1",
+          "repeatX": 1,
+          "repeatY": 1,
+          "offsetX": 0,
+          "offsetY": 0,
+          "materialColor": "#ffffff"
+        }
+      ]
+    }
+  ],
+  "cameraData": {
+    "position": [
+      125.38992332544363,
+      55.73404806708223,
+      -20.613960804312036
+    ],
+    "rotation": [
+      -4.794601806235204,
+      90.64137753962672,
+      -7.979308389186827e-16
+    ],
+    "fov": 45,
+    "near": 0.01,
+    "far": 1000,
+    "zoom": 1,
+    "remark": "/assets/items/"
+  },
+  "cameraPreset": null
+}
